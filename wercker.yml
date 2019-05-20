@@ -44,22 +44,22 @@ build_nongui:
       name: SLAM test (monocular) with TUM RGBD dataset
       code: |
         cd build
-        ./run_tum_slam -v ../vocabulary/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_mono_02.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db tum_mono.msg
+        ./run_tum_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_mono_02.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db tum_mono.msg
     - script:
       name: SLAM test (stereo) with EuRoC MAV dataset
       code: |
         cd build
-        ./run_euroc_slam -v ../vocabulary/orb_vocab.dbow2 -d /datasets/EuRoC/MH_04 -s ../example/euroc/EuRoC_stereo.yaml --frame-skip 2 --no-sleep --debug --eval-log --map-db euroc_stereo.msg
+        ./run_euroc_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/EuRoC/MH_04 -s ../example/euroc/EuRoC_stereo.yaml --frame-skip 2 --no-sleep --debug --eval-log --map-db euroc_stereo.msg
     - script:
       name: SLAM test (RGBD) with TUM RGBD dataset
       code: |
         cd build
-        ./run_tum_slam -v ../vocabulary/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_RGBD_02.yaml --frame-skip 3 --no-sleep  --debug --eval-log  --map-db tum_rgbd.msg
+        ./run_tum_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_RGBD_02.yaml --frame-skip 3 --no-sleep  --debug --eval-log  --map-db tum_rgbd.msg
     - script:
       name: SLAM test (monocular) with THETA S dataset
       code: |
         cd build
-        ./run_movie_slam -v ../vocabulary/orb_vocab.dbow2 -m /datasets/THETA_S/R0012109_er.MP4 -s ../example/models/THETA_S.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db theta_s.msg
+        ./run_movie_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -m /datasets/THETA_S/R0012109_er.MP4 -s ../example/models/THETA_S.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db theta_s.msg
   after-steps:
     - install-packages:
       packages: ruby
