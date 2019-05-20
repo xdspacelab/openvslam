@@ -1,5 +1,5 @@
 # OpenVSLAM
-[![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=latest)](https://openvslam.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/en/master/?badge=master)
 
 ## Overview
 
