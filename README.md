@@ -15,12 +15,13 @@ To be written.
 
 **2-clause BSD license** (see [LICENSE](./LICENSE))
 
-The following files are third-party libraries.
+The following files are derived from third-party libraries.
 
-- `./3rd/json/include/nlohmann/json.hpp` : part of [nlohmann/json \[v3.6.1\]](https://github.com/nlohmann/json) (MIT license)
+- `./3rd/json` : part of [nlohmann/json \[v3.6.1\]](https://github.com/nlohmann/json) (MIT license)
 - `./3rd/popl` : part of [badaix/popl \[v1.2.0\]](https://github.com/badaix/popl) (MIT license)
 - `./3rd/spdlog` : part of [gabime/spdlog \[v1.3.1\]](https://github.com/gabime/spdlog) (MIT license)
 - `./src/openvslam/solver/pnp_solver.cc` : part of [laurentkneip/opengv](https://github.com/laurentkneip/opengv) (3-clause BSD license)
+- `./src/openvslam/feature/orb_point_pairs.h` : part of [opencv/opencv](https://github.com/opencv/opencv) (3-clause BSD License)
 
 ### Contributors
 
