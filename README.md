@@ -1,4 +1,5 @@
 # OpenVSLAM: Versatile Visual SLAM Framework
+[![wercker status](https://app.wercker.com/status/32ca116794463d9db5fb4aa522d5dbc5/s/ "wercker status")](https://app.wercker.com/project/byKey/32ca116794463d9db5fb4aa522d5dbc5)
 [![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/en/master/?badge=master)
 
 ## Overview
