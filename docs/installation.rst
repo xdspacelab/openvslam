@@ -10,7 +10,9 @@ Installation
 Source code
 ===========
 
-You can clone the source code from this `GitHub repository <https://github.com/xdspacelab/openvslam>`_.
+`GitHub repository <https://github.com/xdspacelab/openvslam>`_.
+
+Clone the repository:
 
 .. code-block:: bash
 
@@ -151,7 +153,7 @@ Download, build and install OpenCV from source.
     make -j
     make install
 
-Jump to :ref:`Common Instructions <subsection-common-linux-macos>` for the next step.
+Jump to :ref:`Common Installation Instructions <subsection-common-linux-macos>` for the next step.
 
 .. _section-macos:
 
@@ -179,7 +181,7 @@ Install the dependencies via ``brew`.
     # Pangolin dependencies
     brew install glew
 
-Jump to :ref:`Common Instructions <subsection-common-linux-macos>` for the next step.
+Jump to :ref:`Common Installation Instructions <subsection-common-linux-macos>` for the next step.
 
 .. _subsection-common-linux-macos:
 
@@ -273,7 +275,7 @@ When building with support for Pangolin Viewer.
     - ``G2O_ROOT=/usr/local``
     - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin``
 
-After building, check to see if it was successfully build by executing ``./build/run_kitti_slam -h``.
+After building, check to see if it was successfully built by executing ``./build/run_kitti_slam -h``.
 
 .. code-block::
 
@@ -292,4 +294,4 @@ After building, check to see if it was successfully build by executing ``./build
 
 .. NOTE ::
 
-    If OpenVSLAM terminates abnormaly, rebuuild g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option.
+    If OpenVSLAM terminates abnormaly, rebuild g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option.
