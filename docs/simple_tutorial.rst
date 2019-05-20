@@ -133,7 +133,7 @@ If the two viewers are not launched at all, please check whether any paths are w
 
 .. NOTE ::
 
-    If OpenVSLAM terminates abnormaly soon after initialization, please try to configure g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option when executing ``cmake``.
+    If OpenVSLAM terminates abnormaly soon after initialization, rebuild g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option for ``cmake`` configulation.
 
 .. image:: ./img/slam_frame_viewer_1.png
     :width: 640px
