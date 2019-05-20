@@ -7,11 +7,10 @@ Installation
 
 .. _section-get-source:
 
-Getting the source code
-=======================
+Source code
+===========
 
-You can get the source code from `GitHub repository <https://github.com/xdspacelab/openvslam>`_.
-Please clone it as follows.
+You can clone the source code from this `GitHub repository <https://github.com/xdspacelab/openvslam>`_.
 
 .. code-block:: bash
 
@@ -29,38 +28,38 @@ Dependencies
 
 OpenVSLAM relies on several open-source libraries as shown below.
 
-Required for OpenVSLAM
-^^^^^^^^^^^^^^^^^^^^^^
+Requirements for OpenVSLAM
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* `Eigen <http://eigen.tuxfamily.org/>`_ : 3.3.0 or later version is **required**.
+* `Eigen <http://eigen.tuxfamily.org/>`_ : version 3.3.0 or later.
 
-* `g2o <https://github.com/RainerKuemmerle/g2o>`_ : Please use the latest release. We checked the correct operation of OpenVSLAM with the version of commit ID `9b41a4e <https://github.com/RainerKuemmerle/g2o/tree/9b41a4ea5ade8e1250b9c1b279f3a9c098811b5a>`_.
+* `g2o <https://github.com/RainerKuemmerle/g2o>`_ : Please use the latest release. Tested on commit ID `9b41a4e <https://github.com/RainerKuemmerle/g2o/tree/9b41a4ea5ade8e1250b9c1b279f3a9c098811b5a>`_.
 
-* `SuiteSparse <http://faculty.cse.tamu.edu/davis/suitesparse.html>`_ : Required for g2o.
+* `SuiteSparse <http://faculty.cse.tamu.edu/davis/suitesparse.html>`_ : Required by g2o.
 
-* `DBoW2 <https://github.com/shinsumicco/DBoW2>`_ : **Please use the custom version of DBoW2** released at `https://github.com/shinsumicco/DBoW2 <https://github.com/shinsumicco/DBoW2>`_.
+* `DBoW2 <https://github.com/shinsumicco/DBoW2>`_ : **Please use the custom version of DBoW2** released in `https://github.com/shinsumicco/DBoW2 <https://github.com/shinsumicco/DBoW2>`_.
 
-* `yaml-cpp <https://github.com/jbeder/yaml-cpp>`_ : 0.6.0 or later version is **required**.
+* `yaml-cpp <https://github.com/jbeder/yaml-cpp>`_ : version 0.6.0 or later.
 
-* `OpenCV <https://opencv.org/>`_ : 3.4.0 or later version is **required**.
-
-.. NOTE ::
-
-    If you use the built-in viewer  of OpenVSLAM, OpenCV with GUI support is needed.
+* `OpenCV <https://opencv.org/>`_ : version 3.4.0 or later.
 
 .. NOTE ::
 
-    If you use any movie (e.g. ``.mp4``) for SLAM, OpenCV with movie support is needed.
+    OpenCV with GUI support is necessary for using the build-in viewer.
 
-Required for Pangolin Viewer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. NOTE ::
 
-We provide a simple viewer implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_.
-If you use it, please install the following dependencies.
+    OpenCV with movie support is necessary if you plan on using movies (e.g. ``.mp4``) as inputs.
 
-* `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_ : Please use the latest release. We checked the correct operation of the viewer with the version of commit ID `ad8b5f8 <https://github.com/stevenlovegrove/Pangolin/tree/ad8b5f83222291c51b4800d5a5873b0e90a0cf81>`_.
+Requirements for Pangolin Viewer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* `GLEW <http://glew.sourceforge.net/>`_ : Required for Pangolin.
+We provided a simple viewer implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_.
+Please install the following dependencies if you plan on using the viewer.
+
+* `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_ : Please use the latest release. Tested on commit ID `ad8b5f8 <https://github.com/stevenlovegrove/Pangolin/tree/ad8b5f83222291c51b4800d5a5873b0e90a0cf81>`_.
+
+* `GLEW <http://glew.sourceforge.net/>`_ : Required by Pangolin.
 
 Required for Socket Publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -70,26 +69,26 @@ To be written soon.
 Recommended
 ^^^^^^^^^^^
 
-* `google-glog <https://github.com/google/glog>`_ : Used for the stack-trace logger.
+* `google-glog <https://github.com/google/glog>`_ : Used for stack-trace logger.
 
 
 .. _section-prerequisites-unix:
 
-Prerequisites on Unix
-=====================
+Prerequisites for Unix
+======================
 
 .. NOTE ::
 
-    In the following instruction, we set ``CMAKE_INSTALL_PREFIX`` as ``/usr/local``. If you want to install the libraries to the different location, you should set ``CMAKE_INSTALL_PREFIX`` according to your environment and **set the environment variables adequately**.
+    In the following instruction, we assume that ``CMAKE_INSTALL_PREFIX`` is ``/usr/local``. If you want to install the libraries to the different location, set ``CMAKE_INSTALL_PREFIX`` to your environment and **set the environment variables accordingly**.
 
 .. _section-linux:
 
-Linux
-^^^^^
+Installing for Linux
+^^^^^^^^^^^^^^^^^^^^
 
-We use **Ubuntu 16.04** as our example linux distribution.
+Tested for **Ubuntu 16.04**.
 
-Start by installing the dependencies that can be installed via ``apt`` command.
+Install the dependencies via ``apt``.
 
 .. code-block:: bash
 
@@ -108,7 +107,7 @@ Start by installing the dependencies that can be installed via ``apt`` command.
     # Pangolin dependencies
     apt install -y libglew-dev
 
-Download and install Eigen from the source.
+Download and install Eigen from source.
 
 .. code-block:: bash
 
@@ -125,7 +124,7 @@ Download and install Eigen from the source.
     make -j
     make install
 
-Download, build and install OpenCV from the source.
+Download, build and install OpenCV from source.
 
 .. code-block:: bash
 
@@ -152,16 +151,16 @@ Download, build and install OpenCV from the source.
     make -j
     make install
 
-The following instruction is explained at :ref:`Common for Linux and macOS <subsection-common-linux-macos>`.
+Jump to :ref:`Common Instructions <subsection-common-linux-macos>` for the next step.
 
 .. _section-macos:
 
-macOS
-^^^^^
+Installing for macOS
+^^^^^^^^^^^^^^^^^^^^
 
-We use **macOS High Sierra** as our example.
+Tested for **macOS High Sierra**.
 
-Start by installing the dependencies that can be installed via ``brew`` command.
+Install the dependencies via ``brew`.
 
 .. code-block:: bash
 
@@ -180,14 +179,14 @@ Start by installing the dependencies that can be installed via ``brew`` command.
     # Pangolin dependencies
     brew install glew
 
-The following instruction is explained at :ref:`Common for Linux and macOS <subsection-common-linux-macos>`.
+Jump to :ref:`Common Instructions <subsection-common-linux-macos>` for the next step.
 
 .. _subsection-common-linux-macos:
 
-Common for Linux and macOS
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Common Installation Instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Download, build and install **the custom DBoW2** from the source.
+Download, build and install **custom DBoW2** from source.
 
 .. code-block:: bash
 
@@ -225,7 +224,7 @@ Download, build and install g2o.
     make -j
     make install
 
-Download, build and install Pangolin from the source.
+Download, build and install Pangolin from source.
 
 .. code-block:: bash
 
@@ -243,10 +242,10 @@ Download, build and install Pangolin from the source.
 
 .. _section-build-unix:
 
-Build on Unix
-=============
+Build Instructions
+==================
 
-Building with Pangolin Viewer support.
+When building with support for Pangolin Viewer.
 
 .. code-block:: bash
 
@@ -265,8 +264,8 @@ Building with Pangolin Viewer support.
 
 .. NOTE ::
 
-    If ``cmake`` cannot find any dependencies, please set the environment variables adequately.
-    (The following is the example in case that ``CMAKE_INSTALL_PREFIX`` is ``/usr/local``.)
+    If ``cmake`` cannot find any dependencies, set the environment variables directly.
+    For example, when ``CMAKE_INSTALL_PREFIX`` is ``/usr/local``:
 
     - ``Eigen3_DIR=/usr/local/share/eigen3/cmake``
     - ``OpenCV_DIR=/usr/local/share/OpenCV``
@@ -274,7 +273,7 @@ Building with Pangolin Viewer support.
     - ``G2O_ROOT=/usr/local``
     - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin``
 
-After building, please check that the help message appers as follows when executing ``./build/run_kitti_slam -h``.
+After building, check to see if it was successfully build by executing ``./build/run_kitti_slam -h``.
 
 .. code-block::
 
@@ -293,4 +292,4 @@ After building, please check that the help message appers as follows when execut
 
 .. NOTE ::
 
-    If OpenVSLAM terminates abnormaly, please try to configure g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option when executing ``cmake``.
+    If OpenVSLAM terminates abnormaly, rebuuild g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option.
