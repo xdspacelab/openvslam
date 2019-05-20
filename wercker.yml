@@ -6,11 +6,6 @@ no-response-timeout: 20
 build_gui:
   steps:
     - script:
-      name: git submodule init and update
-      code: |
-        git submodule init
-        git submodule update
-    - script:
       name: cmake and make with pangolin viewer
       code: |
         mkdir build
@@ -33,11 +28,6 @@ build_gui:
 
 build_nongui:
   steps:
-    - script:
-      name: git submodule init and update
-      code: |
-        git submodule init
-        git submodule update
     - script:
       name: cmake and make
       code: |
