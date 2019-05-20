@@ -3,7 +3,9 @@
 
 ## Overview
 
-<img src="./docs/img/teaser.png">
+<img src="./docs/img/teaser.png" width="640px">
+
+<img src="https://raw.githubusercontent.com/wiki/xdspacelab/openvslam/media/tracking.gif" width="640px">
 
 ### Features
 
