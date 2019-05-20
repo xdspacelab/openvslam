@@ -9,7 +9,7 @@
 
 To be written.
 
-**We provide a [document](https://openvslam.readthedocs.io/en/latest/index.html) for installation and tutorial.**
+**We provide a [document](https://openvslam.readthedocs.io/) for installation and tutorial.**
 
 ### License
 
@@ -31,13 +31,13 @@ The following files are derived from third-party libraries.
 
 ## Installation
 
-Please see [**Installation**](https://openvslam.readthedocs.io/en/latest/installation.html) chapter in the [document](https://openvslam.readthedocs.io/en/latest/index.html).
+Please see [**Installation**](https://openvslam.readthedocs.io/en/master/installation.html) chapter in the [document](https://openvslam.readthedocs.io/).
 
 ## Tutorial
 
-Please see [**Simple Tutorial**](https://openvslam.readthedocs.io/en/latest/simple_tutorial.html) chapter in the [document](https://openvslam.readthedocs.io/en/latest/index.html).
+Please see [**Simple Tutorial**](https://openvslam.readthedocs.io/en/master/simple_tutorial.html) chapter in the [document](https://openvslam.readthedocs.io/).
 
-If you would like to run visual SLAM with standard benchmarking datasets (e.g. KITTI Odometry dataset), please see [**SLAM with standard datasets**](https://openvslam.readthedocs.io/en/latest/example.html#slam-with-standard-datasets) section in the [document](https://openvslam.readthedocs.io/en/latest/index.html).
+If you would like to run visual SLAM with standard benchmarking datasets (e.g. KITTI Odometry dataset), please see [**SLAM with standard datasets**](https://openvslam.readthedocs.io/en/master/example.html#slam-with-standard-datasets) section in the [document](https://openvslam.readthedocs.io/).
 
 ## Working on
 
