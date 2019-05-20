@@ -1,0 +1,57 @@
+# EuRoC monocular model
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "EuRoC monocular"
+Camera.setup: "monocular"
+Camera.model: "perspective"
+
+Camera.fx: 458.654
+Camera.fy: 457.296
+Camera.cx: 367.215
+Camera.cy: 248.375
+
+Camera.k1: -0.28340811
+Camera.k2: 0.07395907
+Camera.p1: 0.00019359
+Camera.p2: 1.76187114e-05
+Camera.k3: 0.0
+
+Camera.fps: 20.0
+Camera.cols: 752
+Camera.rows: 480
+
+Camera.color_order: "Gray"
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 1000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
+
+#=====================#
+# Tracking Parameters #
+#=====================#
+
+depth_threshold: 35
+
+#===========================#
+# PangolinViewer Parameters #
+#===========================#
+
+PangolinViewer.keyframe_size: 0.07
+PangolinViewer.keyframe_line_width: 1
+PangolinViewer.graph_line_width: 1
+PangolinViewer.point_size: 2
+PangolinViewer.camera_size: 0.08
+PangolinViewer.camera_line_width: 3
+PangolinViewer.viewpoint_x: 0
+PangolinViewer.viewpoint_y: -0.65
+PangolinViewer.viewpoint_z: -1.9
+PangolinViewer.viewpoint_f: 400

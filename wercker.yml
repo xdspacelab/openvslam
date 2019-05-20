@@ -1,0 +1,79 @@
+box:
+  id: shinsumicco/openvslam-env
+
+no-response-timeout: 20
+
+build_gui:
+  steps:
+    - script:
+      name: git submodule init and update
+      code: |
+        git submodule init
+        git submodule update
+    - script:
+      name: cmake and make with pangolin viewer
+      code: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=ON -DUSE_SOCKET_PUBLISHER=OFF -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
+        make -j
+    - script:
+      name: cmake and make with socket publisher
+      code: |
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=OFF -DUSE_SOCKET_PUBLISHER=ON -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
+        make -j
+  after-steps:
+    - install-packages:
+      packages: ruby
+    - wantedly/pretty-slack-notify:
+      webhook_url: $SLACK_WEBHOOK_URL
+      passed_message: "succeeded in building with GUI :smile:"
+      failed_message: "failed in building with GUI :dizzy_face:"
+
+build_nongui:
+  steps:
+    - script:
+      name: git submodule init and update
+      code: |
+        git submodule init
+        git submodule update
+    - script:
+      name: cmake and make
+      code: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=OFF -DUSE_SOCKET_PUBLISHER=OFF -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
+        make -j
+    - script:
+      name: unit test
+      code: |
+        cd build
+        ctest -V
+    - script:
+      name: SLAM test (monocular) with TUM RGBD dataset
+      code: |
+        cd build
+        ./run_tum_slam -v ../vocabulary/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_mono_02.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db tum_mono.msg
+    - script:
+      name: SLAM test (stereo) with EuRoC MAV dataset
+      code: |
+        cd build
+        ./run_euroc_slam -v ../vocabulary/orb_vocab.dbow2 -d /datasets/EuRoC/MH_04 -s ../example/euroc/EuRoC_stereo.yaml --frame-skip 2 --no-sleep --debug --eval-log --map-db euroc_stereo.msg
+    - script:
+      name: SLAM test (RGBD) with TUM RGBD dataset
+      code: |
+        cd build
+        ./run_tum_slam -v ../vocabulary/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_RGBD_02.yaml --frame-skip 3 --no-sleep  --debug --eval-log  --map-db tum_rgbd.msg
+    - script:
+      name: SLAM test (monocular) with THETA S dataset
+      code: |
+        cd build
+        ./run_movie_slam -v ../vocabulary/orb_vocab.dbow2 -m /datasets/THETA_S/R0012109_er.MP4 -s ../example/models/THETA_S.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db theta_s.msg
+  after-steps:
+    - install-packages:
+      packages: ruby
+    - wantedly/pretty-slack-notify:
+      webhook_url: $SLACK_WEBHOOK_URL
+      passed_message: "succeeded in building and testing without GUI :smile:"
+      failed_message: "failed in building and testing without GUI :dizzy_face:"

@@ -1,0 +1,51 @@
+# KITTI monocular model for seq.00-02
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "KITTI monocular 00-02"
+Camera.setup: "monocular"
+Camera.model: "perspective"
+
+Camera.fx: 718.856
+Camera.fy: 718.856
+Camera.cx: 607.1928
+Camera.cy: 185.2157
+
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
+Camera.k3: 0.0
+
+Camera.fps: 10.0
+Camera.cols: 1241
+Camera.rows: 376
+
+Camera.color_order: "Gray"
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 2000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
+
+#===========================#
+# PangolinViewer Parameters #
+#===========================#
+
+PangolinViewer.keyframe_size: 0.06
+PangolinViewer.keyframe_line_width: 1
+PangolinViewer.graph_line_width: 1
+PangolinViewer.point_size: 2
+PangolinViewer.camera_size: 0.07
+PangolinViewer.camera_line_width: 2
+PangolinViewer.viewpoint_x: 0
+PangolinViewer.viewpoint_y: -20
+PangolinViewer.viewpoint_z: -0.1
+PangolinViewer.viewpoint_f: 2800

@@ -1,0 +1,219 @@
+#ifndef OPENVSLAM_CAMERA_BASE_H
+#define OPENVSLAM_CAMERA_BASE_H
+
+#include "openvslam/type.h"
+
+#include <string>
+#include <limits>
+
+#include <opencv2/opencv.hpp>
+#include <yaml-cpp/yaml.h>
+#include <nlohmann/json.hpp>
+
+namespace openvslam {
+namespace camera {
+
+enum class setup_type_t {
+    Monocular = 0,
+    Stereo = 1,
+    RGBD = 2
+};
+
+const std::array<std::string, 3> setup_type_to_string = {{"Monocular", "Stereo", "RGBD"}};
+
+enum class model_type_t {
+    Perspective = 0,
+    Fisheye = 1,
+    Equirectangular = 2
+};
+
+const std::array<std::string, 3> model_type_to_string = {{"Perspective", "Fisheye", "Equirectangular"}};
+
+enum class color_order_t {
+    Gray = 0,
+    RGB = 1,
+    BGR = 2
+};
+
+const std::array<std::string, 3> color_order_to_string = {{"Gray", "RGB", "BGR"}};
+
+struct image_bounds {
+    // default constructor
+    image_bounds() = default;
+
+    // constructor for uniform initialization
+    template<typename T, typename U>
+    image_bounds(const T min_x, const U max_x, const T min_y, const U max_y)
+            : min_x_(min_x), max_x_(max_x), min_y_(min_y), max_y_(max_y) {}
+
+    float min_x_ = 0.0;
+    float max_x_ = 0.0;
+    float min_y_ = 0.0;
+    float max_y_ = 0.0;
+};
+
+class base {
+public:
+    base(const std::string& name, const setup_type_t setup_type, const model_type_t model_type, const color_order_t color_order,
+         const unsigned int cols, const unsigned int rows, const double fps,
+         const double focal_x_baseline, const double true_baseline,
+         const unsigned int num_grid_cols = 64, const unsigned int num_grid_rows = 48);
+
+    virtual ~base();
+
+    //! camera name
+    const std::string name_;
+
+    //! setup type
+    const setup_type_t setup_type_;
+    //! setup type as string
+    std::string get_setup_type_string() const { return setup_type_to_string.at(static_cast<unsigned int>(setup_type_)); }
+    //! setup type loader from YAML
+    static setup_type_t load_setup_type(const YAML::Node& yaml_node);
+    //! setup type loader from string
+    static setup_type_t load_setup_type(const std::string& setup_type_str);
+
+    //! model type
+    const model_type_t model_type_;
+    //! model type as string
+    std::string get_model_type_string() const { return model_type_to_string.at(static_cast<unsigned int>(model_type_)); }
+    //! model type loader from YAML
+    static model_type_t load_model_type(const YAML::Node& yaml_node);
+    //! model type loader from string
+    static model_type_t load_model_type(const std::string& model_type_str);
+
+    //! color order
+    const color_order_t color_order_;
+    //! color order as string
+    std::string get_color_order_string() const { return color_order_to_string.at(static_cast<unsigned int>(color_order_)); }
+    //! color order loader from YAML
+    static color_order_t load_color_order(const YAML::Node& yaml_node);
+    //! color order loader from string
+    static color_order_t load_color_order(const std::string& color_order_str);
+
+    /**
+     * Show common parameters
+     */
+    void show_common_parameters() const;
+
+    //---------------------------
+    // 基底クラスでセットする変数群
+
+    //! width of image
+    const unsigned int cols_;
+    //! height of image
+    const unsigned int rows_;
+
+    //! frame rate of image
+    const double fps_;
+
+    //! focal x true baseline
+    const double focal_x_baseline_;
+
+    //! true baseline length in metric scale
+    const double true_baseline_;
+
+    //! number of columns of grid to accelerate reprojection matching
+    const unsigned int num_grid_cols_;
+    //! number of rows of grid to accelerate reprojection matching
+    const unsigned int num_grid_rows_;
+
+    //---------------------------
+    // 派生クラスでセットする変数群
+
+    //! information of image boundary
+    image_bounds img_bounds_;
+
+    //! cell width of grid pattern
+    double inv_cell_width_ = std::numeric_limits<double>::quiet_NaN();
+    //! cell height of grid pattern
+    double inv_cell_height_ = std::numeric_limits<double>::quiet_NaN();
+
+    //-------------------------
+    // 派生クラスで実装する関数群
+
+    /**
+     * Show camera parameters
+     */
+    virtual void show_parameters() const = 0;
+
+    /**
+     * Compute image boundaries according to camera model
+     * @return
+     */
+    virtual image_bounds compute_image_bounds() const = 0;
+
+    /**
+     * Undistort keypoint according to camera model
+     * @param dist_keypt
+     * @return
+     */
+    virtual cv::KeyPoint undistort_keypoint(const cv::KeyPoint& dist_keypt) const = 0;
+
+    /**
+     * Undistort keypoints according to camera model
+     * @param dist_keypts
+     * @param undist_keypts
+     */
+    virtual void undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const = 0;
+
+    /**
+     * Convert undistorted keypoint to bearing vector
+     * @param undist_keypt
+     * @return
+     */
+    virtual Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const = 0;
+
+    /**
+     * Convert undistorted keypoints to bearing vectors
+     * @param undist_keypts
+     * @param bearings
+     */
+    virtual void convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector <Vec3_t>& bearings) const = 0;
+
+    /**
+     * Convert bearing vector to undistorted keypoint
+     * @param bearing
+     * @return
+     */
+    virtual cv::KeyPoint convert_bearing_to_keypoint(const Vec3_t& bearing) const = 0;
+
+    /**
+     * Convert bearing vectors to undistorted keypoints
+     * @param bearings
+     * @param undist_keypts
+     */
+    virtual void convert_bearings_to_keypoints(const eigen_alloc_vector <Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const = 0;
+
+    /**
+     * Reproject the specified 3D point to image, using camera pose and projection model
+     * @param rot_cw
+     * @param trans_cw
+     * @param pos_w
+     * @param reproj
+     * @param x_right
+     * @return whether the point is reprojected into image or not
+     */
+    virtual bool reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const = 0;
+
+    /**
+     * Reproject the specified 3D point to bearing vector, using camera pose
+     * @param rot_cw
+     * @param trans_cw
+     * @param pos_w
+     * @param reproj
+     * @return
+     */
+    virtual bool reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const = 0;
+
+    /**
+     * Encode camera information as JSON
+     * @return
+     */
+    virtual nlohmann::json to_json() const = 0;
+};
+
+} // namespace camera
+} // namespace openvslam
+
+#endif // OPENVSLAM_CAMERA_BASE_H

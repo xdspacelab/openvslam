@@ -1,0 +1,206 @@
+#include "util/image_util.h"
+
+#ifdef USE_PANGOLIN_VIEWER
+#include "pangolin_viewer/viewer.h"
+#elif USE_SOCKET_PUBLISHER
+#include "socket_publisher/publisher.h"
+#endif
+
+#include "openvslam/system.h"
+#include "openvslam/config.h"
+
+#include <iostream>
+#include <chrono>
+#include <numeric>
+
+#include <opencv2/core/core.hpp>
+#include <spdlog/spdlog.h>
+#include <popl.hpp>
+
+#ifdef USE_STACK_TRACE_LOGGER
+#include <glog/logging.h>
+#endif
+
+#ifdef USE_GOOGLE_PERFTOOLS
+#include <gperftools/profiler.h>
+#endif
+
+void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
+                       const std::string& vocab_file_path, const std::string& image_dir_path, const std::string& mask_img_path,
+                       const std::string& map_db_path, const bool mapping,
+                       const unsigned int frame_skip, const bool no_sleep, const bool auto_term) {
+    // maskを読み込む
+    const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
+
+    image_sequence sequence(image_dir_path);
+    const auto img_paths = sequence.get_image_paths();
+
+    // SLAM systemを構築
+    openvslam::system SLAM(cfg, vocab_file_path);
+    SLAM.load_message_pack(map_db_path);
+    SLAM.startup(false);
+    if (mapping) {
+        SLAM.activate_mapping_module();
+    }
+    else {
+        SLAM.deactivate_mapping_module();
+    }
+
+#ifdef USE_PANGOLIN_VIEWER
+    pangolin_viewer::viewer viewer(cfg, &SLAM, SLAM.get_frame_publisher(), SLAM.get_map_publisher());
+#elif USE_SOCKET_PUBLISHER
+    socket_publisher::publisher publisher(cfg, &SLAM, SLAM.get_frame_publisher(), SLAM.get_map_publisher());
+#endif
+
+    std::vector<double> track_times;
+    track_times.reserve(img_paths.size());
+
+    double timestamp = 0.0;
+
+    std::thread thread([&]() {
+        for (unsigned int i = 0; i < img_paths.size(); ++i) {
+            const auto& img_path = img_paths.at(i);
+            const auto img = cv::imread(img_path, cv::IMREAD_UNCHANGED);
+
+            const auto tp_1 = std::chrono::steady_clock::now();
+
+            if (!img.empty() && (i % frame_skip == 0)) {
+                // 画像を入力
+                SLAM.track_for_monocular(img, timestamp, mask);
+            }
+
+            const auto tp_2 = std::chrono::steady_clock::now();
+
+            const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
+            if (i % frame_skip == 0) {
+                track_times.push_back(track_time);
+            }
+
+            // 次のフレームまで待機
+            if (!no_sleep) {
+                const auto wait_time = 1.0 / cfg->camera_->fps_ - track_time;
+                if (0.0 < wait_time) {
+                    std::this_thread::sleep_for(std::chrono::microseconds(static_cast<unsigned int>(wait_time * 1e6)));
+                }
+            }
+
+            timestamp += 1.0 / cfg->camera_->fps_;
+
+            if (SLAM.terminate_is_requested()) {
+                break;
+            }
+        }
+
+        while (SLAM.loop_BA_is_running()) {
+            std::this_thread::sleep_for(std::chrono::microseconds(5000));
+        }
+
+#ifdef USE_PANGOLIN_VIEWER
+        if (auto_term) {
+            viewer.request_terminate();
+        }
+#elif USE_SOCKET_PUBLISHER
+        if (auto_term) {
+            publisher.request_terminate();
+        }
+#endif
+    });
+
+#ifdef USE_PANGOLIN_VIEWER
+    viewer.run();
+#elif USE_SOCKET_PUBLISHER
+    publisher.run();
+#endif
+
+    thread.join();
+
+    // SLAM systemの全スレッドを停止
+    SLAM.shutdown();
+
+    std::sort(track_times.begin(), track_times.end());
+    const auto total_track_time = std::accumulate(track_times.begin(), track_times.end(), 0.0);
+    std::cout << "median tracking time: " << track_times.at(track_times.size() / 2) << "[s]" << std::endl;
+    std::cout << "mean tracking time: " << total_track_time / track_times.size() << "[s]" << std::endl;
+}
+
+int main(int argc, char* argv[]) {
+#ifdef USE_STACK_TRACE_LOGGER
+    google::InitGoogleLogging(argv[0]);
+    google::InstallFailureSignalHandler();
+#endif
+
+    // create options
+    popl::OptionParser op("Allowed options");
+    auto help = op.add<popl::Switch>("h", "help", "produce help message");
+    auto vocab_file_path = op.add<popl::Value<std::string>>("v", "vocab", "vocabulary file path");
+    auto img_dir_path = op.add<popl::Value<std::string>>("i", "img-dir", "directory path which contains images");
+    auto setting_file_path = op.add<popl::Value<std::string>>("s", "setting", "setting file path");
+    auto map_db_path = op.add<popl::Value<std::string>>("d", "map-db", "path to a prebuilt map database");
+    auto mapping = op.add<popl::Switch>("", "mapping", "perform mapping as well as localization");
+    auto mask_img_path = op.add<popl::Value<std::string>>("", "mask", "mask image path", "");
+    auto frame_skip = op.add<popl::Value<unsigned int>>("", "frame-skip", "interval of frame skip", 1);
+    auto no_sleep = op.add<popl::Switch>("", "no-sleep", "not wait for next frame in real time");
+    auto auto_term = op.add<popl::Switch>("", "auto-term", "automatically terminate the viewer");
+    auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
+    try {
+        op.parse(argc, argv);
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << std::endl;
+        std::cerr << op << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // check validness of options
+    if (help->is_set()) {
+        std::cerr << op << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (!vocab_file_path->is_set() || !img_dir_path->is_set()
+        || !setting_file_path->is_set() || !map_db_path->is_set()) {
+        std::cerr << "invalid arguments" << std::endl;
+        std::cerr << std::endl;
+        std::cerr << op << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // setup logger
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] %^[%L] %v%$");
+    if (debug_mode->is_set()) {
+        spdlog::set_level(spdlog::level::debug);
+    }
+    else {
+        spdlog::set_level(spdlog::level::info);
+    }
+
+    // load configuration
+    std::shared_ptr<openvslam::config> cfg;
+    try {
+        cfg = std::make_shared<openvslam::config>(setting_file_path->value());
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+#ifdef USE_GOOGLE_PERFTOOLS
+    ProfilerStart("slam.prof");
+#endif
+
+    // run SLAM
+    if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
+        mono_localization(cfg, vocab_file_path->value(), img_dir_path->value(), mask_img_path->value(),
+                          map_db_path->value(), mapping->is_set(),
+                          frame_skip->value(), no_sleep->is_set(), auto_term->is_set());
+    }
+    else {
+        throw std::runtime_error("Invalid setup type: " + cfg->camera_->get_setup_type_string());
+    }
+
+#ifdef USE_GOOGLE_PERFTOOLS
+    ProfilerStop();
+#endif
+
+    return EXIT_SUCCESS;
+}

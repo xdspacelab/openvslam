@@ -1,0 +1,58 @@
+# KITTI stereo model for seq.03
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "KITTI stereo 03"
+Camera.setup: "stereo"
+Camera.model: "perspective"
+
+Camera.fx: 721.5377
+Camera.fy: 721.5377
+Camera.cx: 609.5593
+Camera.cy: 172.854
+
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
+Camera.k3: 0.0
+
+Camera.fps: 10.0
+Camera.cols: 1242
+Camera.rows: 375
+Camera.focal_x_baseline: 387.5744
+
+Camera.color_order: "Gray"
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 2000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 12
+Feature.min_fast_threshold: 7
+
+#=====================#
+# Tracking Parameters #
+#=====================#
+
+depth_threshold: 40
+
+#===========================#
+# PangolinViewer Parameters #
+#===========================#
+
+PangolinViewer.keyframe_size: 1.2
+PangolinViewer.keyframe_line_width: 1
+PangolinViewer.graph_line_width: 2
+PangolinViewer.point_size: 2
+PangolinViewer.camera_size: 0.8
+PangolinViewer.camera_line_width: 3
+PangolinViewer.viewpoint_x: 0.0
+PangolinViewer.viewpoint_y: -300
+PangolinViewer.viewpoint_z: -0.1
+PangolinViewer.viewpoint_f: 2800
