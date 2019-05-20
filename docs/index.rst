@@ -6,6 +6,10 @@
 OpenVSLAM
 =========
 
+.. image:: ./img/teaser.png
+    :width: 800px
+    :align: center
+
 This is the `OpenVSLAM <https://github.com/xdspacelab/openvslam>`_ documentation.
 
 Contents

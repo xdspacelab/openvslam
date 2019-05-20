@@ -3,6 +3,8 @@
 
 ## Overview
 
+<img src="./docs/img/teaser.png">
+
 ### Features
 
 To be written.
