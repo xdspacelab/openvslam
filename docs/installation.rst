@@ -20,7 +20,7 @@ Cloning the repository:
 
 .. NOTE ::
 
-    You can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
+    Docker users can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
 
 
 .. _section-dependencies:
