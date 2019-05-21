@@ -4,6 +4,41 @@
 Simple Tutorial
 ===============
 
+TL; DR
+^^^^^^
+
+You can check the normal operation of OpenVSLAM with the following commands.
+Please copy and paste to your terminal.
+
+.. code-block:: bash
+
+    # at the build directory of openvslam ...
+    $ pwd
+    /path/to/openvslam/build/
+    $ ls
+    run_euroc_slam   lib/   ...
+
+    # download a sample dataset from Google Drive
+    FILE_ID="1mYJ_W6WsMjOqoNGaEoOvIe17NuEMYcSz"
+    curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
+    CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
+    curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o aist_entrance_hall_1.zip
+    unzip aist_entrance_hall_1.zip
+
+    # download an ORB vocabulary from Google Drive
+    FILE_ID="1wUPb328th8bUqhOk-i8xllt5mgRW4n84"
+    curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
+    CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
+    curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o orb_vocab.zip
+    unzip orb_vocab.zip
+
+    # run SLAM
+    ./run_movie_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3
+
+
+Sample Datasets
+^^^^^^^^^^^^^^^
+
 You can experience OpenVSLAM processing with various types of movies in this section.
 If you want to run OpenVSLAM with standard benchmarking detasets, please see :ref:`this section <section-example-standard-datasets>`.
 
