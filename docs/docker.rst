@@ -19,13 +19,13 @@ This chapter describes how to build it and run example executables.
 Building Docker Image
 =====================
 
-All you need is the following commands.
+All you need is executing the following commands.
 
 .. code-block:: bash
 
-        git clone https://github.com/xdspacelab/openvslam
-        cd openvslam
-        docker build -t openvslam-desktop .
+    git clone https://github.com/xdspacelab/openvslam
+    cd openvslam
+    docker build -t openvslam-desktop .
 
 
 .. _section-start-docker-container:
@@ -37,7 +37,10 @@ In order to enable X11 forwarding, supplemental options (``-e DISPLAY=$DISPLAY``
 
 .. code-block:: bash
 
-        docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix:ro openvslam-desktop
+    # before launching the container, allow the display access from local users
+    xhost +local:
+    # launch the container
+    docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix:ro openvslam-desktop
 
 .. NOTE ::
 
@@ -55,7 +58,7 @@ After that, the shell interface will be launched in the docker container.
 
 You can check the behavior of the SLAM examples according to :ref:`Tutorial <chapter-simple-tutorial>`.
 
-If you need to access to any files and directories on a host machine, please bind directories using ``--volume`` or ``--mount`` option.
+If you need to access to any files and directories on a host machine from the container, please bind directories between the host and the container using ``--volume`` or ``--mount`` option.
 (See `the docker documentataion <https://docs.docker.com/engine/reference/commandline/run/>`_.)
 
 Here is an example.
