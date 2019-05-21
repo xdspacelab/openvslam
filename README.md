@@ -30,7 +30,7 @@ Please contact us via [GitHub issues](https://github.com/xdspacelab/openvslam/is
 
 Please see [**Installation**](https://openvslam.readthedocs.io/en/master/installation.html) chapter in the [documentation](https://openvslam.readthedocs.io/).
 
-We are working on [docker support](https://github.com/xdspacelab/openvslam/tree/docker-support), and it will be provided soon.
+[**The instructions for Docker users**](https://openvslam.readthedocs.io/en/master/docker.html) are also provided.
 
 ## Tutorial
 
