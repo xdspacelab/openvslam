@@ -21,6 +21,7 @@ Contents
     ./installation
     ./simple_tutorial
     ./example
+    ./docker
     ./trouble_shooting
 
 Cite Us

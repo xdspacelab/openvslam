@@ -18,17 +18,18 @@ Cloning the repository:
 
        git clone https://github.com/xdspacelab/openvslam
 
+.. NOTE ::
+
+    You can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
+
 
 .. _section-dependencies:
 
 Dependencies
 ============
 
-.. NOTE ::
-
-    OpenVSLAM requires a **C++11-compliant** compiler.
-
-OpenVSLAM relies on several open-source libraries as shown below.
+OpenVSLAM requires a **C++11-compliant** compiler.
+It relies on several open-source libraries as shown below.
 
 Requirements for OpenVSLAM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
