@@ -8,9 +8,9 @@ TL; DR
 ^^^^^^
 
 You can check the normal operation of OpenVSLAM with the following commands.
-Please copy and paste your terminal.
+Please copy and paste to your terminal.
 
-.. code-block::
+.. code-block:: bash
 
     # at the build directory of openvslam ...
     $ pwd
@@ -25,7 +25,7 @@ Please copy and paste your terminal.
     curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o aist_entrance_hall_1.zip
     unzip aist_entrance_hall_1.zip
 
-    # download a ORB vocabulary from Google Drive
+    # download an ORB vocabulary from Google Drive
     FILE_ID="1wUPb328th8bUqhOk-i8xllt5mgRW4n84"
     curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
     CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
@@ -34,6 +34,7 @@ Please copy and paste your terminal.
 
     # run SLAM
     ./run_movie_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3
+
 
 Sample Datasets
 ^^^^^^^^^^^^^^^
