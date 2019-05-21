@@ -11,13 +11,13 @@ build_gui:
         mkdir build
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=ON -DUSE_SOCKET_PUBLISHER=OFF -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
-        make -j
+        make
     - script:
       name: cmake and make with socket publisher
       code: |
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=OFF -DUSE_SOCKET_PUBLISHER=ON -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
-        make -j
+        make
   after-steps:
     - install-packages:
       packages: ruby
@@ -34,7 +34,7 @@ build_nongui:
         mkdir build
         cd build
         cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=OFF -DUSE_SOCKET_PUBLISHER=OFF -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
-        make -j
+        make
     - script:
       name: unit test
       code: |
