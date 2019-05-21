@@ -32,8 +32,11 @@ Please copy and paste to your terminal.
     curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o orb_vocab.zip
     unzip orb_vocab.zip
 
-    # run SLAM
-    ./run_movie_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3
+    # run tracking and mapping
+    ./run_movie_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --map-db map.msg
+
+    # run localization
+    ./run_movie_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --map-db map.msg
 
 
 Sample Datasets
@@ -43,6 +46,7 @@ You can experience OpenVSLAM processing with various types of movies in this sec
 If you want to run OpenVSLAM with standard benchmarking detasets, please see :ref:`this section <section-example-standard-datasets>`.
 
 Start by downloading some datasets you like.
+
 
 .. list-table::
     :header-rows: 1
@@ -110,12 +114,14 @@ Start by downloading some datasets you like.
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
 
 
-After downloading and uncompressing a ``.zip`` file, you will find a movie and a config file under an uncompressed directory.
+After downloading and uncompressing a zip file, you will find a movie and a config file under an uncompressed directory.
+
 
 .. code-block:: bash
 
     $ ls dataset_name_X/
     config.yaml  movie.mp4
+
 
 Please put the dataset at the directory you like.
 
@@ -124,11 +130,13 @@ Please put the dataset at the directory you like.
 
 In the following, we use ``aist_living_lab_1`` and ``aist_living_lab_2`` datasets as an example.
 
+
 Tracking and Mapping
 ^^^^^^^^^^^^^^^^^^^^
 
 Let's try to run SLAM and create a map database file with ``aist_living_lab_1`` dataset.
 You can use ``./run_movie_slam`` for SLAM processing with a movie.
+
 
 .. code-block::
 
@@ -151,8 +159,10 @@ You can use ``./run_movie_slam`` for SLAM processing with a movie.
       --eval-log             store trajectory and tracking times for evaluation
       --map-db arg           store a map database at this path after SLAM
 
+
 Please execute the following command to start a SLAM processing.
 The paths should be changed according to your environment.
+
 
 .. code-block::
 
@@ -163,20 +173,25 @@ The paths should be changed according to your environment.
         --frame-skip 3 \
         --map-db aist_living_lab_1_map.msg
 
+
 Then, you can watch a frame viewer and map viewer.
 If the two viewers are not launched at all, please check whether any paths are wrong or not.
+
 
 .. NOTE ::
 
     If OpenVSLAM terminates abnormaly soon after initialization, rebuild g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option for ``cmake`` configulation.
 
+
 .. image:: ./img/slam_frame_viewer_1.png
     :width: 640px
     :align: center
 
+
 .. image:: ./img/slam_map_viewer_1.png
     :width: 640px
     :align: center
+
 
 .. code-block:: none
 
@@ -244,7 +259,9 @@ If the two viewers are not launched at all, please check whether any paths are w
     [2019-05-20 17:55:40.087] [I] clear BoW database
     [2019-05-20 17:55:40.284] [I] clear map database
 
+
 After terminating, you can find a map database file ``aist_living_lab_1_map.msg``.
+
 
 .. code-block::
 
@@ -253,13 +270,16 @@ After terminating, you can find a map database file ``aist_living_lab_1_map.msg`
     aist_living_lab_1_map.msg
     ...
 
+
 The format of map database files is `MessagePack <https://msgpack.org/>`_, so you can reuse created maps for any third-party applications as well as for OpenVSLAM.
+
 
 Localization
 ^^^^^^^^^^^^
 
 Next, we try to localize frames in ``aist_living_lab_2`` dataset using the created map file ``aist_living_lab_1_map.msg``.
 You can use ``./run_movie_localization`` for localization processing with a movie.
+
 
 .. code-block::
 
@@ -277,8 +297,10 @@ You can use ``./run_movie_localization`` for localization processing with a movi
       --auto-term            automatically terminate the viewer
       --debug                debug mode
 
+
 Please execute the following command to start a localization processing.
 The paths should be changed according to your environment.
+
 
 .. code-block::
 
@@ -289,14 +311,18 @@ The paths should be changed according to your environment.
         --frame-skip 3 \
         --map-db aist_living_lab_1_map.msg
 
+
 Then, you can watch a frame viewer and map viewer.
 If the two viewers are not launched at all, please check whether any paths are wrong or not.
 
+
 You can find the current frame is localized based on the prebuild map.
+
 
 .. image:: ./img/localize_frame_viewer_1.png
     :width: 640px
     :align: center
+
 
 .. code-block:: none
 
@@ -361,5 +387,6 @@ You can find the current frame is localized based on the prebuild map.
     mean tracking time: 0.0384683[s]
     [2019-05-20 18:01:12.390] [I] clear BoW database
     [2019-05-20 18:01:12.574] [I] clear map database
+
 
 If you set ``--mapping`` option, the mapping module is enabled and the map will be extended.
