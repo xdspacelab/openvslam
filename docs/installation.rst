@@ -167,7 +167,6 @@ Install the dependencies via ``brew`.
 .. code-block:: bash
 
     brew update
-    brew upgrade
     # basic dependencies
     brew install pkg-config cmake git
     # g2o dependencies
