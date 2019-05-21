@@ -53,6 +53,8 @@ After that, the shell interface will be launched in the docker container.
     run_euroc_slam          run_kitti_slam          run_tum_slam
     run_image_localization  run_movie_localization
 
+You can check the behavior of the SLAM examples according to :ref:`Tutorial <chapter-simple-tutorial>`.
+
 If you need to access to any files and directories on a host machine, please bind directories using ``--volume`` or ``--mount`` option.
 (See `the docker documentataion <https://docs.docker.com/engine/reference/commandline/run/>`_.)
 
