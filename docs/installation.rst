@@ -277,7 +277,7 @@ When building with support for Pangolin Viewer.
 
 After building, check to see if it was successfully built by executing ``./build/run_kitti_slam -h``.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./build/run_kitti_slam -h
     Allowed options:

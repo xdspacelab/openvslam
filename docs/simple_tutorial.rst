@@ -138,7 +138,7 @@ Let's try to run SLAM and create a map database file with ``aist_living_lab_1`` 
 You can use ``./run_movie_slam`` for SLAM processing with a movie.
 
 
-.. code-block::
+.. code-block:: bash
 
     # at the build directory of OpenVSLAM
     $ ls
@@ -164,7 +164,7 @@ Please execute the following command to start a SLAM processing.
 The paths should be changed according to your environment.
 
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_movie_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
@@ -263,7 +263,7 @@ If the two viewers are not launched at all, please check whether any paths are w
 After terminating, you can find a map database file ``aist_living_lab_1_map.msg``.
 
 
-.. code-block::
+.. code-block:: bash
 
     $ ls
     ...
@@ -281,7 +281,7 @@ Next, we try to localize frames in ``aist_living_lab_2`` dataset using the creat
 You can use ``./run_movie_localization`` for localization processing with a movie.
 
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_movie_localization -h
     Allowed options:
@@ -302,7 +302,7 @@ Please execute the following command to start a localization processing.
 The paths should be changed according to your environment.
 
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_movie_localization \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \

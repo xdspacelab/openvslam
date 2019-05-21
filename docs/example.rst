@@ -18,7 +18,7 @@ We provide a example snippet to use a movie (e.g. ``.mp4``) for visual SLAM.
 The source code is placed at ``./example/run_movie_slam.cc``.
 The following options are allowed.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_movie_slam -h
     Allowed options:
@@ -44,7 +44,7 @@ We provide a example snippet to use a movie (e.g. ``.mp4``) for localization bas
 The source code is placed at ``./example/run_movie_localization.cc``.
 The following options are allowed.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_movie_localization -h
     Allowed options:
@@ -77,7 +77,7 @@ We provide a example snippet to use an image sequence for visual SLAM.
 The source code is placed at ``./example/run_image_slam.cc``.
 The following options are allowed.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_image_slam -h
     Allowed options:
@@ -103,7 +103,7 @@ We provide a example snippet to use an image sequence for localization based on 
 The source code is placed at ``./example/run_image_localization.cc``.
 The following options are allowed.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_image_localization -h
     Allowed options:
@@ -177,7 +177,7 @@ If you have built examples with Pangolin Viewer support, a map viewer and frame 
 
 The following options are allowed.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_kitti_slam -h
     Allowed options:
@@ -240,7 +240,7 @@ If you have built examples with Pangolin Viewer support, a map viewer and frame 
 
 The following options are allowed.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_euroc_slam -h
     Allowed options:
@@ -264,7 +264,7 @@ Will be written soon.
 
 The following options are allowed.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./run_tum_slam -h
     Allowed options:
