@@ -1,0 +1,7 @@
+Dockerfile
+LICENSE
+README.md
+wercker.yml
+docs/
+test/
+build/
