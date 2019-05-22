@@ -4,13 +4,13 @@
 Running on Docker
 =================
 
-``Dockerfile`` is provided to save effort for the installation.
-This chapter describes how to build it and run example executables.
+``Dockerfile`` can be used for easy installation.
+This chapter provides instructions on building and running examples using Docker.
 
 .. NOTE ::
 
-    If you use a computer with the NVIDIA graphics card(s) as a host machine of Docker, please use `nvidia-docker2 <https://github.com/NVIDIA/nvidia-docker>`_.
-    This is because the examples depend on X11 forwarding with OpenGL for visualization.
+    Use `nvidia-docker2 <https://github.com/NVIDIA/nvidia-docker>`_ if you plan on using a machine with NVIDIA graphics card(s).
+    These examples depend on X11 forwarding with OpenGL for visualization.
     Note that our ``Dockerfile`` is **NOT** compatible with nvidia-docker1.
 
 
@@ -19,7 +19,7 @@ This chapter describes how to build it and run example executables.
 Building Docker Image
 =====================
 
-All you need is executing the following commands.
+Execute the following commands:
 
 .. code-block:: bash
 
@@ -37,17 +37,17 @@ In order to enable X11 forwarding, supplemental options (``-e DISPLAY=$DISPLAY``
 
 .. code-block:: bash
 
-    # before launching the container, allow the display access from local users
+    # before launching the container, allow display access from local users
     xhost +local:
     # launch the container
     docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix:ro openvslam-desktop
 
 .. NOTE ::
 
-    If you use the NVIDIA graphics card(s), please insert the additional option ``--runtime=nvidia``.
+    Additional option ``--runtime=nvidia`` is needed if you use NVIDIA graphics card(s).
 
 
-After that, the shell interface will be launched in the docker container.
+After launching the container, the shell interface will be launched in the docker container.
 
 .. code-block:: bash
 
@@ -56,12 +56,12 @@ After that, the shell interface will be launched in the docker container.
     run_euroc_slam          run_kitti_slam          run_tum_slam
     run_image_localization  run_movie_localization
 
-You can check the behavior of the SLAM examples according to :ref:`Tutorial <chapter-simple-tutorial>`.
+See :ref:`Tutorial <chapter-simple-tutorial>` to run SLAM examples.
 
-If you need to access to any files and directories on a host machine from the container, please bind directories between the host and the container using ``--volume`` or ``--mount`` option.
+If you need to access to any files and directories on a host machine from the container, bind directories between the host and the container using ``--volume`` or ``--mount`` option.
 (See `the docker documentataion <https://docs.docker.com/engine/reference/commandline/run/>`_.)
 
-Here is an example.
+For example:
 
 .. code-block:: bash
 

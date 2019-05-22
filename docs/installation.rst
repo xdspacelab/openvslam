@@ -163,7 +163,7 @@ Installing for macOS
 
 Tested for **macOS High Sierra**.
 
-Install the dependencies via ``brew`.
+Install the dependencies via ``brew``.
 
 .. code-block:: bash
 
