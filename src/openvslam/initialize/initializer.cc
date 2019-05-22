@@ -23,9 +23,7 @@ initializer::~initializer() {
 }
 
 void initializer::reset() {
-    if (initializer_) {
-        delete initializer_; initializer_ = nullptr;
-    }
+    delete initializer_; initializer_ = nullptr;
     status_ = status_t::NotReady;
 }
 
@@ -92,9 +90,7 @@ void initializer::create_initializer(data::frame& curr_frm) {
     std::fill(init_matches_.begin(), init_matches_.end(), -1);
 
     // initializerを構築
-    if (initializer_) {
-        delete initializer_; initializer_ = nullptr;
-    }
+    delete initializer_; initializer_ = nullptr;
     switch (init_frm_.camera_->model_type_) {
         case camera::model_type_t::Perspective:
         case camera::model_type_t::Fisheye: {
