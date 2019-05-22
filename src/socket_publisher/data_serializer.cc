@@ -66,18 +66,12 @@ std::string data_serializer::serialize_map_diff() {
 std::string data_serializer::serialize_latest_frame(const unsigned int image_quality) {
 
     const auto image = frame_publisher_->draw_frame();
-    const auto image_hash = get_frame_hash(image);
-    if (image_hash != frame_hash_) {
-        frame_hash_ = image_hash;
-
-        std::vector<uchar> buf;
-        const std::vector<int> params{static_cast<int>(cv::IMWRITE_JPEG_QUALITY), static_cast<int>(image_quality)};
-        cv::imencode(".jpg", image, buf, params);
-        const auto char_buf = reinterpret_cast<const unsigned char*>(buf.data());
-        const std::string base64_serial = base64_encode(char_buf, buf.size());
-        return base64_serial;
-    }
-    return "";
+    std::vector<uchar> buf;
+    const std::vector<int> params{static_cast<int>(cv::IMWRITE_JPEG_QUALITY), static_cast<int>(image_quality)};
+    cv::imencode(".jpg", image, buf, params);
+    const auto char_buf = reinterpret_cast<const unsigned char*>(buf.data());
+    const std::string base64_serial = base64_encode(char_buf, buf.size());
+    return base64_serial;
 }
 
 std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::data::keyframe*>& keyfrms,
