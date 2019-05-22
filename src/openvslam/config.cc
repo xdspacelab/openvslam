@@ -41,12 +41,7 @@ config::config(const std::string& config_file_path)
     }
     catch (const std::exception& e) {
         spdlog::debug("failed in loading camera model parameters: {}", e.what());
-
-        // コンストラクタ内で動的確保しているので例外が発生したら解放
-        if (camera_) {
-            delete camera_; camera_ = nullptr;
-        }
-
+        delete camera_; camera_ = nullptr;
         throw;
     }
 
@@ -60,12 +55,7 @@ config::config(const std::string& config_file_path)
     }
     catch (const std::exception& e) {
         spdlog::debug("failed in loading ORB parameters: {}", e.what());
-
-        // コンストラクタ内で動的確保しているので例外が発生したら解放
-        if (camera_) {
-            delete camera_; camera_ = nullptr;
-        }
-
+        delete camera_; camera_ = nullptr;
         throw;
     }
 
