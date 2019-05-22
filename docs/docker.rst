@@ -44,7 +44,7 @@ In order to enable X11 forwarding, supplemental options (``-e DISPLAY=$DISPLAY``
 
 .. NOTE ::
 
-    Additional option ``--runtime=nvidia`` is needed, if you use NVIDIA graphics card(s).
+    Additional option ``--runtime=nvidia`` is needed if you use NVIDIA graphics card(s).
 
 
 After launching the container, the shell interface will be launched in the docker container.
