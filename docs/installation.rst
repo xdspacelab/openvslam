@@ -18,17 +18,18 @@ Cloning the repository:
 
        git clone https://github.com/xdspacelab/openvslam
 
+.. NOTE ::
+
+    Docker users can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
+
 
 .. _section-dependencies:
 
 Dependencies
 ============
 
-.. NOTE ::
-
-    OpenVSLAM requires a **C++11-compliant** compiler.
-
-OpenVSLAM relies on several open-source libraries as shown below.
+OpenVSLAM requires a **C++11-compliant** compiler.
+It relies on several open-source libraries as shown below.
 
 Requirements for OpenVSLAM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -276,7 +277,7 @@ When building with support for Pangolin Viewer.
 
 After building, check to see if it was successfully built by executing ``./build/run_kitti_slam -h``.
 
-.. code-block::
+.. code-block:: bash
 
     $ ./build/run_kitti_slam -h
     Allowed options:
