@@ -35,10 +35,13 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     euroc_mono_sequence sequence(sequence_dir_path);
     const auto frames = sequence.get_frames();
 
-    // SLAM systemを構築
+    // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
+    // startup the SLAM process
     SLAM.startup();
 
+    // create a viewer object
+    // and pass the frame_publisher and the map_publisher
 #ifdef USE_PANGOLIN_VIEWER
     pangolin_viewer::viewer viewer(cfg, &SLAM, SLAM.get_frame_publisher(), SLAM.get_map_publisher());
 #elif USE_SOCKET_PUBLISHER
@@ -48,6 +51,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     std::vector<double> track_times;
     track_times.reserve(frames.size());
 
+    // run the SLAM in another thread
     std::thread thread([&]() {
         for (unsigned int i = 0; i < frames.size(); ++i) {
             const auto& frame = frames.at(i);
@@ -56,7 +60,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
             const auto tp_1 = std::chrono::steady_clock::now();
 
             if (!img.empty() && (i % frame_skip == 0)) {
-                // 画像を入力
+                // input the current frame and estimate the camera pose
                 SLAM.track_for_monocular(img, frame.timestamp_);
             }
 
@@ -67,7 +71,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
                 track_times.push_back(track_time);
             }
 
-            // 次のフレームまで待機
+            // wait until the timestamp of the next frame
             if (!no_sleep && i < frames.size() - 1) {
                 const auto wait_time = frames.at(i + 1).timestamp_ - (frame.timestamp_ + track_time);
                 if (0.0 < wait_time) {
@@ -75,15 +79,18 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
                 }
             }
 
+            // check if the termination of SLAM system is requested or not
             if (SLAM.terminate_is_requested()) {
                 break;
             }
         }
 
+        // wait until the loop BA is finished
         while (SLAM.loop_BA_is_running()) {
             std::this_thread::sleep_for(std::chrono::microseconds(5000));
         }
 
+        // automatically close the viewer
 #ifdef USE_PANGOLIN_VIEWER
         if (auto_term) {
             viewer.request_terminate();
@@ -95,6 +102,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
 #endif
     });
 
+    // run the viewer in the current thread
 #ifdef USE_PANGOLIN_VIEWER
     viewer.run();
 #elif USE_SOCKET_PUBLISHER
@@ -103,12 +111,14 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
     thread.join();
 
-    // SLAM systemの全スレッドを停止
+    // shutdown the SLAM process
     SLAM.shutdown();
 
     if (eval_log) {
+        // output the trajectories for evaluation
         SLAM.save_frame_trajectory("frame_trajectory.txt", "TUM");
         SLAM.save_keyframe_trajectory("keyframe_trajectory.txt", "TUM");
+        // output the tracking times for evaluation
         std::ofstream ofs("track_times.txt", std::ios::out);
         if (ofs.is_open()) {
             for (const auto track_time : track_times) {
@@ -119,6 +129,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     }
 
     if (!map_db_path.empty()) {
+        // output the map database
         SLAM.save_message_pack(map_db_path);
     }
 
@@ -135,7 +146,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     euroc_stereo_sequence sequence(sequence_dir_path);
     const auto frames = sequence.get_frames();
 
-    // ステレオ平行化の準備
+    // variables for stereo image rectification
     cv::Mat K_l = (cv::Mat_<double>(3, 3) << 458.654, 0.0, 367.215, 0.0, 457.296, 248.375, 0.0, 0.0, 1.0);
     cv::Mat D_l = (cv::Mat_<double>(1, 5) << -0.28340811, 0.07395907, 0.00019359, 1.76187114e-05, 0.0);
     cv::Mat R_l = (cv::Mat_<double>(3, 3) << 0.999966347530033, -0.001422739138722922, 0.008079580483432283, 0.001365741834644127, 0.9999741760894847, 0.007055629199258132, -0.008089410156878961, -0.007044357138835809, 0.9999424675829176);
@@ -153,10 +164,13 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     cv::initUndistortRectifyMap(K_l, D_l, R_l, P_l.rowRange(0,3).colRange(0,3), cv::Size(cols_l, rows_l), CV_32F, M1_l, M2_l);
     cv::initUndistortRectifyMap(K_r, D_r, R_r, P_r.rowRange(0,3).colRange(0,3), cv::Size(cols_r, rows_r), CV_32F, M1_r, M2_r);
 
-    // SLAM systemを構築
+    // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
+    // startup the SLAM process
     SLAM.startup();
 
+    // create a viewer object
+    // and pass the frame_publisher and the map_publisher
 #ifdef USE_PANGOLIN_VIEWER
     pangolin_viewer::viewer viewer(cfg, &SLAM, SLAM.get_frame_publisher(), SLAM.get_map_publisher());
 #elif USE_SOCKET_PUBLISHER
@@ -168,6 +182,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
     cv::Mat left_img_rect, right_img_rect;
 
+    // run the SLAM in another thread
     std::thread thread([&]() {
         for (unsigned int i = 0; i < frames.size(); ++i) {
             const auto& frame = frames.at(i);
@@ -184,7 +199,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
             const auto tp_1 = std::chrono::steady_clock::now();
 
             if (i % frame_skip == 0) {
-                // 画像を入力
+                // input the current frame and estimate the camera pose
                 SLAM.track_for_stereo(left_img_rect, right_img_rect, frame.timestamp_);
             }
 
@@ -195,7 +210,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
                 track_times.push_back(track_time);
             }
 
-            // 次のフレームまで待機
+            // wait until the timestamp of the next frame
             if (!no_sleep && i < frames.size() - 1) {
                 const auto wait_time = frames.at(i + 1).timestamp_ - (frame.timestamp_ + track_time);
                 if (0.0 < wait_time) {
@@ -203,15 +218,18 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
                 }
             }
 
+            // check if the termination of SLAM system is requested or not
             if (SLAM.terminate_is_requested()) {
                 break;
             }
         }
 
+        // wait until the loop BA is finished
         while (SLAM.loop_BA_is_running()) {
             std::this_thread::sleep_for(std::chrono::microseconds(5000));
         }
 
+        // automatically close the viewer
 #ifdef USE_PANGOLIN_VIEWER
         if (auto_term) {
             viewer.request_terminate();
@@ -223,6 +241,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
 #endif
     });
 
+    // run the viewer in the current thread
 #ifdef USE_PANGOLIN_VIEWER
     viewer.run();
 #elif USE_SOCKET_PUBLISHER
@@ -231,12 +250,14 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
     thread.join();
 
-    // SLAM systemの全スレッドを停止
+    // shutdown the SLAM process
     SLAM.shutdown();
 
     if (eval_log) {
+        // output the trajectories for evaluation
         SLAM.save_frame_trajectory("frame_trajectory.txt", "TUM");
         SLAM.save_keyframe_trajectory("keyframe_trajectory.txt", "TUM");
+        // output the tracking times for evaluation
         std::ofstream ofs("track_times.txt", std::ios::out);
         if (ofs.is_open()) {
             for (const auto track_time : track_times) {
@@ -247,6 +268,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     }
 
     if (!map_db_path.empty()) {
+        // output the map database
         SLAM.save_message_pack(map_db_path);
     }
 
@@ -319,7 +341,7 @@ int main(int argc, char* argv[]) {
     ProfilerStart("slam.prof");
 #endif
 
-    // run SLAM
+    // run tracking
     if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
         mono_tracking(cfg, vocab_file_path->value(), data_dir_path->value(),
                       frame_skip->value(), no_sleep->is_set(), auto_term->is_set(),
