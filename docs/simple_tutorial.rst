@@ -7,8 +7,8 @@ Simple Tutorial
 TL; DR
 ^^^^^^
 
-You can check the normal operation of OpenVSLAM with the following commands.
-Please copy and paste to your terminal.
+Running the following commands will give a feel for what OpenVSLAM can do.
+The later parts of this chapter explains what each of the commands do in more detail.
 
 .. code-block:: bash
 
@@ -42,7 +42,7 @@ Please copy and paste to your terminal.
 Sample Datasets
 ^^^^^^^^^^^^^^^
 
-You can experience OpenVSLAM processing with various types of movies in this section.
+You can use OpenVSLAM with various video datasets.
 If you want to run OpenVSLAM with standard benchmarking detasets, please see :ref:`this section <section-example-standard-datasets>`.
 
 Start by downloading some datasets you like.
@@ -114,7 +114,7 @@ Start by downloading some datasets you like.
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
 
 
-After downloading and uncompressing a zip file, you will find a movie and a config file under an uncompressed directory.
+After downloading and uncompressing a zip file, you will find a video file and a config file under the uncompressed directory.
 
 
 .. code-block:: bash
@@ -123,19 +123,19 @@ After downloading and uncompressing a zip file, you will find a movie and a conf
     config.yaml  movie.mp4
 
 
-Please put the dataset at the directory you like.
+You can put the dataset in any directory where you have access to.
 
 | Additionally, please download a vocabulary file for DBoW2 from `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__.
-| After uncompressing it, you can find ``orb_vocab.dbow2`` in an uncompressed directory.
+| After uncompressing it, you will find ``orb_vocab.dbow2``.
 
-In the following, we use ``aist_living_lab_1`` and ``aist_living_lab_2`` datasets as an example.
+For the rest of this chapter, we will use ``aist_living_lab_1`` and ``aist_living_lab_2`` datasets for our example.
 
 
 Tracking and Mapping
 ^^^^^^^^^^^^^^^^^^^^
 
-Let's try to run SLAM and create a map database file with ``aist_living_lab_1`` dataset.
-You can use ``./run_movie_slam`` for SLAM processing with a movie.
+Here we should how to run SLAM and create a map database file with ``aist_living_lab_1`` dataset.
+You can use ``./run_movie_slam`` to run SLAM with the video file.
 
 
 .. code-block:: bash
@@ -160,8 +160,8 @@ You can use ``./run_movie_slam`` for SLAM processing with a movie.
       --map-db arg           store a map database at this path after SLAM
 
 
-Please execute the following command to start a SLAM processing.
-The paths should be changed according to your environment.
+Execute the following command to run SLAM.
+The paths should be changed accordingly.
 
 
 .. code-block:: bash
@@ -174,8 +174,8 @@ The paths should be changed according to your environment.
         --map-db aist_living_lab_1_map.msg
 
 
-Then, you can watch a frame viewer and map viewer.
-If the two viewers are not launched at all, please check whether any paths are wrong or not.
+The frame viewer and map viewer should launch as well.
+If the two viewers are not launching correctly, check if you launched the command with the appropriate paths.
 
 
 .. NOTE ::
@@ -260,7 +260,7 @@ If the two viewers are not launched at all, please check whether any paths are w
     [2019-05-20 17:55:40.284] [I] clear map database
 
 
-After terminating, you can find a map database file ``aist_living_lab_1_map.msg``.
+After terminating, you will find a map database file ``aist_living_lab_1_map.msg``.
 
 
 .. code-block:: bash
@@ -271,14 +271,14 @@ After terminating, you can find a map database file ``aist_living_lab_1_map.msg`
     ...
 
 
-The format of map database files is `MessagePack <https://msgpack.org/>`_, so you can reuse created maps for any third-party applications as well as for OpenVSLAM.
+The format of map database files is `MessagePack <https://msgpack.org/>`_, so you can reuse created maps for any third-party applications other than OpenVSLAM.
 
 
 Localization
 ^^^^^^^^^^^^
 
-Next, we try to localize frames in ``aist_living_lab_2`` dataset using the created map file ``aist_living_lab_1_map.msg``.
-You can use ``./run_movie_localization`` for localization processing with a movie.
+In this section, we will localize the frames in ``aist_living_lab_2`` dataset using the created map file ``aist_living_lab_1_map.msg``.
+You can use ``./run_movie_localization`` to run localization.
 
 
 .. code-block:: bash
@@ -298,8 +298,8 @@ You can use ``./run_movie_localization`` for localization processing with a movi
       --debug                debug mode
 
 
-Please execute the following command to start a localization processing.
-The paths should be changed according to your environment.
+Execute the following command to start localization.
+The paths should be changed accordingly.
 
 
 .. code-block:: bash
@@ -312,11 +312,11 @@ The paths should be changed according to your environment.
         --map-db aist_living_lab_1_map.msg
 
 
-Then, you can watch a frame viewer and map viewer.
-If the two viewers are not launched at all, please check whether any paths are wrong or not.
+The frame viewer and map viewer should launch as well.
+If the two viewers are not launching correctly, check if you launched the command with the appropriate paths.
 
 
-You can find the current frame is localized based on the prebuild map.
+You can see if the current frame is being localized, based on the prebuild map.
 
 
 .. image:: ./img/localize_frame_viewer_1.png
@@ -389,4 +389,4 @@ You can find the current frame is localized based on the prebuild map.
     [2019-05-20 18:01:12.574] [I] clear map database
 
 
-If you set ``--mapping`` option, the mapping module is enabled and the map will be extended.
+If you set the ``--mapping`` option, the mapping module is enabled to extend the prebuild map.
