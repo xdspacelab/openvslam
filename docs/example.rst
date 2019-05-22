@@ -4,19 +4,19 @@
 Example
 =======
 
-We provide example code snippets to run OpenVSLAM with variety of datasets.
+We provided example code snippets for running OpenVSLAM with variety of datasets.
 
 .. _section-example-movie:
 
-SLAM with a movie
-=================
+SLAM with Video Files
+=====================
 
 Tracking and Mapping
 ^^^^^^^^^^^^^^^^^^^^
 
-We provide a example snippet to use a movie (e.g. ``.mp4``) for visual SLAM.
+We provide an example snippet for using video files (e.g. ``.mp4``) for visual SLAM.
 The source code is placed at ``./example/run_movie_slam.cc``.
-The following options are allowed.
+The following options are allowed:
 
 .. code-block:: bash
 
@@ -34,15 +34,15 @@ The following options are allowed.
     --eval-log             store trajectory and tracking times for evaluation
     --map-db arg           store a map database at this path after SLAM
 
-| The camera that capture the movie must be calibrated. According to the calibrated parameters, please create a config file (``.yaml``).
-| We provide a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
+| The camera that captures the video file must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
+| We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
 
 Localization
 ^^^^^^^^^^^^
 
-We provide a example snippet to use a movie (e.g. ``.mp4``) for localization based on a prebuilt map.
+We provide an example snippet for using video files (e.g. ``.mp4``) for localization based on a prebuilt map.
 The source code is placed at ``./example/run_movie_localization.cc``.
-The following options are allowed.
+The following options are allowed:
 
 .. code-block:: bash
 
@@ -60,22 +60,22 @@ The following options are allowed.
     --auto-term            automatically terminate the viewer
     --debug                debug mode
 
-| The camera that capture the movie must be calibrated. According to the calibrated parameters, please create a config file (``.yaml``).
-| We provide a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
+| The camera that captures the video file must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
+| We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
 
 You can create a map database file by running one of the ``run_****_slam`` executables with ``--map-db map_file_name.msg`` option.
 
 .. _section-example-image-sequence:
 
-SLAM with an image sequence
-===========================
+SLAM with Image Sequences
+=========================
 
 Tracking and Mapping
 ^^^^^^^^^^^^^^^^^^^^
 
-We provide a example snippet to use an image sequence for visual SLAM.
+We provided an example snippet for using image sequences for visual SLAM.
 The source code is placed at ``./example/run_image_slam.cc``.
-The following options are allowed.
+The following options are allowed:
 
 .. code-block:: bash
 
@@ -93,15 +93,15 @@ The following options are allowed.
     --eval-log             store trajectory and tracking times for evaluation
     --map-db arg           store a map database at this path after SLAM
 
-| The camera that capture the movie must be calibrated. According to the calibrated parameters, please create a config file (``.yaml``).
-| We provide a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
+| The camera that captures the video file must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
+| We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
 
 Localization
 ^^^^^^^^^^^^
 
-We provide a example snippet to use an image sequence for localization based on a prebuilt map.
+We provided an example snippetfor using image sequences for localization based on a prebuilt map.
 The source code is placed at ``./example/run_image_localization.cc``.
-The following options are allowed.
+The following options are allowed:
 
 .. code-block:: bash
 
@@ -119,14 +119,14 @@ The following options are allowed.
     --auto-term            automatically terminate the viewer
     --debug                debug mode
 
-| The camera that capture the movie must be calibrated. According to the calibrated parameters, please create a config file (``.yaml``).
-| We provide a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
+| The camera that captures the video file must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
+| We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
 
 You can create a map database file by running one of the ``run_****_slam`` executables with ``--map-db map_file_name.msg`` option.
 
 .. _section-example-standard-datasets:
 
-SLAM with standard datasets
+SLAM with Standard Datasets
 ===========================
 
 .. _subsection-example-kitti:
@@ -134,28 +134,26 @@ SLAM with standard datasets
 KITTI Odometry dataset
 ^^^^^^^^^^^^^^^^^^^^^^
 
-`KITTI Odometry dataset <http://www.cvlibs.net/datasets/kitti/>`_ is a benchmarking dataset for monocular and stereo visual odometry and lidar odometry that captured with car-mounted devices.
-We provide an example source code to run monocular and stereo visual SLAM with this dataset.
+`KITTI Odometry dataset <http://www.cvlibs.net/datasets/kitti/>`_ is a benchmarking dataset for monocular and stereo visual odometry and lidar odometry that is captured from car-mounted devices.
+We provided an example source code for running monocular and stereo visual SLAM with this dataset.
 The source code is placed at ``./example/run_kitti_slam.cc``.
 
 Start by downloading the dataset from `here <http://www.cvlibs.net/datasets/kitti/eval_odometry.php>`__.
-Please donwload the grayscale set (``data_odometry_gray.zip``).
+Download the grayscale set (``data_odometry_gray.zip``).
 
-After downloading and uncompressing it, you will find several sequences under ``sequences/`` directory.
+After downloading and uncompressing it, you will find several sequences under the ``sequences/`` directory.
 
 .. code-block:: bash
 
     $ ls sequences/
     00  01  02  03  04  05  06  07  08  09  10  11  12  13  14  15  16  17  18  19  20  21
 
-In addition, please download a vocabulary file for DBoW2 from `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__ and uncompress it.
+In addition, download a vocabulary file for DBoW2 from `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__ and uncompress it.
 You can find ``orb_vocab.dbow2`` in the zip file.
 
-With this, you can run visual SLAM with KITTI Odometry dataset!
+A configuration file for each sequence is contained under ``./example/kitti/``.
 
-A setting file for each sequence is contained under ``./example/kitti/``.
-
-If you have built examples with Pangolin Viewer support, a map viewer and frame viewer will be started soon after executing the following command.
+If you built examples with Pangolin Viewer support, a map viewer and frame viewer will be launced right after executing the following command.
 
 .. code-block:: bash
 
@@ -175,7 +173,7 @@ If you have built examples with Pangolin Viewer support, a map viewer and frame 
         -d /path/to/KITTI/Odometry/sequences/05/ \
         -s ../example/kitti/KITTI_stereo_04-12.yaml
 
-The following options are allowed.
+The following options are allowed:
 
 .. code-block:: bash
 
@@ -197,28 +195,26 @@ The following options are allowed.
 EuRoC MAV dataset
 ^^^^^^^^^^^^^^^^^
 
-`EuRoC MAV dataset <https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets>`_ is a benchmarking dataset for monocular and stereo visual odometry that captured with drone-mounted devices.
-We provide an example source code to run monocular and stereo visual SLAM with this dataset.
+`EuRoC MAV dataset <https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets>`_ is a benchmarking dataset for monocular and stereo visual odometry that is captured from drone-mounted devices.
+We provide an example source code for running monocular and stereo visual SLAM with this dataset.
 The source code is placed at ``./example/run_euroc_slam.cc``.
 
 Start by downloading the dataset from `here <http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/>`__.
-Please donwload the ``.zip`` file of a dataset you want to use.
+Download the ``.zip`` file of a dataset you plan on using.
 
-After downloading and uncompressing it, you will find several directories under ``mav0/`` directory.
+After downloading and uncompressing it, you will find several directories under the ``mav0/`` directory.
 
 .. code-block:: bash
 
     $ ls mav0/
     body.yaml  cam0  cam1  imu0  leica0  state_groundtruth_estimate0
 
-In addition, please download a vocabulary file for DBoW2 from `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__ and uncompress it.
+In addition, download a vocabulary file for DBoW2 from `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__ and uncompress it.
 You can find ``orb_vocab.dbow2`` in the zip file.
 
-With this, you can run visual SLAM with EuRoC MAV dataset!
+We provided the two setting files for EuRoC, ``./example/euroc/EuRoC_mono.yaml`` for monocular and ``./example/euroc/EuRoC_stereo.yaml`` for stereo.
 
-We provide the two setting files for EuRoC, ``./example/euroc/EuRoC_mono.yaml`` for monocular and ``./example/euroc/EuRoC_stereo.yaml`` for stereo.
-
-If you have built examples with Pangolin Viewer support, a map viewer and frame viewer will be started soon after executing the following command.
+If you have built examples with Pangolin Viewer support, a map viewer and frame viewer will be launched right after executing the following command.
 
 .. code-block:: bash
 
@@ -238,7 +234,7 @@ If you have built examples with Pangolin Viewer support, a map viewer and frame 
         -d /path/to/EuRoC/MAV/mav0/ \
         -s ../example/euroc/EuRoC_stereo.yaml
 
-The following options are allowed.
+The following options are allowed:
 
 .. code-block:: bash
 
@@ -262,7 +258,7 @@ TUM RGBD dataset
 
 Will be written soon.
 
-The following options are allowed.
+The following options are allowed:
 
 .. code-block:: bash
 
