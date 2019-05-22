@@ -60,25 +60,6 @@ private:
         return pose(0, 3) + pose(1, 3) + pose(2, 3);
     }
 
-    inline int get_frame_hash(const cv::Mat& frame) {
-        const auto n_channel = frame.channels();
-
-        if (n_channel == 1) {
-            return frame.at<uchar>(image_height_ * 0.5, image_width_ * 0.25)
-                   + frame.at<uchar>(image_height_ * 0.5, image_width_ * 0.5)
-                   + frame.at<uchar>(image_height_ * 0.5, image_width_ * 0.75);
-        }
-        else {
-            return rgb_to_24bit(frame.at<cv::Vec3b>(image_height_ * 0.5, image_width_ * 0.25))
-                   + rgb_to_24bit(frame.at<cv::Vec3b>(image_height_ * 0.5, image_width_ * 0.5))
-                   + rgb_to_24bit(frame.at<cv::Vec3b>(image_height_ * 0.5, image_width_ * 0.75));
-        }
-    }
-
-    inline int rgb_to_24bit(const cv::Vec3b& rgb) {
-        return rgb[0] * 0x1000 + rgb[0] * 0x10 + rgb[0];
-    }
-
     std::string serialize_as_protobuf(const std::vector<openvslam::data::keyframe*>& keyfrms,
                                       const std::vector<openvslam::data::landmark*>& all_landmarks,
                                       const std::set<openvslam::data::landmark*>& local_landmarks,
