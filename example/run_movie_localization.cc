@@ -27,13 +27,16 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
                        const std::string& vocab_file_path, const std::string& movie_file_path, const std::string& mask_img_path,
                        const std::string& map_db_path, const bool mapping,
                        const unsigned int frame_skip, const bool no_sleep, const bool auto_term) {
-    // maskを読み込む
+    // load the mask image
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
 
-    // SLAM systemを構築
+    // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
+    // load the prebuilt map
     SLAM.load_message_pack(map_db_path);
+    // startup the SLAM process (it does not need initialization of a map)
     SLAM.startup(false);
+    // select to activate the mapping module or not
     if (mapping) {
         SLAM.activate_mapping_module();
     }
@@ -41,6 +44,9 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
         SLAM.deactivate_mapping_module();
     }
 
+
+    // create a viewer object
+    // and pass the frame_publisher and the map_publisher
 #ifdef USE_PANGOLIN_VIEWER
     pangolin_viewer::viewer viewer(cfg, &SLAM, SLAM.get_frame_publisher(), SLAM.get_map_publisher());
 #elif USE_SOCKET_PUBLISHER
@@ -56,6 +62,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
     unsigned int num_frame = 0;
 
     bool is_not_end = true;
+    // run the SLAM in another thread
     std::thread thread([&]() {
         while (is_not_end) {
             is_not_end = video.read(frame);
@@ -63,7 +70,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
             const auto tp_1 = std::chrono::steady_clock::now();
 
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
-                // 画像を入力
+                // input the current frame and estimate the camera pose
                 SLAM.track_for_monocular(frame, timestamp, mask);
             }
 
@@ -74,7 +81,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
                 track_times.push_back(track_time);
             }
 
-            // 次のフレームまで待機
+            // wait until the timestamp of the next frame
             if (!no_sleep) {
                 const auto wait_time = 1.0 / cfg->camera_->fps_ - track_time;
                 if (0.0 < wait_time) {
@@ -85,15 +92,18 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
             timestamp += 1.0 / cfg->camera_->fps_;
             ++num_frame;
 
+            // check if the termination of SLAM system is requested or not
             if (SLAM.terminate_is_requested()) {
                 break;
             }
         }
 
+        // wait until the loop BA is finished
         while (SLAM.loop_BA_is_running()) {
             std::this_thread::sleep_for(std::chrono::microseconds(5000));
         }
 
+        // automatically close the viewer
 #ifdef USE_PANGOLIN_VIEWER
         if (auto_term) {
             viewer.request_terminate();
@@ -105,6 +115,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
 #endif
     });
 
+    // run the viewer in the current thread
 #ifdef USE_PANGOLIN_VIEWER
     viewer.run();
 #elif USE_SOCKET_PUBLISHER
@@ -113,7 +124,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
 
     thread.join();
 
-    // SLAM systemの全スレッドを停止
+    // shutdown the SLAM process
     SLAM.shutdown();
 
     std::sort(track_times.begin(), track_times.end());
@@ -187,7 +198,7 @@ int main(int argc, char* argv[]) {
     ProfilerStart("slam.prof");
 #endif
 
-    // run SLAM
+    // run localization
     if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
         mono_localization(cfg, vocab_file_path->value(), movie_file_path->value(), mask_img_path->value(),
                           map_db_path->value(), mapping->is_set(),
