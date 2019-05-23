@@ -41,20 +41,15 @@ build_without_gui:
         cd build
         ctest -V
     - script:
-      name: SLAM test (monocular) with TUM RGBD dataset
+      name: SLAM test (monocular) with EuRoC MAV dataset
       code: |
         cd build
-        ./run_tum_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_mono_02.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db tum_mono.msg
+        ./run_euroc_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/EuRoC/MH_04 -s ../example/euroc/EuRoC_mono.yaml --frame-skip 2 --no-sleep --debug --eval-log --map-db euroc_mono.msg
     - script:
       name: SLAM test (stereo) with EuRoC MAV dataset
       code: |
         cd build
         ./run_euroc_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/EuRoC/MH_04 -s ../example/euroc/EuRoC_stereo.yaml --frame-skip 2 --no-sleep --debug --eval-log --map-db euroc_stereo.msg
-    - script:
-      name: SLAM test (RGBD) with TUM RGBD dataset
-      code: |
-        cd build
-        ./run_tum_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/TUM/fr2_desk -a ../example/tum/assocs/fr2_desk.txt -s ../example/tum/TUM_RGBD_02.yaml --frame-skip 3 --no-sleep  --debug --eval-log  --map-db tum_rgbd.msg
   after-steps:
     - install-packages:
       packages: ruby
