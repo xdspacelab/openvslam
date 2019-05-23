@@ -16,6 +16,7 @@ The notable features are:
 - The system is fully modular. It is designed by encapsulating several functions in separated components with easy-to-understand APIs.
 - We provided **some code snippets** to understand the core functionalities of this system.
 
+OpenVSLAM is based on an indirect SLAM algorithm with sparse features, such as ORB-SLAM, ProSLAM, and UcoSLAM.
 One of the noteworthy features of OpenVSLAM is that the system can deal with images captured with multiple camera models, such as perspective, fisheye, and equirectangular.
 If needed, users can implement extra camera models (e.g. dual fisheye, catadioptric) with ease.
 For example, visual SLAM algorithm using **equirectangular camera models** (e.g. RICOH THETA series, insta360 series, etc) is shown above.
@@ -70,6 +71,8 @@ The following files are derived from third-party libraries.
 - `./3rd/spdlog` : part of [gabime/spdlog \[v1.3.1\]](https://github.com/gabime/spdlog) (MIT license)
 - `./src/openvslam/solver/pnp_solver.cc` : part of [laurentkneip/opengv](https://github.com/laurentkneip/opengv) (3-clause BSD license)
 - `./src/openvslam/feature/orb_point_pairs.h` : part of [opencv/opencv](https://github.com/opencv/opencv) (3-clause BSD License)
+
+Please use `g2o` as the dynamic link library because `csparse_extension` module of `g2o` is LGPLv3+.
 
 ## Contributors
 
