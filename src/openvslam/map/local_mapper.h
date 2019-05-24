@@ -307,7 +307,7 @@ private:
     std::atomic<bool> keyframe_acceptability_{true};
 
     //! current keyframe which is used in the current local mapping
-    data::keyframe* cur_keyfrm_;
+    data::keyframe* cur_keyfrm_ = nullptr;
 
     //! fresh landmarks to check their redundancy
     std::list<data::landmark*> fresh_landmarks_;

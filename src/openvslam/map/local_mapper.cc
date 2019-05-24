@@ -54,6 +54,23 @@ void local_mapper::run() {
             break;
         }
 
+        // check if pause is requested
+        if (check_pause_request()) {
+            // if any keyframe is queued, all of them must be processed before the pause
+            while (keyframe_is_queued()) {
+                // create and extend the map with the new keyframe
+                mapping_with_new_keyframe();
+                // send the new keyframe to the loop closer
+                loop_closer_->queue_keyframe(cur_keyfrm_);
+            }
+            // pause and wait
+            pause();
+            // check if termination or reset is requested during pause
+            while (is_paused() && !check_terminate_request() && !check_reset_request()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(3));
+            }
+        }
+
         // check if reset is requested
         if (check_reset_request()) {
             // reset, UNLOCK and continue
@@ -62,17 +79,7 @@ void local_mapper::run() {
             continue;
         }
 
-        // check if pause is requested
-        if (check_pause_request()) {
-            // pause and wait
-            pause();
-            // check if termination is requested during pause
-            while (is_paused() && !check_terminate_request()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(3));
-            }
-        }
-
-        // if the queue is empty
+        // if the queue is empty, the following process is not needed
         if (!keyframe_is_queued()) {
             // UNLOCK and continue
             set_keyframe_acceptability(true);
@@ -81,13 +88,14 @@ void local_mapper::run() {
 
         // create and extend the map with the new keyframe
         mapping_with_new_keyframe();
-
         // send the new keyframe to the loop closer
         loop_closer_->queue_keyframe(cur_keyfrm_);
 
         // LOCK end
         set_keyframe_acceptability(true);
     }
+
+    spdlog::info("terminate mapping module");
 }
 
 void local_mapper::queue_keyframe(data::keyframe* keyfrm) {
@@ -119,7 +127,15 @@ void local_mapper::abort_local_BA() {
 }
 
 void local_mapper::mapping_with_new_keyframe() {
-    // dequeue and store the new keyframe
+    // dequeue
+    {
+        std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
+        // dequeue -> cur_keyfrm_
+        cur_keyfrm_ = keyfrms_queue_.front();
+        keyfrms_queue_.pop_front();
+    }
+
+    // store the new keyframe to the database
     store_new_keyframe();
 
     // remove redundant landmarks
@@ -148,13 +164,6 @@ void local_mapper::mapping_with_new_keyframe() {
 }
 
 void local_mapper::store_new_keyframe() {
-    {
-        std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
-        // dequeue -> cur_keyfrm_
-        cur_keyfrm_ = keyfrms_queue_.front();
-        keyfrms_queue_.pop_front();
-    }
-
     // compute BoW feature vector
     cur_keyfrm_->compute_bow();
 
@@ -653,10 +662,10 @@ bool local_mapper::check_terminate_request() const {
 }
 
 void local_mapper::terminate() {
-    std::lock_guard<std::mutex> lock1(mtx_terminate_);
-    is_terminated_ = true;
-    std::lock_guard<std::mutex> lock2(mtx_pause_);
+    std::lock_guard<std::mutex> lock1(mtx_pause_);
+    std::lock_guard<std::mutex> lock2(mtx_terminate_);
     is_paused_ = true;
+    is_terminated_ = true;
 }
 
 } // namespace map
