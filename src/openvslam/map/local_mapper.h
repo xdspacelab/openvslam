@@ -167,24 +167,6 @@ private:
                                         const std::vector<std::pair<unsigned int, unsigned int>>& matches);
 
     /**
-     * Check depth is positive or not (if camera model is equirectangular, always return true)
-     */
-    bool check_depth_is_positive(const Vec3_t& pos_w, const Mat33_t& rot_cw, const Vec3_t& trans_cw, camera::base* camera) const;
-
-    /**
-     * Check reprojection error is within the acceptable threshold
-     */
-    template <typename T>
-    bool check_reprojection_error(const Vec3_t& pos_w, const Mat33_t& rot_cw, const Vec3_t& trans_cw, camera::base* camera,
-                                  const cv::Point_<T>& keypt, const float x_right, const float sigma_sq, const bool is_stereo) const;
-
-    /**
-     * Check estimated and actual scale factors are within the acceptable threshold
-     */
-    bool check_scale_factors(const Vec3_t& pos_w, const Vec3_t& cam_center_1, const Vec3_t& cam_center_2,
-                             const float ratio_factor, const float scale_factor_1, const float scale_factor_2) const;
-
-    /**
      * Remove redundant landmarks
      */
     void remove_redundant_landmarks();
@@ -330,61 +312,6 @@ private:
     //! fresh landmarks to check their redundancy
     std::list<data::landmark*> fresh_landmarks_;
 };
-
-inline bool local_mapper::check_depth_is_positive(const Vec3_t& pos_w, const Mat33_t& rot_cw, const Vec3_t& trans_cw, camera::base* camera) const {
-    const auto pos_z = rot_cw.block<1, 3>(2, 0).dot(pos_w) + trans_cw(2);
-    return camera->model_type_ == camera::model_type_t::Equirectangular || 0 < pos_z;
-}
-
-template <typename T>
-inline bool local_mapper::check_reprojection_error(const Vec3_t& pos_w, const Mat33_t& rot_cw, const Vec3_t& trans_cw, camera::base* camera,
-                                                   const cv::Point_<T>& keypt, const float x_right, const float sigma_sq, const bool is_stereo) const {
-    assert(is_stereo ^ (x_right < 0));
-
-    // chi-squared values for p=5%
-    // (n=2)
-    constexpr float chi_sq_2D = 5.99146;
-    // (n=3)
-    constexpr float chi_sq_3D = 7.81473;
-
-    Vec2_t reproj_in_cur;
-    float x_right_in_cur;
-    camera->reproject_to_image(rot_cw, trans_cw, pos_w, reproj_in_cur, x_right_in_cur);
-
-    if (is_stereo) {
-        const Vec2_t reproj_err = reproj_in_cur - keypt;
-        const auto reproj_err_x_right = x_right_in_cur - x_right;
-        if ((chi_sq_3D * sigma_sq) < (reproj_err.squaredNorm() + reproj_err_x_right * reproj_err_x_right)) {
-            return false;
-        }
-    }
-    else {
-        const Vec2_t reproj_err = reproj_in_cur - keypt;
-        if ((chi_sq_2D * sigma_sq) < reproj_err.squaredNorm()) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-inline bool local_mapper::check_scale_factors(const Vec3_t& pos_w, const Vec3_t& cam_center_1, const Vec3_t& cam_center_2,
-                                              const float ratio_factor, const float scale_factor_1, const float scale_factor_2) const {
-    const Vec3_t cam_1_to_lm_vec = pos_w - cam_center_1;
-    const auto cam_1_to_lm_dist = cam_1_to_lm_vec.norm();
-
-    const Vec3_t cam_2_to_lm_vec = pos_w - cam_center_2;
-    const auto cam_2_to_lm_dist = cam_2_to_lm_vec.norm();
-
-    if (cam_1_to_lm_dist == 0 || cam_2_to_lm_dist == 0) {
-        return false;
-    }
-
-    const auto ratio_dists = cam_2_to_lm_dist / cam_1_to_lm_dist;
-    const auto ratio_octave = scale_factor_1 / scale_factor_2;
-
-    return ratio_octave / ratio_dists < ratio_factor && ratio_dists / ratio_octave < ratio_factor;
-}
 
 } // namespace map
 } // namespace openvslam
