@@ -17,9 +17,15 @@ namespace map {
 
 class two_view_triangulator {
 public:
+    /**
+     * Constructor
+     */
     explicit two_view_triangulator(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
                                    const float rays_parallax_deg_thr=1.0);
 
+    /**
+     * Destructor
+     */
     ~two_view_triangulator() = default;
 
     /**
