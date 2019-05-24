@@ -2,6 +2,7 @@
 #include "openvslam/data/bow_database.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/map/local_mapper.h"
+#include "openvslam/map/keyframe_inserter.h"
 
 namespace openvslam {
 namespace map {

@@ -3,6 +3,7 @@
 #include "openvslam/camera/base.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
+#include "openvslam/data/bow_database.h"
 #include "openvslam/feature/orb_extractor.h"
 #include "openvslam/map/local_mapper.h"
 #include "openvslam/map/loop_closer.h"
