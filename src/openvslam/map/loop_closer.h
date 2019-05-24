@@ -4,6 +4,7 @@
 #include "openvslam/type.h"
 #include "openvslam/data/bow_vocabulary.h"
 #include "openvslam/map/type.h"
+#include "openvslam/map/loop_detector.h"
 #include "openvslam/optimize/graph_optimizer.h"
 #include "openvslam/optimize/transform_optimizer.h"
 
@@ -157,48 +158,6 @@ public:
 private:
     //-----------------------------------------
     // main process
-
-    /**
-     * Detect loop candidates using BoW vocabulary
-     * @return whether loop candidates are detected or not
-     */
-    bool detect_loop_candidate();
-
-    /**
-     * Compute the minimum score among covisibilities
-     * @param keyfrm
-     * @return
-     */
-    float compute_min_score_in_covisibilities(data::keyframe* keyfrm) const;
-
-    /**
-     * Find continuously detected keyframe sets
-     * @param prev_cont_detected_keyfrm_sets
-     * @param keyfrms_to_search
-     * @return
-     */
-    keyframe_sets find_continuously_detected_keyframe_sets(const keyframe_sets& prev_cont_detected_keyfrm_sets,
-                                                           const std::vector<data::keyframe*>& keyfrms_to_search) const;
-
-    /**
-     * Validate loop candidates selected in detect_loop_candidate()
-     * @return a loop candidate is validated or not
-     */
-    bool validate_candidates();
-
-    /**
-     * Select ONE candidate from the candidates via linear and nonlinear Sim3 estimation
-     * @param loop_candidates
-     * @param selected_candidate
-     * @param g2o_Sim3_world_to_curr
-     * @param curr_assoc_lms_in_cand
-     * @return
-     */
-    bool select_loop_candidate_via_Sim3(const std::vector<data::keyframe*>& loop_candidates,
-                                        data::keyframe*& selected_candidate,
-                                        g2o::Sim3& g2o_Sim3_world_to_curr,
-                                        std::vector<data::landmark*>& curr_assoc_lms_in_cand) const;
-
     /**
      * Perform loop closing
      */
@@ -310,19 +269,18 @@ private:
     // modules
 
     //! tracker
-    track::tracker* tracker_;
+    track::tracker* tracker_ = nullptr;
     //! local mapper
-    local_mapper* local_mapper_;
+    local_mapper* local_mapper_ = nullptr;
+
+    //! loop detector
+    loop_detector loop_detector_;
 
     //-----------------------------------------
     // database
 
     //! map database
     data::map_database* map_db_;
-    //! BoW database
-    data::bow_database* bow_db_;
-    //! BoW vocabulary
-    data::bow_vocabulary* bow_vocab_;
 
     //-----------------------------------------
     // keyframe queue
@@ -339,41 +297,13 @@ private:
     //! queue for keyframes
     std::list<data::keyframe*> keyfrms_queue_;
 
+    data::keyframe* cur_keyfrm_ = nullptr;
+
     //-----------------------------------------
     // optimizer
 
     //! graph optimizer
     const optimize::graph_optimizer graph_optimizer_;
-    //! transform optimizer
-    const optimize::transform_optimizer transform_optimizer_;
-
-    //-----------------------------------------
-    // variables for loop detection and correction
-
-    //! この回数以上連続してキーフレーム集合が検出されたらループとする
-    static constexpr unsigned int min_continuity_ = 3;
-    //! 現在処理中のキーフレーム
-    data::keyframe* cur_keyfrm_;
-    //! 最終的なループ候補
-    data::keyframe* final_candidate_keyfrm_ = nullptr;
-
-    //! 前回検出されたキーフレーム集合
-    std::vector<keyframe_set> cont_detected_keyfrm_sets_;
-    //! validate対象のキーフレーム
-    std::vector<data::keyframe*> loop_candidates_to_validate_;
-
-    //! current keyframeの特徴点idxに対する，candidateで観測している3次元との対応情報
-    std::vector<data::landmark*> curr_assoc_lms_in_cand_;
-    //! current keyframeの特徴点idxに対する，candidate周辺で観測している3次元との対応情報
-    std::vector<data::landmark*> curr_assoc_lms_near_cand_;
-
-    //! ループ補正後のcurrent keyframeの姿勢
-    Mat44_t Sim3_world_to_curr_;
-    //! ループ補正後のcurrent keyframeの姿勢(g2o::Sim3形式)
-    g2o::Sim3 g2o_Sim3_world_to_curr_;
-
-    //! 前回ループ修正をした際のcurrent keyframeのID
-    unsigned int prev_loop_correct_keyfrm_id_ = 0;
 
     //-----------------------------------------
     // variables for loop BA
@@ -398,7 +328,7 @@ private:
     const bool fix_scale_;
 
     //! the number of times that loop BA is performed
-    unsigned int num_exec_loop_BA_;
+    unsigned int num_exec_loop_BA_ = 0;
 };
 
 } // namespace map
