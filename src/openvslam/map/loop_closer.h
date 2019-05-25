@@ -6,7 +6,6 @@
 #include "openvslam/map/type.h"
 #include "openvslam/map/loop_detector.h"
 #include "openvslam/optimize/graph_optimizer.h"
-#include "openvslam/optimize/transform_optimizer.h"
 
 #include <list>
 #include <thread>
@@ -37,10 +36,6 @@ public:
 
     /**
      * Constructor
-     * @param map_db
-     * @param bow_db
-     * @param bow_vocab
-     * @param fix_scale
      */
     loop_closer(data::map_database* map_db, data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale);
 
@@ -51,13 +46,11 @@ public:
 
     /**
      * Set tracker
-     * @param tracker
      */
     void set_tracker(track::tracker* tracker);
 
     /**
      * Set local mapper
-     * @param local_mapper
      */
     void set_local_mapper(map::local_mapper* local_mapper);
 
@@ -66,13 +59,11 @@ public:
 
     /**
      * Enable or disable the loop detector
-     * @param loop_detector_is_enabled
      */
     void set_loop_detector_status(const bool loop_detector_is_enabled);
 
     /**
      * Check if the loop detector is enabled or not
-     * @return
      */
     bool get_loop_detector_status() const;
 
@@ -86,7 +77,6 @@ public:
 
     /**
      * Queue a keyframe to the BoW database
-     * @param keyfrm a keyframe to queue
      */
     void queue_keyframe(data::keyframe* keyfrm);
 
@@ -110,13 +100,11 @@ public:
 
     /**
      * Check if the loop closer is requested to be paused or not
-     * @return
      */
     bool pause_is_requested() const;
 
     /**
      * Check if the loop closer is paused or not
-     * @return
      */
     bool is_paused() const;
 
@@ -136,7 +124,6 @@ public:
 
     /**
      * Check if the loop closer is terminated or not
-     * @return whether the loop closer is terminated or not
      */
     bool is_terminated() const;
 
@@ -145,7 +132,6 @@ public:
 
     /**
      * Check if loop BA is running or not
-     * @return whether loop BA is running or not
      */
     bool loop_BA_is_running() const;
 
@@ -158,6 +144,7 @@ public:
 private:
     //-----------------------------------------
     // main process
+
     /**
      * Perform loop closing
      */
@@ -165,46 +152,34 @@ private:
 
     /**
      * Compute Sim3s (world to covisibility) which are prior to loop correction
-     * @param covisibilities
-     * @return
      */
-    keyframe_Sim3_pairs_t get_non_corrected_Sim3s(const std::vector<data::keyframe*>& covisibilities) const;
+    keyframe_Sim3_pairs_t get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const;
 
     /**
      * Compute Sim3s (world to covisibility) which are corrected using the estimated Sim3 of the current keyframe
-     * @param cam_pose_curr_to_world non-corrected camera pose of the current keyframe
-     * @param g2o_Sim3_world_to_curr estimated Sim3 of the current keyframe
-     * @param covisibilities
-     * @return
      */
-    keyframe_Sim3_pairs_t get_pre_corrected_Sim3s(const Mat44_t& cam_pose_curr_to_world, const g2o::Sim3& g2o_Sim3_world_to_curr,
-                                                  const std::vector<data::keyframe*>& covisibilities) const;
+    keyframe_Sim3_pairs_t get_Sim3s_after_loop_correction(const Mat44_t& cam_pose_wc_before_correction, const g2o::Sim3& g2o_Sim3_cw_after_correction,
+                                                          const std::vector<data::keyframe*>& neighbors) const;
 
     /**
      * Correct the positions of the landmarks which are seen in covisibilities
-     * @param non_corrected_Sim3s_iw
-     * @param pre_corrected_Sim3s_iw
      */
-    void correct_covisibility_landmarks(const keyframe_Sim3_pairs_t& non_corrected_Sim3s_iw,
-                                        const keyframe_Sim3_pairs_t& pre_corrected_Sim3s_iw) const;
+    void correct_covisibility_landmarks(const keyframe_Sim3_pairs_t& Sim3s_nw_before_correction,
+                                        const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     /**
      * Correct the camera poses of the covisibilities
-     * @param pre_corrected_Sim3s_iw
      */
-    void correct_covisibility_keyframes(const keyframe_Sim3_pairs_t& pre_corrected_Sim3s_iw) const;
+    void correct_covisibility_keyframes(const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     /**
      * Detect and replace duplicated landmarks
-     * @param pre_corrected_Sim3s_iw
      */
-    void replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_assoc_lms_in_cand,
-                                      const keyframe_Sim3_pairs_t& pre_corrected_Sim3s_iw) const;
+    void replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_match_lms_observed_in_cand,
+                                      const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     /**
      * Extract the new connections which will be created AFTER loop correction
-     * @param covisibilities
-     * @return
      */
     std::map<data::keyframe*, std::set<data::keyframe*>> extract_new_connections(const std::vector<data::keyframe*>& covisibilities) const;
 
@@ -323,9 +298,6 @@ private:
     bool abort_loop_BA_ = false;
     //! thread for running loop BA
     std::unique_ptr<std::thread> thread_for_loop_BA_ = nullptr;
-
-    //! flag which indicates that Sim3 optimization or SE3 optimization is performed
-    const bool fix_scale_;
 
     //! the number of times that loop BA is performed
     unsigned int num_exec_loop_BA_ = 0;

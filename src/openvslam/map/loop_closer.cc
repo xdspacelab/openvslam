@@ -4,11 +4,8 @@
 #include "openvslam/data/map_database.h"
 #include "openvslam/map/local_mapper.h"
 #include "openvslam/map/loop_closer.h"
-#include "openvslam/match/projection.h"
-#include "openvslam/match/bow_tree.h"
 #include "openvslam/match/fuse.h"
 #include "openvslam/optimize/global_bundle_adjuster.h"
-#include "openvslam/solver/sim3_solver.h"
 #include "openvslam/util/converter.h"
 
 #include <mutex>
@@ -20,9 +17,8 @@ namespace openvslam {
 namespace map {
 
 loop_closer::loop_closer(data::map_database* map_db, data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale)
-        : loop_detector_(bow_db, bow_vocab, fix_scale), map_db_(map_db),
-          graph_optimizer_(map_db, fix_scale), fix_scale_(fix_scale) {
-    spdlog::debug("CONSTRUCT: loop_closer");
+        : loop_detector_(bow_db, bow_vocab, fix_scale), map_db_(map_db), graph_optimizer_(map_db, fix_scale) {
+    spdlog::debug("CONSTRUCT: map::loop_closer");
 }
 
 loop_closer::~loop_closer() {
@@ -30,7 +26,7 @@ loop_closer::~loop_closer() {
     if (thread_for_loop_BA_) {
         thread_for_loop_BA_->join();
     }
-    spdlog::debug("DESTRUCT: loop_closer");
+    spdlog::debug("DESTRUCT: map::loop_closer");
 }
 
 void loop_closer::set_tracker(track::tracker* tracker) {
@@ -57,7 +53,7 @@ bool loop_closer::get_loop_detector_status() const {
 }
 
 void loop_closer::run() {
-    spdlog::info("start loop closer");
+    spdlog::info("start global optimization module");
 
     is_terminated_ = false;
 
@@ -124,6 +120,8 @@ void loop_closer::run() {
 
         correct_loop();
     }
+
+    spdlog::info("terminate global optimization module");
 }
 
 void loop_closer::queue_keyframe(data::keyframe* keyfrm) {
@@ -144,137 +142,143 @@ void loop_closer::correct_loop() {
     spdlog::info("detect loop: keyframe {} - keyframe {}", final_candidate_keyfrm->id_, cur_keyfrm_->id_);
     ++num_exec_loop_BA_;
 
-    // 0. ループ修正の前処理
+    // 0. pre-processing
 
-    // 0-1. スレッド停止
+    // 0-1. stop the mapping module and the previous loop bundle adjuster
 
-    // loop correction中はlocal mapperを止める
+    // pause the mapping module
     local_mapper_->request_pause();
-    // 前回のloop BAがまだ動いていたら止める
+    // abort the previous loop bundle adjuster
     if (loop_BA_is_running() || thread_for_loop_BA_) {
         abort_loop_BA();
     }
-    // local mapperが止まるまで待つ
+    // wait till the mapping module pauses
     while (!local_mapper_->is_paused()) {
-        std::this_thread::sleep_for(std::chrono::microseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
-    // 0-2. グラフ情報の更新
+    // 0-2. update the graph
 
     cur_keyfrm_->update_connections();
 
-    // 1. current keyframeのSim3(修正後)を用いて，current keyframeのcovisibilitiesの修正前後のSim3を計算する
-    //    修正前後の姿勢を用いて，covisibilitiesの姿勢およびそれらから観測できている3次元点も動かす
+    // 1. compute the Sim3 of the covisibilities of the current keyframe whose Sim3 is already estimated by the loop detector
+    //    then, the covisibilities are moved to the corrected positions
+    //    finally, landmarks observed in them are also moved to the correct position using the camera poses before and after camera pose correction
 
-    // current keyframeとその周辺のkeyframeを集める
-    std::vector<data::keyframe*> curr_covisibilities = cur_keyfrm_->get_covisibilities();
-    curr_covisibilities.push_back(cur_keyfrm_);
+    // acquire the covisibilities of the current keyframe
+    std::vector<data::keyframe*> curr_neighbors = cur_keyfrm_->get_covisibilities();
+    curr_neighbors.push_back(cur_keyfrm_);
 
-    // 修正前のcovisibilitiesのSim3姿勢
-    keyframe_Sim3_pairs_t non_corrected_Sim3s_iw;
-    // 修正後のcovisibilitiesのSim3姿勢
-    keyframe_Sim3_pairs_t pre_corrected_Sim3s_iw;
+    // Sim3 camera poses BEFORE loop correction
+    keyframe_Sim3_pairs_t Sim3s_nw_before_correction;
+    // Sim3 camera poses AFTER loop correction
+    keyframe_Sim3_pairs_t Sim3s_nw_after_correction;
 
-    const auto g2o_Sim3_world_to_curr = loop_detector_.get_Sim3_world_to_current();
+    const auto g2o_Sim3_cw_after_correction = loop_detector_.get_Sim3_world_to_current();
     {
         std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
 
-        // 修正前のcurrent keyframeの姿勢
-        const Mat44_t cam_pose_curr_to_world = cur_keyfrm_->get_cam_pose_inv();
+        // camera pose of the current keyframe BEFORE loop correction
+        const Mat44_t cam_pose_wc_before_correction = cur_keyfrm_->get_cam_pose_inv();
 
-        // validate_candidates()で推定したg2o_Sim3_world_to_curr_(ループ修正後のcurrent keyframeのSim3)
-        // を用いて，ループ修正前後のcurr_covisibilitiesのSim3を求める
-        non_corrected_Sim3s_iw = get_non_corrected_Sim3s(curr_covisibilities);
-        pre_corrected_Sim3s_iw = get_pre_corrected_Sim3s(cam_pose_curr_to_world, g2o_Sim3_world_to_curr, curr_covisibilities);
+        // compute Sim3s BEFORE loop correction
+        Sim3s_nw_before_correction = get_Sim3s_before_loop_correction(curr_neighbors);
+        // compute Sim3s AFTER loop correction
+        Sim3s_nw_after_correction = get_Sim3s_after_loop_correction(cam_pose_wc_before_correction, g2o_Sim3_cw_after_correction, curr_neighbors);
 
-        // 修正前後の相対姿勢を使って3次元点を動かす
-        correct_covisibility_landmarks(non_corrected_Sim3s_iw, pre_corrected_Sim3s_iw);
-        // 修正後の姿勢に更新する
-        correct_covisibility_keyframes(pre_corrected_Sim3s_iw);
+        // correct covibisibility landmark positions
+        correct_covisibility_landmarks(Sim3s_nw_before_correction, Sim3s_nw_after_correction);
+        // correct covisibility keyframe camera poses
+        correct_covisibility_keyframes(Sim3s_nw_after_correction);
     }
 
-    // 3次元点の重複を解消する
-    const auto curr_assoc_lms_in_cand = loop_detector_.current_matched_landmarks_observed_in_candidate();
-    replace_duplicated_landmarks(curr_assoc_lms_in_cand, pre_corrected_Sim3s_iw);
+    // 2. resolve duplications of landmarks after loop fusion
 
-    // curr_covisibilities_の各キーフレームに対して，ループ対応によって生じた新たなedgeを検出する
-    const auto new_connections = extract_new_connections(curr_covisibilities);
+    const auto curr_match_lms_observed_in_cand = loop_detector_.current_matched_landmarks_observed_in_candidate();
+    replace_duplicated_landmarks(curr_match_lms_observed_in_cand, Sim3s_nw_after_correction);
 
-    // pose graph optimization
-    graph_optimizer_.optimize(final_candidate_keyfrm, cur_keyfrm_, non_corrected_Sim3s_iw, pre_corrected_Sim3s_iw, new_connections);
+    // 3. extract the new connections created after loop fusion
 
-    // loop edgeを追加
+    const auto new_connections = extract_new_connections(curr_neighbors);
+
+    // 4. pose graph optimization
+
+    graph_optimizer_.optimize(final_candidate_keyfrm, cur_keyfrm_, Sim3s_nw_before_correction, Sim3s_nw_after_correction, new_connections);
+
+    // add a loop edge
     final_candidate_keyfrm->add_loop_edge(cur_keyfrm_);
     cur_keyfrm_->add_loop_edge(final_candidate_keyfrm);
 
-    // loop BAを起動
-    if (thread_for_loop_BA_) {
-        thread_for_loop_BA_->join();
-        thread_for_loop_BA_.reset(nullptr);
-    }
-    loop_BA_is_running_ = true;
-    abort_loop_BA_ = false;
-    thread_for_loop_BA_ = std::unique_ptr<std::thread>(new std::thread(&loop_closer::run_loop_BA, this, cur_keyfrm_->id_));
+    // 5. launch loop BA
 
-    // local mapperを再開
+    {
+        std::lock_guard<std::mutex> lock1(mtx_loop_BA_);
+        if (thread_for_loop_BA_) {
+            thread_for_loop_BA_->join();
+            thread_for_loop_BA_.reset(nullptr);
+        }
+        loop_BA_is_running_ = true;
+        abort_loop_BA_ = false;
+        thread_for_loop_BA_ = std::unique_ptr<std::thread>(new std::thread(&loop_closer::run_loop_BA, this, cur_keyfrm_->id_));
+    }
+
+    // 6. post-processing
+
+    // resume the mapping module
     local_mapper_->resume();
 
+    // set the loop fusion information to the loop detector
     loop_detector_.set_loop_correct_keyframe_id(cur_keyfrm_->id_);
 }
 
-keyframe_Sim3_pairs_t loop_closer::get_non_corrected_Sim3s(const std::vector<data::keyframe*>& covisibilities) const {
-    // 修正前のcovisibilitiesのSim3姿勢
-    keyframe_Sim3_pairs_t non_corrected_Sim3s_iw;
+keyframe_Sim3_pairs_t loop_closer::get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const {
+    keyframe_Sim3_pairs_t Sim3s_nw_before_loop_correction;
 
-    for (auto covisibility : covisibilities) {
-        // 修正前のcovisibilityの姿勢
-        const Mat44_t cam_pose_world_to_covi = covisibility->get_cam_pose();
-        // 修正前のworld->covisibilityのSim3を作って保存
-        const Mat33_t& rot_world_to_covi = cam_pose_world_to_covi.block<3, 3>(0, 0);
-        const Vec3_t& trans_world_to_covi = cam_pose_world_to_covi.block<3, 1>(0, 3);
-        const g2o::Sim3 non_corrected_Sim3_world_to_covi(rot_world_to_covi, trans_world_to_covi, 1.0);
-        non_corrected_Sim3s_iw[covisibility] = non_corrected_Sim3_world_to_covi;
+    for (const auto neighbor : neighbors) {
+        // camera pose of `neighbor` BEFORE loop correction
+        const Mat44_t cam_pose_nw = neighbor->get_cam_pose();
+        // create Sim3 from SE3
+        const Mat33_t& rot_nw = cam_pose_nw.block<3, 3>(0, 0);
+        const Vec3_t& trans_nw = cam_pose_nw.block<3, 1>(0, 3);
+        const g2o::Sim3 Sim3_nw_before_correction(rot_nw, trans_nw, 1.0);
+        Sim3s_nw_before_loop_correction[neighbor] = Sim3_nw_before_correction;
     }
 
-    return non_corrected_Sim3s_iw;
+    return Sim3s_nw_before_loop_correction;
 }
 
-keyframe_Sim3_pairs_t loop_closer::get_pre_corrected_Sim3s(const Mat44_t& cam_pose_curr_to_world, const g2o::Sim3& g2o_Sim3_world_to_curr,
-                                                           const std::vector<data::keyframe*>& covisibilities) const {
-    // 修正後のcovisibilitiesのSim3姿勢
-    keyframe_Sim3_pairs_t pre_corrected_Sim3s_iw;
+keyframe_Sim3_pairs_t loop_closer::get_Sim3s_after_loop_correction(const Mat44_t& cam_pose_wc_before_correction,
+                                                                   const g2o::Sim3& g2o_Sim3_cw_after_correction,
+                                                                   const std::vector<data::keyframe*>& neighbors) const {
+    keyframe_Sim3_pairs_t Sim3s_nw_after_loop_correction;
 
-    for (auto covisibility : covisibilities) {
-        // 修正前のcovisibilityの姿勢
-        const Mat44_t cam_pose_world_to_covi = covisibility->get_cam_pose();
-        // まず，修正前の姿勢を用いてcurrent->covisibilityのSim3を作る
-        const Mat44_t cam_pose_curr_to_covi = cam_pose_world_to_covi * cam_pose_curr_to_world;
-        const Mat33_t& rot_curr_to_covi = cam_pose_curr_to_covi.block<3, 3>(0, 0);
-        const Vec3_t& trans_curr_to_covi = cam_pose_curr_to_covi.block<3, 1>(0, 3);
-        const g2o::Sim3 Sim3_curr_to_covi(rot_curr_to_covi, trans_curr_to_covi, 1.0);
-        // 修正後のworld->currentと修正前のcurrent->covisibilityの姿勢を合わせて
-        // 修正後のworld->covisibilityのSim3を求める
-        const g2o::Sim3 pre_corrected_Sim3_world_to_covi = Sim3_curr_to_covi * g2o_Sim3_world_to_curr;
-        pre_corrected_Sim3s_iw[covisibility] = pre_corrected_Sim3_world_to_covi;
+    for (auto neighbor : neighbors) {
+        // camera pose of `neighbor` BEFORE loop correction
+        const Mat44_t cam_pose_nw_before_correction = neighbor->get_cam_pose();
+        // create the relative Sim3 from the current to `neighbor`
+        const Mat44_t cam_pose_nc = cam_pose_nw_before_correction * cam_pose_wc_before_correction;
+        const Mat33_t& rot_nc = cam_pose_nc.block<3, 3>(0, 0);
+        const Vec3_t& trans_nc = cam_pose_nc.block<3, 1>(0, 3);
+        const g2o::Sim3 Sim3_nc(rot_nc, trans_nc, 1.0);
+        // compute the camera poses AFTER loop correction of the neighbors
+        const g2o::Sim3 Sim3_nw_after_correction = Sim3_nc * g2o_Sim3_cw_after_correction;
+        Sim3s_nw_after_loop_correction[neighbor] = Sim3_nw_after_correction;
     }
 
-    return pre_corrected_Sim3s_iw;
+    return Sim3s_nw_after_loop_correction;
 }
 
-void loop_closer::correct_covisibility_landmarks(const keyframe_Sim3_pairs_t& non_corrected_Sim3s_iw,
-                                                 const keyframe_Sim3_pairs_t& pre_corrected_Sim3s_iw) const {
-    // 修正前後の相対姿勢を使って3次元点を動かす
-    for (const auto& keyfrm_Sim3_pair : pre_corrected_Sim3s_iw) {
-        auto keyfrm_i = keyfrm_Sim3_pair.first;
-        // world->keyframeのSim3(修正後)
-        const auto pre_corrected_Sim3_iw = keyfrm_Sim3_pair.second;
-        // keyframe->worldのSim3(修正後)
-        const auto pre_corrected_Sim3_wi = pre_corrected_Sim3_iw.inverse();
-        // world->keyframeのSim3(修正前)
-        const auto& non_corrected_Sim3_iw = non_corrected_Sim3s_iw.at(keyfrm_i);
+void loop_closer::correct_covisibility_landmarks(const keyframe_Sim3_pairs_t& Sim3s_nw_before_correction,
+                                                 const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const {
+    for (const auto& t : Sim3s_nw_after_correction) {
+        auto neighbor = t.first;
+        // neighbor->world AFTER loop correction
+        const auto Sim3_wn_after_correction = t.second.inverse();
+        // world->neighbor BEFORE loop correction
+        const auto& Sim3_nw_before_correction = Sim3s_nw_before_correction.at(neighbor);
 
-        const auto landmarks = keyfrm_i->get_landmarks();
-        for (auto lm : landmarks) {
+        const auto ngh_landmarks = neighbor->get_landmarks();
+        for (auto lm : ngh_landmarks) {
             if (!lm) {
                 continue;
             }
@@ -282,92 +286,87 @@ void loop_closer::correct_covisibility_landmarks(const keyframe_Sim3_pairs_t& no
                 continue;
             }
 
-            // 重複を避ける
-            if (lm->keyfrm_id_in_loop_fusion_ == cur_keyfrm_->id_) {
+            // avoid duplication
+            if (lm->loop_fusion_identifier_ == cur_keyfrm_->id_) {
                 continue;
             }
+            lm->loop_fusion_identifier_ = cur_keyfrm_->id_;
 
-            // 修正前後の相対姿勢を使って3次元点を動かす
-            const Vec3_t pow_w = lm->get_pos_in_world();
-            // 修正前のSim3でcamera座標に戻してから，修正後のSim3でworldへ戻す
-            const Vec3_t corrected_pos_w = pre_corrected_Sim3_wi.map(non_corrected_Sim3_iw.map(pow_w));
-
-            // 座標を更新
-            lm->set_pos_in_world(corrected_pos_w);
+            // correct position of `lm`
+            const Vec3_t pos_w_before_correction = lm->get_pos_in_world();
+            const Vec3_t pos_w_after_correction = Sim3_wn_after_correction.map(Sim3_nw_before_correction.map(pos_w_before_correction));
+            lm->set_pos_in_world(pos_w_after_correction);
+            // update geometry
             lm->update_normal_and_depth();
 
-            // どのkeyframeの姿勢を元に座標を修正したかを保存しておく
-            lm->keyfrm_id_in_loop_BA_ = keyfrm_i->id_;
-            // 重複を避ける & loop fusionを行った際のcurrent keyframeを保存しておく
-            lm->keyfrm_id_in_loop_fusion_ = cur_keyfrm_->id_;
+            // record the reference keyframe used in loop fusion of landmarks
+            lm->ref_keyfrm_id_in_loop_fusion_ = neighbor->id_;
         }
     }
 }
 
-void loop_closer::correct_covisibility_keyframes(const keyframe_Sim3_pairs_t& pre_corrected_Sim3s_iw) const {
-    // 修正後の姿勢をセットする
-    for (const auto& keyfrm_Sim3_pair : pre_corrected_Sim3s_iw) {
-        auto keyfrm_i = keyfrm_Sim3_pair.first;
-        const auto pre_corrected_Sim3_iw = keyfrm_Sim3_pair.second;
+void loop_closer::correct_covisibility_keyframes(const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const {
+    for (const auto& t : Sim3s_nw_after_correction) {
+        auto neighbor = t.first;
+        const auto Sim3_nw_after_correction = t.second;
 
-        const auto s = pre_corrected_Sim3_iw.scale();
-        const Mat33_t rot_iw = pre_corrected_Sim3_iw.rotation().toRotationMatrix();
-        const Vec3_t trans_iw = pre_corrected_Sim3_iw.translation() / s;
-        const Mat44_t corrected_cam_pose_iw = util::converter::to_eigen_cam_pose(rot_iw, trans_iw);
-        keyfrm_i->set_cam_pose(corrected_cam_pose_iw);
+        const auto s_nw = Sim3_nw_after_correction.scale();
+        const Mat33_t rot_nw = Sim3_nw_after_correction.rotation().toRotationMatrix();
+        const Vec3_t trans_nw = Sim3_nw_after_correction.translation() / s_nw;
+        const Mat44_t cam_pose_nw = util::converter::to_eigen_cam_pose(rot_nw, trans_nw);
+        neighbor->set_cam_pose(cam_pose_nw);
 
-        keyfrm_i->update_connections();
+        // update graph
+        neighbor->update_connections();
     }
 }
 
-void loop_closer::replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_assoc_lms_in_cand,
-                                               const keyframe_Sim3_pairs_t& pre_corrected_Sim3s_iw) const {
-    // currentとcandidateの間での3次元点の重複を解消する
+void loop_closer::replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_match_lms_observed_in_cand,
+                                               const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const {
+    // resolve duplications of landmarks between the current keyframe and the loop candidate
     {
         std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
 
         for (unsigned int idx = 0; idx < cur_keyfrm_->num_keypts_; ++idx) {
-            // candidateで観測されている3次元点のうち，currentの特徴点と対応が取れているもの
-            auto assoc_lm_in_cand = curr_assoc_lms_in_cand.at(idx);
-            if (!assoc_lm_in_cand) {
+            auto curr_match_lm_in_cand = curr_match_lms_observed_in_cand.at(idx);
+            if (!curr_match_lm_in_cand) {
                 continue;
             }
 
-            // currentで観測している3次元点
-            auto assoc_lm_in_curr = cur_keyfrm_->get_landmark(idx);
-            if (assoc_lm_in_curr) {
-                // current側に対応している点がすでに存在する場合は
-                // candidate側の3次元点で置き換える
-                assoc_lm_in_curr->replace(assoc_lm_in_cand);
+            auto lm_in_curr = cur_keyfrm_->get_landmark(idx);
+            if (lm_in_curr) {
+                // if the landmark corresponding `idx` exists,
+                // replace it with `curr_match_lm_in_cand` (observed in the candidate)
+                lm_in_curr->replace(curr_match_lm_in_cand);
             }
             else {
-                // current側に対応している点が存在しない場合は，
-                // candidate側の点との対応を追加する
-                cur_keyfrm_->add_landmark(assoc_lm_in_cand, idx);
-                assoc_lm_in_cand->add_observation(cur_keyfrm_, idx);
-                assoc_lm_in_cand->compute_descriptor();
+                // if landmark corresponding `idx` does not exists,
+                // add association between the current keyframe and `curr_match_lm_in_cand`
+                cur_keyfrm_->add_landmark(curr_match_lm_in_cand, idx);
+                curr_match_lm_in_cand->add_observation(cur_keyfrm_, idx);
+                curr_match_lm_in_cand->compute_descriptor();
             }
         }
     }
 
-    // currentの周辺のキーフレームについても，重複を解消する
-    const auto curr_assoc_lms_near_cand = loop_detector_.current_matched_landmarks_observed_in_candidate_covisibilities();
+    // resolve duplications of landmarks between the current keyframe and the candidates of the loop candidate
+    const auto curr_match_lms_observed_in_cand_covis = loop_detector_.current_matched_landmarks_observed_in_candidate_covisibilities();
     match::fuse fuser(0.8);
-    for (const auto& pre_corrected_Sim3_iw : pre_corrected_Sim3s_iw) {
-        auto keyfrm = pre_corrected_Sim3_iw.first;
-        const auto& g2o_Sim3_cw = pre_corrected_Sim3_iw.second;
+    for (const auto& t : Sim3s_nw_after_correction) {
+        auto neighbor = t.first;
+        const Mat44_t Sim3_nw_after_correction = util::converter::to_eigen_mat(t.second);
 
-        const Mat44_t Sim3_cw = util::converter::to_eigen_mat(g2o_Sim3_cw);
-
-        // currentの特徴点と対応が取れている3次元点(curr_assoc_lms_near_cand_)をkeyfrmに投影して，3次元点の重複を探す
-        std::vector<data::landmark*> lms_to_replace(curr_assoc_lms_near_cand.size(), nullptr);
-        fuser.detect_duplication(keyfrm, Sim3_cw, curr_assoc_lms_near_cand, 4, lms_to_replace);
+        // reproject the landmarks observed in the current keyframe to the neighbor,
+        // then search duplication of the landmarks
+        std::vector<data::landmark*> lms_to_replace(curr_match_lms_observed_in_cand_covis.size(), nullptr);
+        fuser.detect_duplication(neighbor, Sim3_nw_after_correction, curr_match_lms_observed_in_cand_covis, 4, lms_to_replace);
 
         std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
-        for (unsigned int i = 0; i < curr_assoc_lms_near_cand.size(); ++i) {
+        // if any landmark duplication is found, replace it
+        for (unsigned int i = 0; i < curr_match_lms_observed_in_cand_covis.size(); ++i) {
             auto lm_to_replace = lms_to_replace.at(i);
             if (lm_to_replace) {
-                lm_to_replace->replace(curr_assoc_lms_near_cand.at(i));
+                lm_to_replace->replace(curr_match_lms_observed_in_cand_covis.at(i));
             }
         }
     }
@@ -375,28 +374,25 @@ void loop_closer::replace_duplicated_landmarks(const std::vector<data::landmark*
 
 auto loop_closer::extract_new_connections(const std::vector<data::keyframe*>& covisibilities) const
 -> std::map<data::keyframe*, std::set<data::keyframe*>> {
-    // covisibilities_の各キーフレームに対して，ループ対応によって生じた新たなedgeを検出する
     std::map<data::keyframe*, std::set<data::keyframe*>> new_connections;
 
     for (auto covisibility : covisibilities) {
-        // update_connections()を実行する前なので，ループ対応する前の情報が得られる
+        // acquire neighbors BEFORE loop fusion (because update_connections() is not called yet)
         const auto neighbors_before_update = covisibility->get_covisibilities();
 
-        // covisibility graphの情報を更新
+        // call update_connections()
         covisibility->update_connections();
-        // 更新後の情報を取得する
+        // acquire neighbors AFTER loop fusion
         new_connections[covisibility] = covisibility->get_connected_keyframes();
 
-        // covisibilityを削除
+        // remove covisibilities
         for (const auto keyfrm_to_erase : covisibilities) {
             new_connections.at(covisibility).erase(keyfrm_to_erase);
         }
-        // 更新前にもcovisibilityであったものは削除
+        // remove nighbors before loop fusion
         for (const auto keyfrm_to_erase : neighbors_before_update) {
             new_connections.at(covisibility).erase(keyfrm_to_erase);
         }
-
-        // 以上の処理で，ループ対応によってcovisibilityと新たに接続したノードのみが残る
     }
 
     return new_connections;
@@ -512,7 +508,6 @@ void loop_closer::request_reset() {
         {
             std::lock_guard<std::mutex> lock(mtx_reset_);
             if (!reset_is_requested_) {
-                spdlog::info("reset loop closer");
                 break;
             }
         }
@@ -550,7 +545,7 @@ bool loop_closer::is_paused() const {
 
 void loop_closer::pause() {
     std::lock_guard<std::mutex> lock(mtx_pause_);
-    spdlog::info("pause loop closer");
+    spdlog::info("pause global optimization module");
     is_paused_ = true;
 }
 
@@ -568,7 +563,7 @@ void loop_closer::resume() {
     is_paused_ = false;
     pause_is_requested_ = false;
 
-    spdlog::info("resume loop closer");
+    spdlog::info("resume global optimization module");
 }
 
 void loop_closer::request_terminate() {

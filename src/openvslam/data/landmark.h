@@ -121,8 +121,8 @@ public:
     unsigned int lead_keyfrm_id_in_local_BA_ = 0;
 
     // loop closingの際に重複を避けるために用いられる変数
-    unsigned int keyfrm_id_in_loop_fusion_ = 0;
-    unsigned int keyfrm_id_in_loop_BA_ = 0;
+    unsigned int loop_fusion_identifier_ = 0;
+    unsigned int ref_keyfrm_id_in_loop_fusion_ = 0;
     Vec3_t pos_w_after_global_BA_;
     unsigned int lead_keyfrm_id_in_loop_BA_ = 0;
 
