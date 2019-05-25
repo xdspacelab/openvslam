@@ -33,10 +33,10 @@ The later parts of this chapter explains what each of the commands do in more de
     unzip orb_vocab.zip
 
     # run tracking and mapping
-    ./run_movie_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --map-db map.msg
+    ./run_video_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --map-db map.msg
 
     # run localization
-    ./run_movie_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --map-db map.msg
+    ./run_video_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --map-db map.msg
 
 
 Sample Datasets
@@ -135,7 +135,7 @@ Tracking and Mapping
 ^^^^^^^^^^^^^^^^^^^^
 
 Here we should how to run SLAM and create a map database file with ``aist_living_lab_1`` dataset.
-You can use ``./run_movie_slam`` to run SLAM with the video file.
+You can use ``./run_video_slam`` to run SLAM with the video file.
 
 
 .. code-block:: bash
@@ -143,13 +143,13 @@ You can use ``./run_movie_slam`` to run SLAM with the video file.
     # at the build directory of OpenVSLAM
     $ ls
     ...
-    run_movie_slam
+    run_video_slam
     ...
-    $ ./run_movie_slam -h
+    $ ./run_video_slam -h
     Allowed options:
       -h, --help             produce help message
       -v, --vocab arg        vocabulary file path
-      -m, --movie arg        movie file path
+      -m, --video arg        video file path
       -s, --setting arg      setting file path
       --mask arg             mask image path
       --frame-skip arg (=1)  interval of frame skip
@@ -166,7 +166,7 @@ The paths should be changed accordingly.
 
 .. code-block:: bash
 
-    $ ./run_movie_slam \
+    $ ./run_video_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -s /path/to/aist_living_lab_1/config.yaml \
         -m /path/to/aist_living_lab_1/movie.mp4 \
@@ -278,16 +278,16 @@ Localization
 ^^^^^^^^^^^^
 
 In this section, we will localize the frames in ``aist_living_lab_2`` dataset using the created map file ``aist_living_lab_1_map.msg``.
-You can use ``./run_movie_localization`` to run localization.
+You can use ``./run_video_localization`` to run localization.
 
 
 .. code-block:: bash
 
-    $ ./run_movie_localization -h
+    $ ./run_video_localization -h
     Allowed options:
       -h, --help             produce help message
       -v, --vocab arg        vocabulary file path
-      -m, --movie arg        movie file path
+      -m, --video arg        video file path
       -s, --setting arg      setting file path
       -d, --map-db arg       path to a prebuilt map database
       --mapping              perform mapping as well as localization
@@ -304,7 +304,7 @@ The paths should be changed accordingly.
 
 .. code-block:: bash
 
-    $ ./run_movie_localization \
+    $ ./run_video_localization \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -s /path/to/aist_living_lab_2/config.yaml \
         -m /path/to/aist_living_lab_2/movie.mp4 \

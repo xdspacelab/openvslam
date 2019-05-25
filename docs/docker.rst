@@ -52,9 +52,9 @@ After launching the container, the shell interface will be launched in the docke
 .. code-block:: bash
 
     root@ddad048b5fff:/openvslam/build# ls
-    lib                     run_image_slam          run_movie_slam
+    lib                     run_image_slam          run_video_slam
     run_euroc_slam          run_kitti_slam          run_tum_slam
-    run_image_localization  run_movie_localization
+    run_image_localization  run_video_localization
 
 See :ref:`Tutorial <chapter-simple-tutorial>` to run SLAM examples.
 

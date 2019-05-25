@@ -52,7 +52,7 @@ Requirements for OpenVSLAM
 
 .. NOTE ::
 
-    OpenCV with movie support is necessary if you plan on using movies (e.g. ``.mp4``) as inputs.
+    OpenCV with video support is necessary if you plan on using video files (e.g. ``.mp4``) as inputs.
 
 Requirements for Pangolin Viewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
