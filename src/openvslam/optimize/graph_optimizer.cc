@@ -266,8 +266,8 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
                 continue;
             }
 
-            const auto id = (lm->keyfrm_id_in_loop_fusion_ == curr_keyfrm->id_)
-                            ? lm->keyfrm_id_in_loop_BA_ : lm->get_ref_keyframe()->id_;
+            const auto id = (lm->loop_fusion_identifier_ == curr_keyfrm->id_)
+                            ? lm->ref_keyfrm_id_in_loop_fusion_ : lm->get_ref_keyframe()->id_;
 
             const ::g2o::Sim3& Sim3_cw = Sim3s_cw.at(id);
             const ::g2o::Sim3& corrected_Sim3_wc = corrected_Sim3s_wc.at(id);
