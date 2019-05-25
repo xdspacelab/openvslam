@@ -1,6 +1,7 @@
 #include "openvslam/system.h"
 #include "openvslam/config.h"
 #include "openvslam/camera/base.h"
+#include "openvslam/io/trajectory_io.h"
 #include "openvslam/track/tracker.h"
 #include "openvslam/map/local_mapper.h"
 #include "openvslam/map/loop_closer.h"
@@ -8,12 +9,10 @@
 #include "openvslam/data/camera_database.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/data/bow_database.h"
-#include "openvslam/util/converter.h"
 #include "openvslam/publisher/map_publisher.h"
 #include "openvslam/publisher/frame_publisher.h"
 
 #include <thread>
-#include <iomanip>
 
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
@@ -24,11 +23,11 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
         : cfg_(cfg), camera_(cfg->camera_) {
     spdlog::debug("CONSTRUCT: system");
 
-    std::cout << R"(  ___               __   _____ _      _   __  __  )" << std::endl;
-    std::cout << R"( / _ \ _ __  ___ _ _\ \ / / __| |    /_\ |  \/  | )" << std::endl;
-    std::cout << R"(| (_) | '_ \/ -_) ' \\ V /\__ \ |__ / _ \| |\/| | )" << std::endl;
-    std::cout << R"( \___/| .__/\___|_||_|\_/ |___/____/_/ \_\_|  |_| )" << std::endl;
-    std::cout << R"(      |_|                                         )" << std::endl;
+    std::cout << R"(  ___               __   _____ _      _   __  __ )" << std::endl;
+    std::cout << R"( / _ \ _ __  ___ _ _\ \ / / __| |    /_\ |  \/  |)" << std::endl;
+    std::cout << R"(| (_) | '_ \/ -_) ' \\ V /\__ \ |__ / _ \| |\/| |)" << std::endl;
+    std::cout << R"( \___/| .__/\___|_||_|\_/ |___/____/_/ \_\_|  |_|)" << std::endl;
+    std::cout << R"(      |_|                                        )" << std::endl;
     std::cout << std::endl;
     std::cout << "Copyright (C) 2019," << std::endl;
     std::cout << "National Institute of Advanced Industrial Science and Technology (AIST)" << std::endl;
@@ -267,176 +266,21 @@ void system::shutdown() {
 }
 
 void system::save_frame_trajectory(const std::string& path, const std::string& format) const {
-    assert(map_db_);
-
     pause_other_threads();
-
-    {
-        std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
-
-        // 1. frame statsを取得
-
-        const auto frm_stats = map_db_->get_frame_statistics();
-
-        // 2. フレームの姿勢を復元しながら保存
-
-        const auto num_valid_frms = frm_stats.get_num_valid_frames();
-        const auto reference_keyframes = frm_stats.get_reference_keyframes();
-        const auto rel_cam_poses_from_ref_keyfrms = frm_stats.get_relative_cam_poses();
-        const auto timestamps = frm_stats.get_timestamps();
-        const auto is_lost_frms = frm_stats.get_lost_frames();
-
-        if (num_valid_frms == 0) {
-            spdlog::warn("there are no valid frames, cannot dump frame trajectory");
-            resume_other_threads();
-            return;
-        }
-
-        std::ofstream ofs(path, std::ios::out);
-        if (!ofs.is_open()) {
-            spdlog::critical("cannot create a file at {}", path);
-            throw std::runtime_error("cannot create a file at " + path);
-        }
-
-        spdlog::info("dump frame trajectory in \"{}\" format from frame {} to frame {} ({} frames)",
-                     format, reference_keyframes.begin()->first, reference_keyframes.rbegin()->first, num_valid_frms);
-
-        const auto rk_itr_bgn = reference_keyframes.begin();
-        const auto rc_itr_bgn = rel_cam_poses_from_ref_keyfrms.begin();
-        const auto rk_itr_end = reference_keyframes.end();
-        const auto rc_itr_end = rel_cam_poses_from_ref_keyfrms.end();
-        auto rk_itr = rk_itr_bgn;
-        auto rc_itr = rc_itr_bgn;
-
-        int offset = rk_itr->first;
-        unsigned int prev_frm_id = 0;
-        for (unsigned int i = 0; i < num_valid_frms; ++i, ++rk_itr, ++rc_itr) {
-            // frame IDを確認
-            assert(rk_itr->first == rc_itr->first);
-            const auto frm_id = rk_itr->first;
-
-            // lost frameかどうかを確認
-            if (is_lost_frms.at(frm_id)) {
-                spdlog::warn("frame {} is lost", frm_id);
-                continue;
-            }
-
-            // フレームがスキップされていないか確認
-            if (frm_id != i + offset) {
-                spdlog::warn("frame(s) from {} to {} is/are skipped", prev_frm_id + 1, frm_id - 1);
-                offset = frm_id - i;
-            }
-
-            // reference keyframeのポインタと絶対姿勢
-            auto ref_keyfrm = rk_itr->second;
-            const Mat44_t ref_cam_pose_rw = ref_keyfrm->get_cam_pose();
-            // reference keyframe -> frame の相対姿勢
-            const Mat44_t rel_cam_pose_cr = rc_itr->second;
-
-            // フレームの姿勢を計算
-            const Mat44_t cam_pose_cw = rel_cam_pose_cr * ref_cam_pose_rw;
-            const Mat44_t cam_pose_wc = cam_pose_cw.inverse();
-
-            if (format == "KITTI") {
-                ofs << std::setprecision(9)
-                    << cam_pose_wc(0, 0) << " " << cam_pose_wc(0, 1) << " " << cam_pose_wc(0, 2) << " " << cam_pose_wc(0, 3) << " "
-                    << cam_pose_wc(1, 0) << " " << cam_pose_wc(1, 1) << " " << cam_pose_wc(1, 2) << " " << cam_pose_wc(1, 3) << " "
-                    << cam_pose_wc(2, 0) << " " << cam_pose_wc(2, 1) << " " << cam_pose_wc(2, 2) << " " << cam_pose_wc(2, 3) << std::endl;
-            }
-            else if (format == "TUM") {
-                const Mat33_t& rot_wc = cam_pose_wc.block<3, 3>(0, 0);
-                const Vec3_t& trans_wc = cam_pose_wc.block<3, 1>(0, 3);
-                const Quat_t quat_wc = Quat_t(rot_wc);
-                ofs << std::setprecision(15)
-                    << timestamps.at(frm_id) << " "
-                    << std::setprecision(9)
-                    << trans_wc(0) << " " << trans_wc(1) << " " << trans_wc(2) << " "
-                    << quat_wc.x() << " " << quat_wc.y() << " " << quat_wc.z() << " " << quat_wc.w() << std::endl;
-            }
-            else {
-                throw std::runtime_error("Not implemented: trajectory format \"" + format + "\"");
-            }
-
-            prev_frm_id = frm_id;
-        }
-        if (rk_itr != rk_itr_end || rc_itr != rc_itr_end) {
-            spdlog::error("the sizes of frame statistics are not matched");
-        }
-
-        ofs.close();
-    }
-
+    io::trajectory_io trajectory_io(map_db_);
+    trajectory_io.save_frame_trajectory(path, format);
     resume_other_threads();
 }
 
 void system::save_keyframe_trajectory(const std::string& path, const std::string& format) const {
-    assert(map_db_);
-
     pause_other_threads();
-
-    {
-        std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
-
-        // 1. keyframesを取得してID順にソート
-
-        auto keyfrms = map_db_->get_all_keyframes();
-        std::sort(keyfrms.begin(), keyfrms.end(), [&](data::keyframe* keyfrm_1, data::keyframe* keyfrm_2) {
-            return *keyfrm_1 < *keyfrm_2;
-        });
-
-        // 2. 姿勢を変換して保存
-
-        if (keyfrms.empty()) {
-            spdlog::warn("there are no valid keyframes, cannot dump keyframe trajectory");
-            resume_other_threads();
-            return;
-        }
-
-        std::ofstream ofs(path, std::ios::out);
-        if (!ofs.is_open()) {
-            spdlog::critical("cannot create a file at {}", path);
-            throw std::runtime_error("cannot create a file at " + path);
-        }
-
-        spdlog::info("dump keyframe trajectory in \"{}\" format from keyframe {} to keyframe {} ({} keyframes)",
-                     format, (*keyfrms.begin())->id_, (*keyfrms.rbegin())->id_, keyfrms.size());
-
-        for (const auto keyfrm : keyfrms) {
-            // フレームの姿勢とタイムスタンプを取得
-            const Mat44_t cam_pose_cw = keyfrm->get_cam_pose();
-            const Mat44_t cam_pose_wc = cam_pose_cw.inverse();
-            const auto timestamp = keyfrm->timestamp_;
-
-            if (format == "KITTI") {
-                ofs << std::setprecision(9)
-                    << cam_pose_wc(0, 0) << " " << cam_pose_wc(0, 1) << " " << cam_pose_wc(0, 2) << " " << cam_pose_wc(0, 3) << " "
-                    << cam_pose_wc(1, 0) << " " << cam_pose_wc(1, 1) << " " << cam_pose_wc(1, 2) << " " << cam_pose_wc(1, 3) << " "
-                    << cam_pose_wc(2, 0) << " " << cam_pose_wc(2, 1) << " " << cam_pose_wc(2, 2) << " " << cam_pose_wc(2, 3) << std::endl;
-            }
-            else if (format == "TUM") {
-                const Mat33_t& rot_wc = cam_pose_wc.block<3, 3>(0, 0);
-                const Vec3_t& trans_wc = cam_pose_wc.block<3, 1>(0, 3);
-                const Quat_t quat_wc = Quat_t(rot_wc);
-                ofs << std::setprecision(15)
-                    << timestamp << " "
-                    << std::setprecision(9)
-                    << trans_wc(0) << " " << trans_wc(1) << " " << trans_wc(2) << " "
-                    << quat_wc.x() << " " << quat_wc.y() << " " << quat_wc.z() << " " << quat_wc.w() << std::endl;
-            }
-            else {
-                throw std::runtime_error("Not implemented: trajectory format \"" + format + "\"");
-            }
-        }
-
-        ofs.close();
-    }
-
+    io::trajectory_io trajectory_io(map_db_);
+    trajectory_io.save_keyframe_trajectory(path, format);
     resume_other_threads();
 }
 
 void system::load_message_pack(const std::string& path) {
     assert(map_db_ && bow_db_);
-
     pause_other_threads();
 
     {

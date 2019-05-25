@@ -2,7 +2,6 @@
 #define OPENVSLAM_SYSTEM_H
 
 #include "openvslam/type.h"
-#include "openvslam/camera/base.h"
 #include "openvslam/data/bow_vocabulary.h"
 
 #include <string>
@@ -14,8 +13,11 @@
 
 namespace openvslam {
 
-// system
 class config;
+
+namespace camera {
+class base;
+} // namespace camera
 
 namespace data {
 class camera_database;
