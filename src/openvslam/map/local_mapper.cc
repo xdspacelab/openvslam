@@ -49,14 +49,14 @@ void local_mapper::run() {
         set_keyframe_acceptability(false);
 
         // check if termination is requested
-        if (check_terminate_request()) {
+        if (terminate_is_requested()) {
             // terminate and break
             terminate();
             break;
         }
 
         // check if pause is requested
-        if (check_pause_request()) {
+        if (pause_is_requested()) {
             // if any keyframe is queued, all of them must be processed before the pause
             while (keyframe_is_queued()) {
                 // create and extend the map with the new keyframe
@@ -67,13 +67,13 @@ void local_mapper::run() {
             // pause and wait
             pause();
             // check if termination or reset is requested during pause
-            while (is_paused() && !check_terminate_request() && !check_reset_request()) {
+            while (is_paused() && !terminate_is_requested() && !reset_is_requested()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(3));
             }
         }
 
         // check if reset is requested
-        if (check_reset_request()) {
+        if (reset_is_requested()) {
             // reset, UNLOCK and continue
             reset();
             set_keyframe_acceptability(true);
@@ -102,7 +102,7 @@ void local_mapper::run() {
 void local_mapper::queue_keyframe(data::keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
     keyfrms_queue_.push_back(keyfrm);
-    abort_BA_is_requested_ = true;
+    abort_local_BA_ = true;
 }
 
 unsigned int local_mapper::get_num_queued_keyframes() const {
@@ -124,7 +124,7 @@ void local_mapper::set_keyframe_acceptability(const bool acceptability) {
 }
 
 void local_mapper::abort_local_BA() {
-    abort_BA_is_requested_ = true;
+    abort_local_BA_ = true;
 }
 
 void local_mapper::mapping_with_new_keyframe() {
@@ -160,9 +160,9 @@ void local_mapper::mapping_with_new_keyframe() {
     }
 
     // local bundle adjustment
-    abort_BA_is_requested_ = false;
+    abort_local_BA_ = false;
     if (2 < map_db_->get_num_keyframes()) {
-        local_bundle_adjuster_.optimize(cur_keyfrm_, &abort_BA_is_requested_);
+        local_bundle_adjuster_.optimize(cur_keyfrm_, &abort_local_BA_);
     }
     local_map_cleaner_.remove_redundant_keyframes(cur_keyfrm_);
 }
@@ -263,9 +263,9 @@ void local_mapper::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, data
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (unsigned int j = 0; j < matches.size(); ++j) {
-        const auto idx_1 = matches.at(j).first;
-        const auto idx_2 = matches.at(j).second;
+    for (unsigned int i = 0; i < matches.size(); ++i) {
+        const auto idx_1 = matches.at(i).first;
+        const auto idx_2 = matches.at(i).second;
 
         // triangulate between idx_1 and idx_2
         Vec3_t pos_w;
@@ -421,7 +421,7 @@ void local_mapper::request_reset() {
     }
 }
 
-bool local_mapper::check_reset_request() const {
+bool local_mapper::reset_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     return reset_is_requested_;
 }
@@ -438,12 +438,7 @@ void local_mapper::request_pause() {
     std::lock_guard<std::mutex> lock1(mtx_pause_);
     pause_is_requested_ = true;
     std::lock_guard<std::mutex> lock2(mtx_keyfrm_queue_);
-    abort_BA_is_requested_ = true;
-}
-
-bool local_mapper::pause_is_requested() const {
-    std::lock_guard<std::mutex> lock(mtx_pause_);
-    return pause_is_requested_;
+    abort_local_BA_ = true;
 }
 
 bool local_mapper::is_paused() const {
@@ -451,7 +446,7 @@ bool local_mapper::is_paused() const {
     return is_paused_;
 }
 
-bool local_mapper::check_pause_request() const {
+bool local_mapper::pause_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     return pause_is_requested_ && !force_to_run_;
 }
@@ -504,7 +499,7 @@ bool local_mapper::is_terminated() const {
     return is_terminated_;
 }
 
-bool local_mapper::check_terminate_request() const {
+bool local_mapper::terminate_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_terminate_);
     return terminate_is_requested_;
 }

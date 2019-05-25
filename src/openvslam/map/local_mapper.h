@@ -29,10 +29,6 @@ class loop_closer;
 
 class local_mapper {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    local_mapper() = delete;
-
     /**
      * Constructor
      */
@@ -192,7 +188,7 @@ private:
     /**
      * Check and execute reset
      */
-    bool check_reset_request() const;
+    bool reset_is_requested() const;
 
     /**
      * Reset the variables
@@ -207,11 +203,6 @@ private:
 
     //! mutex for access to pause procedure
     mutable std::mutex mtx_pause_;
-
-    /**
-     * Check and execute pause
-     */
-    bool check_pause_request() const;
 
     /**
      * Pause the local mapper
@@ -234,7 +225,7 @@ private:
     /**
      * Check if termination is requested or not
      */
-    bool check_terminate_request() const;
+    bool terminate_is_requested() const;
 
     /**
      * Raise the flag which indicates the main loop has been already terminated
@@ -284,7 +275,7 @@ private:
     const optimize::local_bundle_adjuster local_bundle_adjuster_;
 
     //! bridge flag to abort local BA
-    bool abort_BA_is_requested_ = false;
+    bool abort_local_BA_ = false;
 
     //-----------------------------------------
     // others
