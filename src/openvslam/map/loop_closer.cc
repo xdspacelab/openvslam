@@ -1,14 +1,11 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
-#include "openvslam/data/bow_database.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/map/local_mapper.h"
 #include "openvslam/map/loop_closer.h"
 #include "openvslam/match/fuse.h"
-#include "openvslam/optimize/global_bundle_adjuster.h"
 #include "openvslam/util/converter.h"
 
-#include <mutex>
 #include <thread>
 
 #include <spdlog/spdlog.h>
