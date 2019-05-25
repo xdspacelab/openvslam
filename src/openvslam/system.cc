@@ -279,14 +279,14 @@ void system::save_keyframe_trajectory(const std::string& path, const std::string
     resume_other_threads();
 }
 
-void system::load_message_pack(const std::string& path) {
+void system::load_map_database(const std::string& path) const {
     pause_other_threads();
     io::map_database_io map_db_io(cam_db_, map_db_, bow_db_, bow_vocab_);
     map_db_io.load_message_pack(path);
     resume_other_threads();
 }
 
-void system::save_message_pack(const std::string& path) {
+void system::save_map_database(const std::string& path) const {
     pause_other_threads();
     io::map_database_io map_db_io(cam_db_, map_db_, bow_db_, bow_vocab_);
     map_db_io.save_message_pack(path);

@@ -97,9 +97,9 @@ public:
 
     void save_keyframe_trajectory(const std::string& path, const std::string& format) const;
 
-    void load_message_pack(const std::string& path);
+    void load_map_database(const std::string& path) const;
 
-    void save_message_pack(const std::string& path);
+    void save_map_database(const std::string& path) const;
 
 private:
     //! check reset request

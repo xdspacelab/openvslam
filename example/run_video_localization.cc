@@ -33,7 +33,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
     // load the prebuilt map
-    SLAM.load_message_pack(map_db_path);
+    SLAM.load_map_database(map_db_path);
     // startup the SLAM process (it does not need initialization of a map)
     SLAM.startup(false);
     // select to activate the mapping module or not
