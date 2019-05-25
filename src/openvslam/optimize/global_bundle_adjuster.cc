@@ -148,8 +148,8 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
             keyfrm->set_cam_pose(cam_pose_cw);
         }
         else {
-            keyfrm->cam_pose_cw_after_BA_ = cam_pose_cw;
-            keyfrm->lead_keyfrm_id_in_loop_BA_ = lead_keyfrm_id_in_global_BA;
+            keyfrm->cam_pose_cw_after_loop_BA_ = cam_pose_cw;
+            keyfrm->loop_BA_identifier_ = lead_keyfrm_id_in_global_BA;
         }
     }
 
@@ -175,7 +175,7 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
         }
         else {
             lm->pos_w_after_global_BA_ = pos_w;
-            lm->lead_keyfrm_id_in_loop_BA_ = lead_keyfrm_id_in_global_BA;
+            lm->loop_BA_identifier_ = lead_keyfrm_id_in_global_BA;
         }
     }
 }

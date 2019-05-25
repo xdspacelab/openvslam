@@ -5,6 +5,7 @@
 #include "openvslam/data/bow_vocabulary.h"
 #include "openvslam/map/type.h"
 #include "openvslam/map/loop_detector.h"
+#include "openvslam/map/loop_bundle_adjuster.h"
 #include "openvslam/optimize/graph_optimizer.h"
 
 #include <list>
@@ -283,24 +284,11 @@ private:
     //-----------------------------------------
     // variables for loop BA
 
-    //! mutex for access to loop BA related variables
-    mutable std::mutex mtx_loop_BA_;
+    //! loop bundle adjuster
+    loop_bundle_adjuster loop_bundle_adjuster_;
 
-    /**
-     * Run loop BA
-     * @param lead_keyfrm_id
-     */
-    void run_loop_BA(unsigned int lead_keyfrm_id);
-
-    //! flag which indicates whether the loop BA is running or not
-    bool loop_BA_is_running_ = false;
-    //! flag to abort loop BA, which is passed to g2o optimizer
-    bool abort_loop_BA_ = false;
     //! thread for running loop BA
     std::unique_ptr<std::thread> thread_for_loop_BA_ = nullptr;
-
-    //! the number of times that loop BA is performed
-    unsigned int num_exec_loop_BA_ = 0;
 };
 
 } // namespace map

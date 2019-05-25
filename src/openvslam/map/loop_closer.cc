@@ -17,7 +17,8 @@ namespace openvslam {
 namespace map {
 
 loop_closer::loop_closer(data::map_database* map_db, data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale)
-        : loop_detector_(bow_db, bow_vocab, fix_scale), map_db_(map_db), graph_optimizer_(map_db, fix_scale) {
+        : loop_detector_(bow_db, bow_vocab, fix_scale), map_db_(map_db),
+          graph_optimizer_(map_db, fix_scale), loop_bundle_adjuster_(map_db) {
     spdlog::debug("CONSTRUCT: map::loop_closer");
 }
 
@@ -35,6 +36,7 @@ void loop_closer::set_tracker(track::tracker* tracker) {
 
 void loop_closer::set_local_mapper(map::local_mapper* local_mapper) {
     local_mapper_ = local_mapper;
+    loop_bundle_adjuster_.set_local_mapper(local_mapper);
 }
 
 void loop_closer::set_loop_detector_status(const bool loop_detector_is_enabled) {
@@ -140,7 +142,7 @@ void loop_closer::correct_loop() {
     auto final_candidate_keyfrm = loop_detector_.get_selected_candidate_keyframe();
 
     spdlog::info("detect loop: keyframe {} - keyframe {}", final_candidate_keyfrm->id_, cur_keyfrm_->id_);
-    ++num_exec_loop_BA_;
+    loop_bundle_adjuster_.count_loop_BA_execution();
 
     // 0. pre-processing
 
@@ -149,7 +151,7 @@ void loop_closer::correct_loop() {
     // pause the mapping module
     local_mapper_->request_pause();
     // abort the previous loop bundle adjuster
-    if (loop_BA_is_running() || thread_for_loop_BA_) {
+    if (thread_for_loop_BA_ || loop_bundle_adjuster_.is_running()) {
         abort_loop_BA();
     }
     // wait till the mapping module pauses
@@ -192,7 +194,7 @@ void loop_closer::correct_loop() {
         correct_covisibility_keyframes(Sim3s_nw_after_correction);
     }
 
-    // 2. resolve duplications of landmarks after loop fusion
+    // 2. resolve duplications of landmarks caused by loop fusion
 
     const auto curr_match_lms_observed_in_cand = loop_detector_.current_matched_landmarks_observed_in_candidate();
     replace_duplicated_landmarks(curr_match_lms_observed_in_cand, Sim3s_nw_after_correction);
@@ -211,16 +213,14 @@ void loop_closer::correct_loop() {
 
     // 5. launch loop BA
 
-    {
-        std::lock_guard<std::mutex> lock1(mtx_loop_BA_);
-        if (thread_for_loop_BA_) {
-            thread_for_loop_BA_->join();
-            thread_for_loop_BA_.reset(nullptr);
-        }
-        loop_BA_is_running_ = true;
-        abort_loop_BA_ = false;
-        thread_for_loop_BA_ = std::unique_ptr<std::thread>(new std::thread(&loop_closer::run_loop_BA, this, cur_keyfrm_->id_));
+    while (loop_bundle_adjuster_.is_running()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
+    if (thread_for_loop_BA_) {
+        thread_for_loop_BA_->join();
+        thread_for_loop_BA_.reset(nullptr);
+    }
+    thread_for_loop_BA_ = std::unique_ptr<std::thread>(new std::thread(&loop_bundle_adjuster::optimize, &loop_bundle_adjuster_, cur_keyfrm_->id_));
 
     // 6. post-processing
 
@@ -398,112 +398,13 @@ auto loop_closer::extract_new_connections(const std::vector<data::keyframe*>& co
     return new_connections;
 }
 
-void loop_closer::run_loop_BA(unsigned int lead_keyfrm_id) {
-    spdlog::info("start loop bundle adjustment");
-
-    const unsigned int idx = num_exec_loop_BA_;
-
-    const auto global_bundle_adjuster = optimize::global_bundle_adjuster(map_db_, 10, false);
-    global_bundle_adjuster.optimize(lead_keyfrm_id, &abort_loop_BA_);
-
-    {
-        std::lock_guard<std::mutex> lock1(mtx_loop_BA_);
-
-        // BA中にcorrect loopが走っていたらreturn
-        // BAが中止されていたらreturn
-        if (idx != num_exec_loop_BA_ || abort_loop_BA_) {
-            spdlog::info("abort loop bundle adjustment");
-            loop_BA_is_running_ = false;
-            abort_loop_BA_ = false;
-            return;
-        }
-
-        spdlog::info("finish loop bundle adjustment");
-        spdlog::info("updating map with pose propagation");
-        local_mapper_->request_pause();
-
-        while (!local_mapper_->is_paused() && !local_mapper_->is_terminated()) {
-            std::this_thread::sleep_for(std::chrono::microseconds(1000));
-        }
-
-        std::lock_guard<std::mutex> lock2(data::map_database::mtx_database_);
-
-        // 原点のkeyframeからspanning treeを辿って，姿勢を修正していく
-        std::list<data::keyframe*> keyfrms_to_check;
-        keyfrms_to_check.push_back(map_db_->origin_keyfrm_);
-        while (!keyfrms_to_check.empty()) {
-            auto parent = keyfrms_to_check.front();
-            const Mat44_t cam_pose_wp = parent->get_cam_pose_inv();
-
-            const auto children = parent->get_spanning_children();
-            for (auto child : children) {
-                if (child->lead_keyfrm_id_in_loop_BA_ != lead_keyfrm_id) {
-                    // BAの対象外だった場合このif文の中に入る
-                    // 姿勢伝播で姿勢を補正する
-
-                    // 修正前のparent->childの姿勢
-                    const Mat44_t cam_pose_cp = child->get_cam_pose() * cam_pose_wp;
-                    // BA修正後のchildの姿勢 = BA修正前のparent->childの姿勢 * BA修正後のkeyframeの姿勢
-                    child->cam_pose_cw_after_BA_ = cam_pose_cp * parent->cam_pose_cw_after_BA_;
-                    // 修正済みの印を付ける
-                    child->lead_keyfrm_id_in_loop_BA_ = lead_keyfrm_id;
-                }
-
-                // チェック対象に追加する
-                keyfrms_to_check.push_back(child);
-            }
-
-            // 更新前の姿勢を保存しておく(3次元点の移動のため)
-            parent->cam_pose_cw_before_BA_ = parent->get_cam_pose();
-            // 姿勢を更新
-            parent->set_cam_pose(parent->cam_pose_cw_after_BA_);
-            // 更新したのでcheck対象から外す
-            keyfrms_to_check.pop_front();
-        }
-
-        const auto landmarks = map_db_->get_all_landmarks();
-        for (auto lm : landmarks) {
-            if (lm->will_be_erased()) {
-                continue;
-            }
-
-            if (lm->lead_keyfrm_id_in_loop_BA_ == lead_keyfrm_id) {
-                // BAの対象だった場合はそのまま位置を更新する
-                lm->set_pos_in_world(lm->pos_w_after_global_BA_);
-            }
-            else {
-                // BAの対象外だった場合はreference keyframeの姿勢移動に応じて3次元点を移す
-                auto ref_keyfrm = lm->get_ref_keyframe();
-
-                assert(ref_keyfrm->lead_keyfrm_id_in_loop_BA_ == lead_keyfrm_id);
-
-                // BA補正前の姿勢を使って3次元点をカメラ座標に移す
-                const Mat33_t rot_cw_before_BA = ref_keyfrm->cam_pose_cw_before_BA_.block<3, 3>(0, 0);
-                const Vec3_t trans_cw_before_BA = ref_keyfrm->cam_pose_cw_before_BA_.block<3, 1>(0, 3);
-                const Vec3_t pos_c = rot_cw_before_BA * lm->get_pos_in_world() + trans_cw_before_BA;
-
-                // BA補正後の姿勢を使って3次元点をワールド座標に戻す
-                const Mat44_t cam_pose_wc = ref_keyfrm->get_cam_pose_inv();
-                const Mat33_t rot_wc = cam_pose_wc.block<3, 3>(0, 0);
-                const Vec3_t trans_wc = cam_pose_wc.block<3, 1>(0, 3);
-                lm->set_pos_in_world(rot_wc * pos_c + trans_wc);
-            }
-        }
-
-        local_mapper_->resume();
-        loop_BA_is_running_ = false;
-
-        spdlog::info("updated map");
-    }
-}
-
 void loop_closer::request_reset() {
     {
         std::lock_guard<std::mutex> lock(mtx_reset_);
         reset_is_requested_ = true;
     }
 
-    // resetされるまで(reset_is_requested_フラグが落とされるまで)待機する
+    // BLOCK until reset
     while (true) {
         {
             std::lock_guard<std::mutex> lock(mtx_reset_);
@@ -550,16 +451,14 @@ void loop_closer::pause() {
 }
 
 void loop_closer::resume() {
-    // pauseとterminateのフラグを触るので排他制御
     std::lock_guard<std::mutex> lock1(mtx_pause_);
     std::lock_guard<std::mutex> lock2(mtx_terminate_);
 
-    // 既にloop closerが停止している場合は再開できない
+    // if it has been already terminated, cannot resume
     if (is_terminated_) {
         return;
     }
 
-    // 再開する処理を行う
     is_paused_ = false;
     pause_is_requested_ = false;
 
@@ -587,13 +486,11 @@ void loop_closer::terminate() {
 }
 
 bool loop_closer::loop_BA_is_running() const {
-    std::lock_guard<std::mutex> lock(mtx_loop_BA_);
-    return loop_BA_is_running_;
+    return loop_bundle_adjuster_.is_running();
 }
 
 void loop_closer::abort_loop_BA() {
-    std::lock_guard<std::mutex> lock(mtx_loop_BA_);
-    abort_loop_BA_ = true;
+    loop_bundle_adjuster_.abort();
 }
 
 } // namespace map

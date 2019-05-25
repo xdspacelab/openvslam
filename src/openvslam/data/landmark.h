@@ -124,7 +124,7 @@ public:
     unsigned int loop_fusion_identifier_ = 0;
     unsigned int ref_keyfrm_id_in_loop_fusion_ = 0;
     Vec3_t pos_w_after_global_BA_;
-    unsigned int lead_keyfrm_id_in_loop_BA_ = 0;
+    unsigned int loop_BA_identifier_ = 0;
 
 private:
     //! world coordinates of this landmark
