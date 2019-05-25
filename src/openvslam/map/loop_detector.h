@@ -18,47 +18,67 @@ namespace map {
 
 class loop_detector {
 public:
-    loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale);
+    /**
+     * Constructor
+     */
+    loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale_in_Sim3_estimation);
+
+    /**
+     * Enable loop detection
+     */
+    void enable_loop_detector();
+
+    /**
+     * Disable loop detection
+     */
+    void disable_loop_detector();
+
+    /**
+     * Get the loop detector status
+     */
+    bool is_enabled() const;
+
+    /**
+     * Set the current keyframe
+     */
+    void set_current_keyframe(data::keyframe* keyfrm);
 
     /**
      * Detect loop candidates using BoW vocabulary
      */
-    bool detect_loop_candidates(data::keyframe* keyfrm);
+    bool detect_loop_candidates();
 
     /**
      * Validate loop candidates selected in detect_loop_candidate()
      */
     bool validate_candidates();
 
-    data::keyframe* get_final_candidate_keyframe() const {
-        return final_candidate_keyfrm_;
-    }
+    /**
+     * Get the selected candidate keyframe after loop detection and validation
+     */
+    data::keyframe* get_selected_candidate_keyframe() const;
 
-    g2o::Sim3 get_g2o_Sim3_world_to_curr() const {
-        return g2o_Sim3_world_to_curr_;
-    }
+    /**
+     * Get the estimated Sim3 from the world the the current
+     */
+    g2o::Sim3 get_Sim3_world_to_current() const;
 
-    std::vector<data::landmark*> get_curr_assoc_lms_in_cand() const {
-        return curr_assoc_lms_in_cand_;
-    }
+    /**
+     * Get the matches between the keypoint indices of the current keyframe and the landmarks observed in the candidate
+     */
+    std::vector<data::landmark*> current_matched_landmarks_observed_in_candidate() const;
 
-    std::vector<data::landmark*> get_curr_assoc_lms_near_cand() const {
-        return curr_assoc_lms_near_cand_;
-    }
+    /**
+     * Get the matches between the keypoint indices of the current keyframe and the landmarks observed in covisibilities of the candidate
+     */
+    std::vector<data::landmark*> current_matched_landmarks_observed_in_candidate_covisibilities() const;
 
-    void set_prev_loop_correct_keyfrm_id(const unsigned int prev_loop_correct_keyfrm_id) {
-        prev_loop_correct_keyfrm_id_ = prev_loop_correct_keyfrm_id;
-    }
+    /**
+     * Set the keyframe ID when loop correction is performed
+     */
+    void set_loop_correct_keyframe_id(const unsigned int loop_correct_keyfrm_id);
 
 private:
-    void enable_loop_detector() {
-        loop_detector_is_enabled_ = true;
-    }
-
-    void disable_loop_detector() {
-        loop_detector_is_enabled_ = false;
-    }
-
     /**
      * Compute the minimum score among covisibilities
      */
@@ -71,50 +91,55 @@ private:
                                                            const std::vector<data::keyframe*>& keyfrms_to_search) const;
 
     /**
-     * Select ONE candidate from the candidates via linear and nonlinear Sim3 estimation
+     * Select ONE candidate from the candidates via linear and nonlinear Sim3 validation
      */
     bool select_loop_candidate_via_Sim3(const std::vector<data::keyframe*>& loop_candidates,
                                         data::keyframe*& selected_candidate,
                                         g2o::Sim3& g2o_Sim3_world_to_curr,
-                                        std::vector<data::landmark*>& curr_assoc_lms_in_cand) const;
+                                        std::vector<data::landmark*>& curr_match_lms_observed_in_cand) const;
 
+    //! BoW database
     data::bow_database* bow_db_;
+    //! BoW vocabulary
     data::bow_vocabulary* bow_vocab_;
 
     //! transform optimizer
     const optimize::transform_optimizer transform_optimizer_;
 
+    //! flag which indicates the loop detector is enabled or not
     std::atomic<bool> loop_detector_is_enabled_{true};
+
+    //! for stereo/RGBD models, fix scale when estimating Sim3
+    const bool fix_scale_in_Sim3_estimation_;
 
     //-----------------------------------------
     // variables for loop detection and correction
 
-    const bool fix_scale_;
-
-    //! この回数以上連続してキーフレーム集合が検出されたらループとする
-    static constexpr unsigned int min_continuity_ = 3;
-    //! 現在処理中のキーフレーム
+    //! current keyframe
     data::keyframe* cur_keyfrm_;
-    //! 最終的なループ候補
-    data::keyframe* final_candidate_keyfrm_ = nullptr;
+    //! final loop candidate
+    data::keyframe* selected_candidate_ = nullptr;
 
-    //! 前回検出されたキーフレーム集合
+    //! previously detected keyframe sets as loop candidate
     std::vector<keyframe_set> cont_detected_keyfrm_sets_;
-    //! validate対象のキーフレーム
+    //! loop candidate for validation
     std::vector<data::keyframe*> loop_candidates_to_validate_;
 
-    //! current keyframeの特徴点idxに対する，candidateで観測している3次元との対応情報
-    std::vector<data::landmark*> curr_assoc_lms_in_cand_;
-    //! current keyframeの特徴点idxに対する，candidate周辺で観測している3次元との対応情報
-    std::vector<data::landmark*> curr_assoc_lms_near_cand_;
+    //! matches between the keypoint indices of the current keyframe and the landmarks observed in the candidate
+    std::vector<data::landmark*> curr_match_lms_observed_in_cand_;
+    //! matches between the keypoint indices of the current keyframe and the landmarks observed in covisibilities of the candidate
+    std::vector<data::landmark*> curr_match_lms_observed_in_cand_covis_;
 
-    //! ループ補正後のcurrent keyframeの姿勢
+    //! the Sim3 camera pose of the current keyframe AFTER loop correction (in Mat44_t format)
     Mat44_t Sim3_world_to_curr_;
-    //! ループ補正後のcurrent keyframeの姿勢(g2o::Sim3形式)
+    //! the Sim3 camera pose of the current keyframe AFTER loop correction (in g2o::Sim3 format)
     g2o::Sim3 g2o_Sim3_world_to_curr_;
 
-    //! 前回ループ修正をした際のcurrent keyframeのID
+    //! the keyframe ID when the previouls loop correction was performed
     unsigned int prev_loop_correct_keyfrm_id_ = 0;
+
+    //! the threshold of the continuity of continuously detected keyframe set
+    static constexpr unsigned int min_continuity_ = 3;
 };
 
 } // namespace map

@@ -44,15 +44,16 @@ void loop_closer::set_local_mapper(map::local_mapper* local_mapper) {
 void loop_closer::set_loop_detector_status(const bool loop_detector_is_enabled) {
     if (loop_detector_is_enabled) {
         spdlog::info("enable loop detector");
+        loop_detector_.enable_loop_detector();
     }
     else {
         spdlog::info("disable loop detector");
+        loop_detector_.disable_loop_detector();
     }
-    loop_detector_is_enabled_ = loop_detector_is_enabled;
 }
 
 bool loop_closer::get_loop_detector_status() const {
-    return loop_detector_is_enabled_;
+    return loop_detector_.is_enabled();
 }
 
 void loop_closer::run() {
@@ -61,42 +62,68 @@ void loop_closer::run() {
     is_terminated_ = false;
 
     while (true) {
-        if (keyframe_is_queued()) {
-            {
-                std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
-                cur_keyfrm_ = keyfrms_queue_.front();
-                keyfrms_queue_.pop_front();
-                // ループ探索中はこのキーフレームの削除を禁止する
-                cur_keyfrm_->set_not_to_be_erased();
-            }
-            if (loop_detector_.detect_loop_candidates(cur_keyfrm_)) {
-                if (loop_detector_.validate_candidates()) {
-                    correct_loop();
-                }
-            }
-        }
-        else if (check_and_execute_pause()) {
-            // pauseフラグが立っていたらpause処理を行う
-            // pauseされるまで待機，pauseされたままterminateされたらloop closerを終了する
-            while (is_paused() && !check_terminate()) {
-                std::this_thread::sleep_for(std::chrono::microseconds(5000));
-            }
-            if (check_terminate()) {
-                break;
-            }
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        // resetフラグが立っていたらreset処理を行う
-        check_and_execute_reset();
-
-        if (check_terminate()) {
+        // check if termination is requested
+        if (terminate_is_requested()) {
+            // terminate and break
+            terminate();
             break;
         }
 
-        std::this_thread::sleep_for(std::chrono::microseconds(5000));
-    }
+        // check if pause is requested
+        if (pause_is_requested()) {
+            // pause and wait
+            pause();
+            // check if termination or reset is requested during pause
+            while (is_paused() && !terminate_is_requested() && !reset_is_requested()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(3));
+            }
+        }
 
-    terminate();
+        // check if reset is requested
+        if (reset_is_requested()) {
+            // reset and continue
+            reset();
+            continue;
+        }
+
+        // if the queue is empty, the following process is not needed
+        if (!keyframe_is_queued()) {
+            continue;
+        }
+
+        // dequeue the keyframe from the queue -> cur_keyfrm_
+        {
+            std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
+            cur_keyfrm_ = keyfrms_queue_.front();
+            keyfrms_queue_.pop_front();
+        }
+
+        // not to be removed during loop detection and correction
+        cur_keyfrm_->set_not_to_be_erased();
+
+        // pass the current keyframe to the loop detector
+        loop_detector_.set_current_keyframe(cur_keyfrm_);
+
+        // detect some loop candidate with BoW
+        if (!loop_detector_.detect_loop_candidates()) {
+            // could not find
+            // allow the removal of the current keyframe
+            cur_keyfrm_->set_to_be_erased();
+            continue;
+        }
+
+        // validate candidates and select ONE candidate from them
+        if (!loop_detector_.validate_candidates()) {
+            // could not find
+            // allow the removal of the current keyframe
+            cur_keyfrm_->set_to_be_erased();
+            continue;
+        }
+
+        correct_loop();
+    }
 }
 
 void loop_closer::queue_keyframe(data::keyframe* keyfrm) {
@@ -112,7 +139,7 @@ bool loop_closer::keyframe_is_queued() const {
 }
 
 void loop_closer::correct_loop() {
-    auto final_candidate_keyfrm = loop_detector_.get_final_candidate_keyframe();
+    auto final_candidate_keyfrm = loop_detector_.get_selected_candidate_keyframe();
 
     spdlog::info("detect loop: keyframe {} - keyframe {}", final_candidate_keyfrm->id_, cur_keyfrm_->id_);
     ++num_exec_loop_BA_;
@@ -148,7 +175,7 @@ void loop_closer::correct_loop() {
     // 修正後のcovisibilitiesのSim3姿勢
     keyframe_Sim3_pairs_t pre_corrected_Sim3s_iw;
 
-    const auto g2o_Sim3_world_to_curr = loop_detector_.get_g2o_Sim3_world_to_curr();
+    const auto g2o_Sim3_world_to_curr = loop_detector_.get_Sim3_world_to_current();
     {
         std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
 
@@ -167,7 +194,7 @@ void loop_closer::correct_loop() {
     }
 
     // 3次元点の重複を解消する
-    const auto curr_assoc_lms_in_cand = loop_detector_.get_curr_assoc_lms_in_cand();
+    const auto curr_assoc_lms_in_cand = loop_detector_.current_matched_landmarks_observed_in_candidate();
     replace_duplicated_landmarks(curr_assoc_lms_in_cand, pre_corrected_Sim3s_iw);
 
     // curr_covisibilities_の各キーフレームに対して，ループ対応によって生じた新たなedgeを検出する
@@ -192,7 +219,7 @@ void loop_closer::correct_loop() {
     // local mapperを再開
     local_mapper_->resume();
 
-    loop_detector_.set_prev_loop_correct_keyfrm_id(cur_keyfrm_->id_);
+    loop_detector_.set_loop_correct_keyframe_id(cur_keyfrm_->id_);
 }
 
 keyframe_Sim3_pairs_t loop_closer::get_non_corrected_Sim3s(const std::vector<data::keyframe*>& covisibilities) const {
@@ -324,7 +351,7 @@ void loop_closer::replace_duplicated_landmarks(const std::vector<data::landmark*
     }
 
     // currentの周辺のキーフレームについても，重複を解消する
-    const auto curr_assoc_lms_near_cand = loop_detector_.get_curr_assoc_lms_near_cand();
+    const auto curr_assoc_lms_near_cand = loop_detector_.current_matched_landmarks_observed_in_candidate_covisibilities();
     match::fuse fuser(0.8);
     for (const auto& pre_corrected_Sim3_iw : pre_corrected_Sim3s_iw) {
         auto keyfrm = pre_corrected_Sim3_iw.first;
@@ -493,14 +520,16 @@ void loop_closer::request_reset() {
     }
 }
 
-void loop_closer::check_and_execute_reset() {
+bool loop_closer::reset_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_reset_);
-    if (!reset_is_requested_) {
-        return;
-    }
-    // リセットフラグが立っていたらリセットする
+    return reset_is_requested_;
+}
+
+void loop_closer::reset() {
+    std::lock_guard<std::mutex> lock(mtx_reset_);
+    spdlog::info("reset global optimization module");
     keyfrms_queue_.clear();
-    loop_detector_.set_prev_loop_correct_keyfrm_id(0);
+    loop_detector_.set_loop_correct_keyframe_id(0);
     reset_is_requested_ = false;
 }
 
@@ -519,16 +548,10 @@ bool loop_closer::is_paused() const {
     return is_paused_;
 }
 
-bool loop_closer::check_and_execute_pause() {
+void loop_closer::pause() {
     std::lock_guard<std::mutex> lock(mtx_pause_);
-    if (pause_is_requested_) {
-        is_paused_ = true;
-        spdlog::info("pause loop closer");
-        return true;
-    }
-    else {
-        return false;
-    }
+    spdlog::info("pause loop closer");
+    is_paused_ = true;
 }
 
 void loop_closer::resume() {
@@ -558,7 +581,7 @@ bool loop_closer::is_terminated() const {
     return is_terminated_;
 }
 
-bool loop_closer::check_terminate() const {
+bool loop_closer::terminate_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_terminate_);
     return terminate_is_requested_;
 }

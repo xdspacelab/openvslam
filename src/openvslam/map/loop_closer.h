@@ -209,11 +209,6 @@ private:
     std::map<data::keyframe*, std::set<data::keyframe*>> extract_new_connections(const std::vector<data::keyframe*>& covisibilities) const;
 
     //-----------------------------------------
-    // interfaces to ON/OFF loop detector
-
-    std::atomic<bool> loop_detector_is_enabled_{true};
-
-    //-----------------------------------------
     // management for reset process
 
     //! mutex for access to reset procedure
@@ -222,7 +217,12 @@ private:
     /**
      * Check and execute reset
      */
-    void check_and_execute_reset();
+    bool reset_is_requested() const;
+
+    /**
+     * Reset the global optimization module
+     */
+    void reset();
 
     //! flag which indicates whether reset is requested or not
     bool reset_is_requested_ = false;
@@ -234,9 +234,9 @@ private:
     mutable std::mutex mtx_pause_;
 
     /**
-     * Check and execute pause
+     * Pause the global optimizer
      */
-    bool check_and_execute_pause();
+    void pause();
 
     //! flag which indicates termination is requested or not
     bool pause_is_requested_ = false;
@@ -253,7 +253,7 @@ private:
      * Check if termination is requested or not
      * @return
      */
-    bool check_terminate() const;
+    bool terminate_is_requested() const;
 
     /**
      * Raise the flag which indicates the main loop has been already terminated
