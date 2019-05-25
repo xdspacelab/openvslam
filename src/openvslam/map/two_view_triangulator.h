@@ -17,6 +17,8 @@ namespace map {
 
 class two_view_triangulator {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     /**
      * Constructor
      */

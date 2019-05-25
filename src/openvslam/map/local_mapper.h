@@ -2,6 +2,7 @@
 #define OPENVSLAM_MAP_LOCAL_MAPPER_H
 
 #include "openvslam/camera/base.h"
+#include "openvslam/map/local_map_cleaner.h"
 #include "openvslam/optimize/local_bundle_adjuster.h"
 
 #include <mutex>
@@ -28,10 +29,6 @@ class loop_closer;
 
 class local_mapper {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    local_mapper() = delete;
-
     /**
      * Constructor
      */
@@ -167,21 +164,6 @@ private:
                                         const std::vector<std::pair<unsigned int, unsigned int>>& matches);
 
     /**
-     * Remove redundant landmarks
-     */
-    void remove_redundant_landmarks();
-
-    /**
-     * Remove redundant keyframes
-     */
-    void remove_redundant_keyframes();
-
-    /**
-     * Count the valid and the redundant observations in the specified keyframe
-     */
-    void count_redundant_landmarks(data::keyframe* keyfrm, unsigned int& num_valid_obs, unsigned int& num_redundant_obs) const;
-
-    /**
      * Update the new keyframe
      */
     void update_new_keyframe();
@@ -206,7 +188,7 @@ private:
     /**
      * Check and execute reset
      */
-    bool check_reset_request() const;
+    bool reset_is_requested() const;
 
     /**
      * Reset the variables
@@ -221,11 +203,6 @@ private:
 
     //! mutex for access to pause procedure
     mutable std::mutex mtx_pause_;
-
-    /**
-     * Check and execute pause
-     */
-    bool check_pause_request() const;
 
     /**
      * Pause the local mapper
@@ -248,7 +225,7 @@ private:
     /**
      * Check if termination is requested or not
      */
-    bool check_terminate_request() const;
+    bool terminate_is_requested() const;
 
     /**
      * Raise the flag which indicates the main loop has been already terminated
@@ -267,6 +244,9 @@ private:
     track::tracker* tracker_ = nullptr;
     //! loop closer
     loop_closer* loop_closer_ = nullptr;
+
+    //! local map cleaner
+    local_map_cleaner local_map_cleaner_;
 
     //-----------------------------------------
     // database
@@ -295,7 +275,7 @@ private:
     const optimize::local_bundle_adjuster local_bundle_adjuster_;
 
     //! bridge flag to abort local BA
-    bool abort_BA_is_requested_ = false;
+    bool abort_local_BA_ = false;
 
     //-----------------------------------------
     // others
@@ -304,13 +284,10 @@ private:
     const bool is_monocular_;
 
     //! flag for keyframe acceptability
-    std::atomic<bool> keyframe_acceptability_{true};
+    std::atomic<bool> keyfrm_acceptability_{true};
 
     //! current keyframe which is used in the current local mapping
     data::keyframe* cur_keyfrm_ = nullptr;
-
-    //! fresh landmarks to check their redundancy
-    std::list<data::landmark*> fresh_landmarks_;
 };
 
 } // namespace map

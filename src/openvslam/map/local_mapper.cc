@@ -19,7 +19,8 @@ namespace openvslam {
 namespace map {
 
 local_mapper::local_mapper(data::map_database* map_db, const bool is_monocular)
-        : map_db_(map_db), local_bundle_adjuster_(), is_monocular_(is_monocular) {
+        : local_map_cleaner_(is_monocular), map_db_(map_db),
+          local_bundle_adjuster_(), is_monocular_(is_monocular) {
     spdlog::debug("CONSTRUCT: map::local_mapper");
 }
 
@@ -48,14 +49,14 @@ void local_mapper::run() {
         set_keyframe_acceptability(false);
 
         // check if termination is requested
-        if (check_terminate_request()) {
+        if (terminate_is_requested()) {
             // terminate and break
             terminate();
             break;
         }
 
         // check if pause is requested
-        if (check_pause_request()) {
+        if (pause_is_requested()) {
             // if any keyframe is queued, all of them must be processed before the pause
             while (keyframe_is_queued()) {
                 // create and extend the map with the new keyframe
@@ -66,13 +67,13 @@ void local_mapper::run() {
             // pause and wait
             pause();
             // check if termination or reset is requested during pause
-            while (is_paused() && !check_terminate_request() && !check_reset_request()) {
+            while (is_paused() && !terminate_is_requested() && !reset_is_requested()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(3));
             }
         }
 
         // check if reset is requested
-        if (check_reset_request()) {
+        if (reset_is_requested()) {
             // reset, UNLOCK and continue
             reset();
             set_keyframe_acceptability(true);
@@ -101,7 +102,7 @@ void local_mapper::run() {
 void local_mapper::queue_keyframe(data::keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
     keyfrms_queue_.push_back(keyfrm);
-    abort_BA_is_requested_ = true;
+    abort_local_BA_ = true;
 }
 
 unsigned int local_mapper::get_num_queued_keyframes() const {
@@ -115,15 +116,15 @@ bool local_mapper::keyframe_is_queued() const {
 }
 
 bool local_mapper::get_keyframe_acceptability() const {
-    return keyframe_acceptability_;
+    return keyfrm_acceptability_;
 }
 
 void local_mapper::set_keyframe_acceptability(const bool acceptability) {
-    keyframe_acceptability_ = acceptability;
+    keyfrm_acceptability_ = acceptability;
 }
 
 void local_mapper::abort_local_BA() {
-    abort_BA_is_requested_ = true;
+    abort_local_BA_ = true;
 }
 
 void local_mapper::mapping_with_new_keyframe() {
@@ -135,11 +136,14 @@ void local_mapper::mapping_with_new_keyframe() {
         keyfrms_queue_.pop_front();
     }
 
+    // set the origin keyframe
+    local_map_cleaner_.set_origin_keyframe_id(map_db_->origin_keyfrm_->id_);
+
     // store the new keyframe to the database
     store_new_keyframe();
 
     // remove redundant landmarks
-    remove_redundant_landmarks();
+    local_map_cleaner_.remove_redundant_landmarks(cur_keyfrm_->id_);
 
     // triangulate new landmarks between the current frame and each of the covisibilities
     create_new_landmarks();
@@ -156,11 +160,11 @@ void local_mapper::mapping_with_new_keyframe() {
     }
 
     // local bundle adjustment
-    abort_BA_is_requested_ = false;
+    abort_local_BA_ = false;
     if (2 < map_db_->get_num_keyframes()) {
-        local_bundle_adjuster_.optimize(cur_keyfrm_, &abort_BA_is_requested_);
+        local_bundle_adjuster_.optimize(cur_keyfrm_, &abort_local_BA_);
     }
-    remove_redundant_keyframes();
+    local_map_cleaner_.remove_redundant_keyframes(cur_keyfrm_);
 }
 
 void local_mapper::store_new_keyframe() {
@@ -259,9 +263,9 @@ void local_mapper::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, data
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (unsigned int j = 0; j < matches.size(); ++j) {
-        const auto idx_1 = matches.at(j).first;
-        const auto idx_2 = matches.at(j).second;
+    for (unsigned int i = 0; i < matches.size(); ++i) {
+        const auto idx_1 = matches.at(i).first;
+        const auto idx_2 = matches.at(i).second;
 
         // triangulate between idx_1 and idx_2
         Vec3_t pos_w;
@@ -289,163 +293,7 @@ void local_mapper::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, data
 #pragma omp critical
 #endif
         {
-            fresh_landmarks_.push_back(lm);
-        }
-    }
-}
-
-void local_mapper::remove_redundant_landmarks() {
-    constexpr float found_per_visible_ratio_thr = 0.25;
-    constexpr unsigned int num_reliable_keyfrms = 2;
-    const unsigned int num_obs_thr = is_monocular_ ? 2 : 3;
-
-    auto iter = fresh_landmarks_.begin();
-    const unsigned int cur_keyfrm_id = cur_keyfrm_->id_;
-
-    // states of observed landmarks
-    enum class lm_state_t {Valid, Invalid, NotClear};
-
-    while (iter != fresh_landmarks_.end()) {
-        auto lm = *iter;
-
-        // decide the state of lms the buffer
-        auto lm_state = lm_state_t::NotClear;
-        if (lm->will_be_erased()) {
-            // in case `lm` will be erased
-            // remove `lm` from the buffer
-            lm_state = lm_state_t::Valid;
-        }
-        else if (lm->get_found_per_visible_ratio() < found_per_visible_ratio_thr) {
-            // if `lm` is not reliable
-            // remove `lm` from the buffer and the database
-            lm_state = lm_state_t::Invalid;
-        }
-        else if (num_reliable_keyfrms + lm->first_keyfrm_id_ <= cur_keyfrm_id
-                 && lm->num_observations() <= num_obs_thr) {
-            // if the number of the observers of `lm` is small after some keyframes were inserted
-            // remove `lm` from the buffer and the database
-            lm_state = lm_state_t::Invalid;
-        }
-        else if (num_reliable_keyfrms + 1U + lm->first_keyfrm_id_ <= cur_keyfrm_id) {
-            // if the number of the observers of `lm` is sufficient after some keyframes were inserted
-            // remove `lm` from the buffer
-            lm_state = lm_state_t::Valid;
-        }
-
-        // select to remove `lm` according to the state
-        if (lm_state == lm_state_t::Valid) {
-            iter = fresh_landmarks_.erase(iter);
-        }
-        else if (lm_state == lm_state_t::Invalid) {
-            lm->prepare_for_erasing();
-            iter = fresh_landmarks_.erase(iter);
-        }
-        else {
-            // hold decision because the state is NotClear
-            iter++;
-        }
-    }
-}
-
-void local_mapper::remove_redundant_keyframes() {
-    // window size not to remove
-    constexpr unsigned int window_size_not_to_remove = 2;
-    // if the redundancy ratio of observations is larger than this threshold,
-    // the corresponding keyframe will be erased
-    constexpr float redundant_obs_ratio_thr = 0.9;
-
-    // check redundancy for each of the covisibilities
-    const auto cur_covisibilities = cur_keyfrm_->get_covisibilities();
-    for (const auto covisibility : cur_covisibilities) {
-        // cannot remove the origin
-        if (*covisibility == *(map_db_->origin_keyfrm_)) {
-            continue;
-        }
-        // cannot remove the recent keyframe(s)
-        if (covisibility->id_ <= cur_keyfrm_->id_
-            && cur_keyfrm_->id_ <= covisibility->id_ + window_size_not_to_remove) {
-            continue;
-        }
-
-        // count the number of redundant observations (num_redundant_obs) and valid observations (num_valid_obs)
-        // for the covisibility
-        unsigned int num_redundant_obs = 0;
-        unsigned int num_valid_obs = 0;
-        count_redundant_landmarks(covisibility, num_valid_obs, num_redundant_obs);
-
-        // if the redundant observation ratio of `covisibility` is larger than the threshold, it will be removed
-        if (redundant_obs_ratio_thr <= static_cast<float>(num_redundant_obs) / num_valid_obs) {
-            covisibility->prepare_for_erasing();
-        }
-    }
-}
-
-void local_mapper::count_redundant_landmarks(data::keyframe* keyfrm, unsigned int& num_valid_obs, unsigned int& num_redundant_obs) const {
-    // if the number of keyframes that observes the landmark with more reliable scale than the specified keyframe does,
-    // it is considered as redundant
-    constexpr unsigned int num_better_obs_thr = 3;
-
-    num_valid_obs = 0;
-    num_redundant_obs = 0;
-
-    const auto landmarks = keyfrm->get_landmarks();
-    for (unsigned int idx = 0; idx < landmarks.size(); ++idx) {
-        auto lm = landmarks.at(idx);
-        if (!lm) {
-            continue;
-        }
-        if (lm->will_be_erased()) {
-            continue;
-        }
-
-        // if depth is within the valid range, it won't be considered
-        const auto depth = keyfrm->depths_.at(idx);
-        if (!is_monocular_ && (depth < 0.0 || keyfrm->depth_thr_ < depth)) {
-            continue;
-        }
-
-        ++num_valid_obs;
-
-        // if the number of the obs is smaller than the threshold, cannot remote the observers
-        if (lm->num_observations() <= num_better_obs_thr) {
-            continue;
-        }
-
-        // `keyfrm` observes `lm` with the scale level `scale_level`
-        const auto scale_level = keyfrm->undist_keypts_.at(idx).octave;
-        // get observers of `lm`
-        const auto observations = lm->get_observations();
-
-        bool obs_by_keyfrm_is_redundant = false;
-
-        // the number of the keyframes that observe `lm` with the more reliable (closer) scale
-        unsigned int num_better_obs = 0;
-
-        for (const auto obs : observations) {
-            const auto ngh_keyfrm = obs.first;
-            if (*ngh_keyfrm == *keyfrm) {
-                continue;
-            }
-
-            // `ngh_keyfrm` observes `lm` with the scale level `ngh_scale_level`
-            const auto ngh_scale_level = ngh_keyfrm->undist_keypts_.at(obs.second).octave;
-
-            // compare the scale levels
-            if (ngh_scale_level <= scale_level + 1) {
-                // the observation by `ngh_keyfrm` is more reliable than `keyfrm`
-                ++num_better_obs;
-                if (num_better_obs_thr <= num_better_obs) {
-                    // if the number of the better observations is greater than the threshold,
-                    // consider the observation of `lm` by `keyfrm` is redundant
-                    obs_by_keyfrm_is_redundant = true;
-                    break;
-                }
-            }
-        }
-
-        if (obs_by_keyfrm_is_redundant) {
-            // keyfrmが観測している3次元点のうち，冗長と判断されたものの数を数えておく
-            ++num_redundant_obs;
+            local_map_cleaner_.add_fresh_landmark(lm);
         }
     }
 }
@@ -573,7 +421,7 @@ void local_mapper::request_reset() {
     }
 }
 
-bool local_mapper::check_reset_request() const {
+bool local_mapper::reset_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     return reset_is_requested_;
 }
@@ -582,7 +430,7 @@ void local_mapper::reset() {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     spdlog::info("reset mapping module");
     keyfrms_queue_.clear();
-    fresh_landmarks_.clear();
+    local_map_cleaner_.reset();
     reset_is_requested_ = false;
 }
 
@@ -590,12 +438,7 @@ void local_mapper::request_pause() {
     std::lock_guard<std::mutex> lock1(mtx_pause_);
     pause_is_requested_ = true;
     std::lock_guard<std::mutex> lock2(mtx_keyfrm_queue_);
-    abort_BA_is_requested_ = true;
-}
-
-bool local_mapper::pause_is_requested() const {
-    std::lock_guard<std::mutex> lock(mtx_pause_);
-    return pause_is_requested_;
+    abort_local_BA_ = true;
 }
 
 bool local_mapper::is_paused() const {
@@ -603,7 +446,7 @@ bool local_mapper::is_paused() const {
     return is_paused_;
 }
 
-bool local_mapper::check_pause_request() const {
+bool local_mapper::pause_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     return pause_is_requested_ && !force_to_run_;
 }
@@ -656,7 +499,7 @@ bool local_mapper::is_terminated() const {
     return is_terminated_;
 }
 
-bool local_mapper::check_terminate_request() const {
+bool local_mapper::terminate_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_terminate_);
     return terminate_is_requested_;
 }
