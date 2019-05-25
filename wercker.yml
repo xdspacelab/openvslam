@@ -81,12 +81,12 @@ build_tutorial:
       name: mapping test with the tutorial
       code: |
         cd build
-        ./run_movie_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
+        ./run_video_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
     - script:
       name: localization test with the tutorial
       code: |
         cd build
-        ./run_movie_localization -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
+        ./run_video_localization -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/movie.mp4 -s ./aist_entrance_hall_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
   after-steps:
     - install-packages:
       packages: ruby
