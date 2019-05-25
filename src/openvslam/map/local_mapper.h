@@ -2,6 +2,7 @@
 #define OPENVSLAM_MAP_LOCAL_MAPPER_H
 
 #include "openvslam/camera/base.h"
+#include "openvslam/map/local_map_cleaner.h"
 #include "openvslam/optimize/local_bundle_adjuster.h"
 
 #include <mutex>
@@ -167,21 +168,6 @@ private:
                                         const std::vector<std::pair<unsigned int, unsigned int>>& matches);
 
     /**
-     * Remove redundant landmarks
-     */
-    void remove_redundant_landmarks();
-
-    /**
-     * Remove redundant keyframes
-     */
-    void remove_redundant_keyframes();
-
-    /**
-     * Count the valid and the redundant observations in the specified keyframe
-     */
-    void count_redundant_landmarks(data::keyframe* keyfrm, unsigned int& num_valid_obs, unsigned int& num_redundant_obs) const;
-
-    /**
      * Update the new keyframe
      */
     void update_new_keyframe();
@@ -268,6 +254,9 @@ private:
     //! loop closer
     loop_closer* loop_closer_ = nullptr;
 
+    //! local map cleaner
+    local_map_cleaner local_map_cleaner_;
+
     //-----------------------------------------
     // database
 
@@ -304,13 +293,10 @@ private:
     const bool is_monocular_;
 
     //! flag for keyframe acceptability
-    std::atomic<bool> keyframe_acceptability_{true};
+    std::atomic<bool> keyfrm_acceptability_{true};
 
     //! current keyframe which is used in the current local mapping
     data::keyframe* cur_keyfrm_ = nullptr;
-
-    //! fresh landmarks to check their redundancy
-    std::list<data::landmark*> fresh_landmarks_;
 };
 
 } // namespace map
