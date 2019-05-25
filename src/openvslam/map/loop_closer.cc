@@ -6,16 +6,14 @@
 #include "openvslam/match/fuse.h"
 #include "openvslam/util/converter.h"
 
-#include <thread>
-
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
 namespace map {
 
 loop_closer::loop_closer(data::map_database* map_db, data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale)
-        : loop_detector_(bow_db, bow_vocab, fix_scale), map_db_(map_db),
-          graph_optimizer_(map_db, fix_scale), loop_bundle_adjuster_(map_db) {
+        : loop_detector_(bow_db, bow_vocab, fix_scale), loop_bundle_adjuster_(map_db),
+          map_db_(map_db), graph_optimizer_(map_db, fix_scale) {
     spdlog::debug("CONSTRUCT: map::loop_closer");
 }
 

@@ -1,8 +1,6 @@
 #ifndef OPENVSLAM_MAP_LOOP_BUNDLE_ADJUSTER_H
 #define OPENVSLAM_MAP_LOOP_BUNDLE_ADJUSTER_H
 
-#include <thread>
-
 namespace openvslam {
 
 namespace data {

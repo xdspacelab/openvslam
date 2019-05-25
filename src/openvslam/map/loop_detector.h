@@ -18,6 +18,8 @@ namespace map {
 
 class loop_detector {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     /**
      * Constructor
      */

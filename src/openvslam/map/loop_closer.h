@@ -9,9 +9,8 @@
 #include "openvslam/optimize/graph_optimizer.h"
 
 #include <list>
-#include <thread>
 #include <mutex>
-#include <atomic>
+#include <thread>
 
 namespace openvslam {
 
@@ -31,8 +30,6 @@ class local_mapper;
 
 class loop_closer {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     loop_closer() = delete;
 
     /**
@@ -227,7 +224,6 @@ private:
 
     /**
      * Check if termination is requested or not
-     * @return
      */
     bool terminate_is_requested() const;
 
@@ -251,6 +247,8 @@ private:
 
     //! loop detector
     loop_detector loop_detector_;
+    //! loop bundle adjuster
+    loop_bundle_adjuster loop_bundle_adjuster_;
 
     //-----------------------------------------
     // database
@@ -266,7 +264,6 @@ private:
 
     /**
      * Check if keyframe is queued
-     * @return Whether keyframe is queued or not
      */
     bool keyframe_is_queued() const;
 
@@ -283,9 +280,6 @@ private:
 
     //-----------------------------------------
     // variables for loop BA
-
-    //! loop bundle adjuster
-    loop_bundle_adjuster loop_bundle_adjuster_;
 
     //! thread for running loop BA
     std::unique_ptr<std::thread> thread_for_loop_BA_ = nullptr;

@@ -5,6 +5,8 @@
 #include "openvslam/map/loop_bundle_adjuster.h"
 #include "openvslam/optimize/global_bundle_adjuster.h"
 
+#include <thread>
+
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
@@ -139,7 +141,7 @@ void loop_bundle_adjuster::optimize(const unsigned int identifier) {
         local_mapper_->resume();
         loop_BA_is_running_ = false;
 
-        spdlog::info("updated map");
+        spdlog::info("updated the map");
     }
 }
 
