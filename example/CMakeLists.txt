@@ -14,11 +14,11 @@ list(APPEND EXECUTABLE_TARGETS run_image_slam)
 add_executable(run_image_localization run_image_localization.cc util/image_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_image_localization)
 
-add_executable(run_movie_slam run_movie_slam.cc)
-list(APPEND EXECUTABLE_TARGETS run_movie_slam)
+add_executable(run_video_slam run_video_slam.cc)
+list(APPEND EXECUTABLE_TARGETS run_video_slam)
 
-add_executable(run_movie_localization run_movie_localization.cc)
-list(APPEND EXECUTABLE_TARGETS run_movie_localization)
+add_executable(run_video_localization run_video_localization.cc)
+list(APPEND EXECUTABLE_TARGETS run_video_localization)
 
 add_executable(run_euroc_slam run_euroc_slam.cc util/euroc_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_euroc_slam)

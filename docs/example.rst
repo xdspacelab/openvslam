@@ -6,7 +6,7 @@ Example
 
 We provided example code snippets for running OpenVSLAM with variety of datasets.
 
-.. _section-example-movie:
+.. _section-example-video:
 
 SLAM with Video Files
 =====================
@@ -15,16 +15,16 @@ Tracking and Mapping
 ^^^^^^^^^^^^^^^^^^^^
 
 We provide an example snippet for using video files (e.g. ``.mp4``) for visual SLAM.
-The source code is placed at ``./example/run_movie_slam.cc``.
+The source code is placed at ``./example/run_video_slam.cc``.
 The following options are allowed:
 
 .. code-block:: bash
 
-    $ ./run_movie_slam -h
+    $ ./run_video_slam -h
     Allowed options:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
-    -m, --movie arg        movie file path
+    -m, --video arg        video file path
     -s, --setting arg      setting file path
     --mask arg             mask image path
     --frame-skip arg (=1)  interval of frame skip
@@ -41,16 +41,16 @@ Localization
 ^^^^^^^^^^^^
 
 We provide an example snippet for using video files (e.g. ``.mp4``) for localization based on a prebuilt map.
-The source code is placed at ``./example/run_movie_localization.cc``.
+The source code is placed at ``./example/run_video_localization.cc``.
 The following options are allowed:
 
 .. code-block:: bash
 
-    $ ./run_movie_localization -h
+    $ ./run_video_localization -h
     Allowed options:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
-    -m, --movie arg        movie file path
+    -m, --video arg        video file path
     -s, --setting arg      setting file path
     -d, --map-db arg       path to a prebuilt map database
     --mapping              perform mapping as well as localization

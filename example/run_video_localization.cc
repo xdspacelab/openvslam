@@ -23,17 +23,26 @@
 #include <gperftools/profiler.h>
 #endif
 
-void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
-                   const std::string& vocab_file_path, const std::string& movie_file_path, const std::string& mask_img_path,
-                   const unsigned int frame_skip, const bool no_sleep, const bool auto_term,
-                   const bool eval_log, const std::string& map_db_path) {
+void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
+                       const std::string& vocab_file_path, const std::string& video_file_path, const std::string& mask_img_path,
+                       const std::string& map_db_path, const bool mapping,
+                       const unsigned int frame_skip, const bool no_sleep, const bool auto_term) {
     // load the mask image
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
 
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
-    // startup the SLAM process
-    SLAM.startup();
+    // load the prebuilt map
+    SLAM.load_message_pack(map_db_path);
+    // startup the SLAM process (it does not need initialization of a map)
+    SLAM.startup(false);
+    // select to activate the mapping module or not
+    if (mapping) {
+        SLAM.activate_mapping_module();
+    }
+    else {
+        SLAM.deactivate_mapping_module();
+    }
 
     // create a viewer object
     // and pass the frame_publisher and the map_publisher
@@ -43,7 +52,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     socket_publisher::publisher publisher(cfg, &SLAM, SLAM.get_frame_publisher(), SLAM.get_map_publisher());
 #endif
 
-    auto video = cv::VideoCapture(movie_file_path, cv::CAP_FFMPEG);
+    auto video = cv::VideoCapture(video_file_path, cv::CAP_FFMPEG);
     std::vector<double> track_times;
 
     cv::Mat frame;
@@ -117,25 +126,6 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     // shutdown the SLAM process
     SLAM.shutdown();
 
-    if (eval_log) {
-        // output the trajectories for evaluation
-        SLAM.save_frame_trajectory("frame_trajectory.txt", "TUM");
-        SLAM.save_keyframe_trajectory("keyframe_trajectory.txt", "TUM");
-        // output the tracking times for evaluation
-        std::ofstream ofs("track_times.txt", std::ios::out);
-        if (ofs.is_open()) {
-            for (const auto track_time : track_times) {
-                ofs << track_time << std::endl;
-            }
-            ofs.close();
-        }
-    }
-
-    if (!map_db_path.empty()) {
-        // output the map database
-        SLAM.save_message_pack(map_db_path);
-    }
-
     std::sort(track_times.begin(), track_times.end());
     const auto total_track_time = std::accumulate(track_times.begin(), track_times.end(), 0.0);
     std::cout << "median tracking time: " << track_times.at(track_times.size() / 2) << "[s]" << std::endl;
@@ -152,15 +142,15 @@ int main(int argc, char* argv[]) {
     popl::OptionParser op("Allowed options");
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
     auto vocab_file_path = op.add<popl::Value<std::string>>("v", "vocab", "vocabulary file path");
-    auto movie_file_path = op.add<popl::Value<std::string>>("m", "movie", "movie file path");
+    auto video_file_path = op.add<popl::Value<std::string>>("m", "video", "video file path");
     auto setting_file_path = op.add<popl::Value<std::string>>("s", "setting", "setting file path");
+    auto map_db_path = op.add<popl::Value<std::string>>("d", "map-db", "path to a prebuilt map database");
+    auto mapping = op.add<popl::Switch>("", "mapping", "perform mapping as well as localization");
     auto mask_img_path = op.add<popl::Value<std::string>>("", "mask", "mask image path", "");
     auto frame_skip = op.add<popl::Value<unsigned int>>("", "frame-skip", "interval of frame skip", 1);
     auto no_sleep = op.add<popl::Switch>("", "no-sleep", "not wait for next frame in real time");
     auto auto_term = op.add<popl::Switch>("", "auto-term", "automatically terminate the viewer");
     auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
-    auto eval_log = op.add<popl::Switch>("", "eval-log", "store trajectory and tracking times for evaluation");
-    auto map_db_path = op.add<popl::Value<std::string>>("", "map-db", "store a map database at this path after SLAM", "");
     try {
         op.parse(argc, argv);
     }
@@ -176,7 +166,8 @@ int main(int argc, char* argv[]) {
         std::cerr << op << std::endl;
         return EXIT_FAILURE;
     }
-    if (!vocab_file_path->is_set() || !movie_file_path->is_set() || !setting_file_path->is_set()) {
+    if (!vocab_file_path->is_set() || !video_file_path->is_set()
+        || !setting_file_path->is_set() || !map_db_path->is_set()) {
         std::cerr << "invalid arguments" << std::endl;
         std::cerr << std::endl;
         std::cerr << op << std::endl;
@@ -206,11 +197,11 @@ int main(int argc, char* argv[]) {
     ProfilerStart("slam.prof");
 #endif
 
-    // run tracking
+    // run localization
     if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
-        mono_tracking(cfg, vocab_file_path->value(), movie_file_path->value(), mask_img_path->value(),
-                      frame_skip->value(), no_sleep->is_set(), auto_term->is_set(),
-                      eval_log->is_set(), map_db_path->value());
+        mono_localization(cfg, vocab_file_path->value(), video_file_path->value(), mask_img_path->value(),
+                          map_db_path->value(), mapping->is_set(),
+                          frame_skip->value(), no_sleep->is_set(), auto_term->is_set());
     }
     else {
         throw std::runtime_error("Invalid setup type: " + cfg->camera_->get_setup_type_string());
