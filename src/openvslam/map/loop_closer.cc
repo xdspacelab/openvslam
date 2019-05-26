@@ -34,18 +34,17 @@ void loop_closer::set_local_mapper(map::local_mapper* local_mapper) {
     loop_bundle_adjuster_.set_local_mapper(local_mapper);
 }
 
-void loop_closer::set_loop_detector_status(const bool loop_detector_is_enabled) {
-    if (loop_detector_is_enabled) {
-        spdlog::info("enable loop detector");
-        loop_detector_.enable_loop_detector();
-    }
-    else {
-        spdlog::info("disable loop detector");
-        loop_detector_.disable_loop_detector();
-    }
+void loop_closer::enable_loop_detector() {
+    spdlog::info("enable loop detector");
+    loop_detector_.enable_loop_detector();
 }
 
-bool loop_closer::get_loop_detector_status() const {
+void loop_closer::disable_loop_detector() {
+    spdlog::info("disable loop detector");
+    loop_detector_.disable_loop_detector();
+}
+
+bool loop_closer::loop_detector_is_enabled() const {
     return loop_detector_.is_enabled();
 }
 

@@ -41,77 +41,182 @@ class frame_publisher;
 
 class system {
 public:
+    /**
+     * Constructor
+     */
     system(const std::shared_ptr<config>& cfg, const std::string& vocab_file_path);
 
+    /**
+     * Destructor
+     */
     ~system();
 
+    //-----------------------------------------
+    // system startup and shutdown
+
+    /**
+     * Startup the SLAM system
+     */
     void startup(const bool need_initialize = true);
 
-    Mat44_t track_for_monocular(const cv::Mat& img, const double timestamp, const cv::Mat& mask = cv::Mat{});
-
-    Mat44_t track_for_stereo(const cv::Mat& left_img, const cv::Mat& right_img, const double timestamp, const cv::Mat& mask = cv::Mat{});
-
-    Mat44_t track_for_RGBD(const cv::Mat& rgb_img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask = cv::Mat{});
-
-    const std::shared_ptr<publisher::map_publisher> get_map_publisher() const {
-        return map_publisher_;
-    }
-
-    const std::shared_ptr<publisher::frame_publisher> get_frame_publisher() const {
-        return frame_publisher_;
-    }
-
-    void activate_mapping_module();
-
-    void deactivate_mapping_module();
-
-    bool get_mapping_module_status() const;
-
-    void activate_loop_detector();
-
-    void deactivate_loop_detector();
-
-    bool get_loop_detector_status() const;
-
-    bool loop_BA_is_running() const;
-
-    void abort_loop_BA();
-
-    void pause_tracker();
-
-    bool tracker_is_paused() const;
-
-    void resume_tracker();
-
-    void request_reset();
-
-    bool reset_is_requested() const;
-
-    void request_terminate();
-
-    bool terminate_is_requested() const;
-
+    /**
+     * Shutdown the SLAM system
+     */
     void shutdown();
 
+    //-----------------------------------------
+    // data I/O
+
+    /**
+     * Save the frame trajectory in the specified format
+     */
     void save_frame_trajectory(const std::string& path, const std::string& format) const;
 
+    /**
+     * Save the keyframe trajectory in the specified format
+     */
     void save_keyframe_trajectory(const std::string& path, const std::string& format) const;
 
+    /**
+     * Load the map database from the MessagePack file
+     */
     void load_map_database(const std::string& path) const;
 
+    /**
+     * Save the map database to the MessagePack file
+     */
     void save_map_database(const std::string& path) const;
 
+    /**
+     * Get the map publisher
+     */
+    const std::shared_ptr<publisher::map_publisher> get_map_publisher() const;
+
+    /**
+     * Get the frame publisher
+     */
+    const std::shared_ptr<publisher::frame_publisher> get_frame_publisher() const;
+
+    //-----------------------------------------
+    // module management
+
+    /**
+     * Enable the mapping module
+     */
+    void enable_mapping_module();
+
+    /**
+     * Disable the mapping module
+     */
+    void disable_mapping_module();
+
+    /**
+     * The mapping module is enabled or not
+     */
+    bool mapping_module_is_enabled() const;
+
+    /**
+     * Enable the loop detector
+     */
+    void enable_loop_detector();
+
+    /**
+     * Disable the loop detector
+     */
+    void disable_loop_detector();
+
+    /**
+     * The loop detector is enabled or not
+     */
+    bool loop_detector_is_enabled() const;
+
+    /**
+     * Loop BA is running or not
+     */
+    bool loop_BA_is_running() const;
+
+    /**
+     * Abort the loop BA externally
+     */
+    void abort_loop_BA();
+
+    //-----------------------------------------
+    // tracking methods
+
+    /**
+     * Track monocular image
+     */
+    Mat44_t track_for_monocular(const cv::Mat& img, const double timestamp, const cv::Mat& mask = cv::Mat{});
+
+    /**
+     * Track stereo image
+     * (NOTE: left and right images must be stereo-rectified)
+     */
+    Mat44_t track_for_stereo(const cv::Mat& left_img, const cv::Mat& right_img, const double timestamp, const cv::Mat& mask = cv::Mat{});
+
+    /**
+     * Track RGBD image
+     * (NOTE: RGB and depth images must be aligned)
+     */
+    Mat44_t track_for_RGBD(const cv::Mat& rgb_img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask = cv::Mat{});
+
+    //-----------------------------------------
+    // management for pause
+
+    /**
+     * Pause the tracking module
+     */
+    void pause_tracker();
+
+    /**
+     * The tracking module is paused or not
+     */
+    bool tracker_is_paused() const;
+
+    /**
+     * Resume the tracking module
+     */
+    void resume_tracker();
+
+    //-----------------------------------------
+    // management for reset
+
+    /**
+     * Request to reset the system
+     */
+    void request_reset();
+
+    /**
+     * Reset of the system is requested or not
+     */
+    bool reset_is_requested() const;
+
+    //-----------------------------------------
+    // management for terminate
+
+    /**
+     * Request to terminate the system
+     */
+    void request_terminate();
+
+    /**
+     * Termination of the system is requested or not
+     */
+    bool terminate_is_requested() const;
+
 private:
-    //! check reset request
+    /**
+     * Check reset request of hte system
+     */
     void check_reset_request();
 
     /**
-     * Pause local mapper and loop closer threads
+     * Pause the mapping module and the global optimization module
      */
     void pause_other_threads() const;
 
     /**
-     * Resume local mapper and loop closer threads
+     * Resume the mapping module and the global optimization module
      */
     void resume_other_threads() const;
 

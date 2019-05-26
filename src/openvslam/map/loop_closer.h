@@ -56,14 +56,19 @@ public:
     // interfaces to ON/OFF loop detector
 
     /**
-     * Enable or disable the loop detector
+     * Enable the loop detector
      */
-    void set_loop_detector_status(const bool loop_detector_is_enabled);
+    void enable_loop_detector();
 
     /**
-     * Check if the loop detector is enabled or not
+     * Disable the loop detector
      */
-    bool get_loop_detector_status() const;
+    void disable_loop_detector();
+
+    /**
+     * The loop detector is enabled or not
+     */
+    bool loop_detector_is_enabled() const;
 
     //-----------------------------------------
     // main process

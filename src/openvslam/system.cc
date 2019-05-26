@@ -117,6 +117,113 @@ void system::startup(const bool need_initialize) {
     loop_closer_thread_ = std::unique_ptr<std::thread>(new std::thread(&openvslam::map::loop_closer::run, loop_closer_));
 }
 
+void system::shutdown() {
+    // terminate the other threads
+    local_mapper_->request_terminate();
+    loop_closer_->request_terminate();
+    // wait until they stop
+    while (!local_mapper_->is_terminated()
+           || !loop_closer_->is_terminated()
+           || loop_closer_->loop_BA_is_running()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(5000));
+    }
+
+    // wait until the threads stop
+    local_mapper_thread_->join();
+    loop_closer_thread_->join();
+
+    spdlog::info("shutdown SLAM system");
+    system_is_running_ = false;
+}
+
+void system::save_frame_trajectory(const std::string& path, const std::string& format) const {
+    pause_other_threads();
+    io::trajectory_io trajectory_io(map_db_);
+    trajectory_io.save_frame_trajectory(path, format);
+    resume_other_threads();
+}
+
+void system::save_keyframe_trajectory(const std::string& path, const std::string& format) const {
+    pause_other_threads();
+    io::trajectory_io trajectory_io(map_db_);
+    trajectory_io.save_keyframe_trajectory(path, format);
+    resume_other_threads();
+}
+
+void system::load_map_database(const std::string& path) const {
+    pause_other_threads();
+    io::map_database_io map_db_io(cam_db_, map_db_, bow_db_, bow_vocab_);
+    map_db_io.load_message_pack(path);
+    resume_other_threads();
+}
+
+void system::save_map_database(const std::string& path) const {
+    pause_other_threads();
+    io::map_database_io map_db_io(cam_db_, map_db_, bow_db_, bow_vocab_);
+    map_db_io.save_message_pack(path);
+    resume_other_threads();
+}
+
+const std::shared_ptr<publisher::map_publisher> system::get_map_publisher() const {
+    return map_publisher_;
+}
+
+const std::shared_ptr<publisher::frame_publisher> system::get_frame_publisher() const {
+    return frame_publisher_;
+}
+
+void system::enable_mapping_module() {
+    std::lock_guard<std::mutex> lock(mtx_mapping_);
+    if (!system_is_running_) {
+        spdlog::critical("please call system::enable_mapping_module() after system::startup()");
+    }
+    // resume the mapping module
+    local_mapper_->resume();
+    // inform to the tracking module
+    tracker_->set_mapping_module_status(true);
+}
+
+void system::disable_mapping_module() {
+    std::lock_guard<std::mutex> lock(mtx_mapping_);
+    if (!system_is_running_) {
+        spdlog::critical("please call system::disable_mapping_module() after system::startup()");
+    }
+    // pause the mapping module
+    local_mapper_->request_pause();
+    // wait until it stops
+    while (!local_mapper_->is_paused()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
+    }
+    // inform to the tracking module
+    tracker_->set_mapping_module_status(false);
+}
+
+bool system::mapping_module_is_enabled() const {
+    return !local_mapper_->is_paused() && !local_mapper_->is_terminated();
+}
+
+void system::enable_loop_detector() {
+    std::lock_guard<std::mutex> lock(mtx_loop_detector_);
+    loop_closer_->enable_loop_detector();
+}
+
+void system::disable_loop_detector() {
+    std::lock_guard<std::mutex> lock(mtx_loop_detector_);
+    loop_closer_->disable_loop_detector();
+}
+
+bool system::loop_detector_is_enabled() const {
+    return loop_closer_->loop_detector_is_enabled();
+}
+
+bool system::loop_BA_is_running() const {
+    return loop_closer_->loop_BA_is_running();
+}
+
+void system::abort_loop_BA() {
+    loop_closer_->abort_loop_BA();
+}
+
 Mat44_t system::track_for_monocular(const cv::Mat& img, const double timestamp, const cv::Mat& mask) {
     assert(camera_->setup_type_ == camera::setup_type_t::Monocular);
 
@@ -162,58 +269,6 @@ Mat44_t system::track_for_RGBD(const cv::Mat& rgb_img, const cv::Mat& depthmap, 
     return cam_pose_cw;
 }
 
-void system::activate_mapping_module() {
-    std::lock_guard<std::mutex> lock(mtx_mapping_);
-    if (!system_is_running_) {
-        spdlog::critical("please call system::activate_mapping_module() after system::startup()");
-    }
-    // local mapperを再開する
-    local_mapper_->resume();
-    // trackerに教える
-    tracker_->set_mapping_module_status(true);
-}
-
-void system::deactivate_mapping_module() {
-    std::lock_guard<std::mutex> lock(mtx_mapping_);
-    if (!system_is_running_) {
-        spdlog::critical("please call system::deactivate_mapping_module() after system::startup()");
-    }
-    // local mapperを止める
-    local_mapper_->request_pause();
-    // 止まるまで待つ
-    while (!local_mapper_->is_paused()) {
-        std::this_thread::sleep_for(std::chrono::microseconds(1000));
-    }
-    // trackerに教える
-    tracker_->set_mapping_module_status(false);
-}
-
-bool system::get_mapping_module_status() const {
-    return tracker_->get_mapping_module_status();
-}
-
-void system::activate_loop_detector() {
-    std::lock_guard<std::mutex> lock(mtx_loop_detector_);
-    loop_closer_->set_loop_detector_status(true);
-}
-
-void system::deactivate_loop_detector() {
-    std::lock_guard<std::mutex> lock(mtx_loop_detector_);
-    loop_closer_->set_loop_detector_status(false);
-}
-
-bool system::get_loop_detector_status() const {
-    return loop_closer_->get_loop_detector_status();
-}
-
-bool system::loop_BA_is_running() const {
-    return loop_closer_->loop_BA_is_running();
-}
-
-void system::abort_loop_BA() {
-    loop_closer_->abort_loop_BA();
-}
-
 void system::pause_tracker() {
     tracker_->request_pause();
 }
@@ -246,53 +301,6 @@ bool system::terminate_is_requested() const {
     return terminate_is_requested_;
 }
 
-void system::shutdown() {
-    // 他のスレッドで動いているものを止める
-    local_mapper_->request_terminate();
-    loop_closer_->request_terminate();
-    // 止まるまで待つ
-    while (!local_mapper_->is_terminated()
-           || !loop_closer_->is_terminated()
-           || loop_closer_->loop_BA_is_running()) {
-        std::this_thread::sleep_for(std::chrono::microseconds(5000));
-    }
-
-    // スレッド終了まで待機
-    local_mapper_thread_->join();
-    loop_closer_thread_->join();
-
-    spdlog::info("shutdown SLAM system");
-    system_is_running_ = false;
-}
-
-void system::save_frame_trajectory(const std::string& path, const std::string& format) const {
-    pause_other_threads();
-    io::trajectory_io trajectory_io(map_db_);
-    trajectory_io.save_frame_trajectory(path, format);
-    resume_other_threads();
-}
-
-void system::save_keyframe_trajectory(const std::string& path, const std::string& format) const {
-    pause_other_threads();
-    io::trajectory_io trajectory_io(map_db_);
-    trajectory_io.save_keyframe_trajectory(path, format);
-    resume_other_threads();
-}
-
-void system::load_map_database(const std::string& path) const {
-    pause_other_threads();
-    io::map_database_io map_db_io(cam_db_, map_db_, bow_db_, bow_vocab_);
-    map_db_io.load_message_pack(path);
-    resume_other_threads();
-}
-
-void system::save_map_database(const std::string& path) const {
-    pause_other_threads();
-    io::map_database_io map_db_io(cam_db_, map_db_, bow_db_, bow_vocab_);
-    map_db_io.save_message_pack(path);
-    resume_other_threads();
-}
-
 void system::check_reset_request() {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     if (reset_is_requested_) {
@@ -316,7 +324,6 @@ void system::pause_other_threads() const {
             std::this_thread::sleep_for(std::chrono::microseconds(5000));
         }
     }
-
 }
 
 void system::resume_other_threads() const {

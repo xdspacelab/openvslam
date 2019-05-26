@@ -25,8 +25,8 @@ viewer::viewer(const std::shared_ptr<openvslam::config>& cfg, openvslam::system*
           camera_size_(cfg->yaml_node_["PangolinViewer.camera_size"].as<float>(0.15)),
           camera_line_width_(cfg->yaml_node_["PangolinViewer.camera_line_width"].as<unsigned int>(2)),
           cs_(cfg->yaml_node_["PangolinViewer.color_scheme"].as<std::string>("black")),
-          mapping_mode_(system->get_mapping_module_status()),
-          loop_detection_mode_(system->get_loop_detector_status()) {}
+          mapping_mode_(system->mapping_module_is_enabled()),
+          loop_detection_mode_(system->loop_detector_is_enabled()) {}
 
 void viewer::run() {
     is_terminated_ = false;
@@ -366,18 +366,18 @@ void viewer::reset() {
 
     // reset mapping mode
     if (mapping_mode_) {
-        system_->activate_mapping_module();
+        system_->enable_mapping_module();
     }
     else {
-        system_->deactivate_mapping_module();
+        system_->disable_mapping_module();
     }
 
     // reset loop detector
     if (loop_detection_mode_) {
-        system_->activate_loop_detector();
+        system_->enable_loop_detector();
     }
     else {
-        system_->deactivate_loop_detector();
+        system_->disable_loop_detector();
     }
 
     // reset internal state
@@ -398,21 +398,21 @@ void viewer::check_state_transition() {
 
     // mapping module
     if (*menu_mapping_mode_ && !mapping_mode_) {
-        system_->activate_mapping_module();
+        system_->enable_mapping_module();
         mapping_mode_ = true;
     }
     else if (!*menu_mapping_mode_ && mapping_mode_) {
-        system_->deactivate_mapping_module();
+        system_->disable_mapping_module();
         mapping_mode_ = false;
     }
 
     // loop detector
     if (*menu_loop_detection_mode_ && !loop_detection_mode_) {
-        system_->activate_loop_detector();
+        system_->enable_loop_detector();
         loop_detection_mode_ = true;
     }
     else if (!*menu_loop_detection_mode_ && loop_detection_mode_) {
-        system_->deactivate_loop_detector();
+        system_->disable_loop_detector();
         loop_detection_mode_ = false;
     }
 }

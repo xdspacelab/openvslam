@@ -38,10 +38,10 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
     SLAM.startup(false);
     // select to activate the mapping module or not
     if (mapping) {
-        SLAM.activate_mapping_module();
+        SLAM.enable_mapping_module();
     }
     else {
-        SLAM.deactivate_mapping_module();
+        SLAM.disable_mapping_module();
     }
 
     // create a viewer object
