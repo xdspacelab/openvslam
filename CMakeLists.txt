@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(openvslam LANGUAGES CXX C)
 
 if(POLICY CMP0042)
@@ -113,13 +113,28 @@ endif()
 # Find packages #
 #################
 
-find_package(OpenMP)
-if(OpenMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
-
 include_directories(${PROJECT_SOURCE_DIR}/src)
+
+# thread library
+find_package(Threads REQUIRED)
+
+# OpenMP
+set(USE_OPENMP ON CACHE BOOL "Use OpenMP")
+if(USE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_FOUND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        add_definitions(-DUSE_OPENMP)
+        message(STATUS "OpenMP: ENABLED")
+    else()
+        remove_definitions(-DUSE_OPENMP)
+        message(STATUS "OpenMP: DISABLED")
+    endif()
+else()
+    remove_definitions(-DUSE_OPENMP)
+    message(STATUS "OpenMP: DISABLED")
+endif()
 
 # OpenCV
 find_package(OpenCV 3.4 QUIET)

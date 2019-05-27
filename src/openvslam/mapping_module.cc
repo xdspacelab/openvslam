@@ -260,7 +260,7 @@ void mapping_module::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, da
                                                     const std::vector<std::pair<unsigned int, unsigned int>>& matches) {
     const module::two_view_triangulator triangulator(keyfrm_1, keyfrm_2, 1.0);
 
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp parallel for
 #endif
     for (unsigned int i = 0; i < matches.size(); ++i) {
@@ -289,7 +289,7 @@ void mapping_module::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, da
 
         map_db_->add_landmark(lm);
         // wait for redundancy check
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp critical
 #endif
         {
