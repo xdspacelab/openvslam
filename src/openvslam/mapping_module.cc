@@ -184,6 +184,8 @@ void mapping_module::store_new_keyframe() {
         // if `lm` does not have the observation information from `cur_keyfrm_`,
         // add the association between the keyframe and the landmark
         if (lm->is_observed_in_keyframe(cur_keyfrm_)) {
+            // if `lm` is correctly observed, make it be checked by the local map cleaner
+            local_map_cleaner_.add_fresh_landmark(lm);
             continue;
         }
 
