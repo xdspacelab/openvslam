@@ -1,7 +1,7 @@
 #include "openvslam/data/frame.h"
 #include "openvslam/initialize/bearing_vector.h"
-#include "openvslam/solver/essential_solver.h"
-#include "openvslam/solver/triangulator.h"
+#include "openvslam/solve/essential_solver.h"
+#include "openvslam/solve/triangulator.h"
 
 #include <spdlog/spdlog.h>
 
@@ -37,7 +37,7 @@ bool bearing_vector::initialize(const data::frame& cur_frm, const std::vector<in
     }
 
     // Eを計算
-    auto essential_solver = solver::essential_solver(ref_bearings_, cur_bearings_, ref_cur_matches_);
+    auto essential_solver = solve::essential_solver(ref_bearings_, cur_bearings_, ref_cur_matches_);
     essential_solver.find_via_ransac(max_num_iters_);
 
     // 3次元点を作成
@@ -64,7 +64,7 @@ bool bearing_vector::reconstruct(const Mat33_t& E_ref_to_cur, const std::vector<
     // https://en.wikipedia.org/wiki/Essential_matrix#Determining_R_and_t_from_E
     eigen_alloc_vector<Mat33_t> init_rots;
     eigen_alloc_vector<Vec3_t> init_transes;
-    if (!solver::essential_solver::decompose(E_ref_to_cur, init_rots, init_transes)) {
+    if (!solve::essential_solver::decompose(E_ref_to_cur, init_rots, init_transes)) {
         return false;
     }
 
@@ -154,7 +154,7 @@ unsigned int bearing_vector::check_pose(const Mat33_t& rot_ref_to_cur, const Vec
         const Vec3_t& ref_bearing = ref_bearings_.at(ref_cur_matches_.at(i).first);
         const Vec3_t& cur_bearing = cur_bearings_.at(ref_cur_matches_.at(i).second);
 
-        const Vec3_t pos_c_in_ref = solver::triangulator::triangulate(ref_bearing, cur_bearing, rot_ref_to_cur, trans_ref_to_cur);
+        const Vec3_t pos_c_in_ref = solve::triangulator::triangulate(ref_bearing, cur_bearing, rot_ref_to_cur, trans_ref_to_cur);
 
         if (!std::isfinite(pos_c_in_ref(0))
             || !std::isfinite(pos_c_in_ref(1))

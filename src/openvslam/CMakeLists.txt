@@ -1,56 +1,23 @@
-file(GLOB_RECURSE CAMERA_SOURCES ./camera/*.cc)
-file(GLOB_RECURSE CAMERA_HEADERS ./camera/*.h)
-
-file(GLOB_RECURSE DATA_SOURCES ./data/*.cc)
-file(GLOB_RECURSE DATA_HEADERS ./data/*.h)
-
-file(GLOB_RECURSE FEATURE_SOURCES ./feature/*.cc)
-file(GLOB_RECURSE FEATURE_HEADERS ./feature/*.h)
-
-file(GLOB_RECURSE INITIALIZE_SOURCES ./initialize/*.cc)
-file(GLOB_RECURSE INITIALIZE_HEADERS ./initialize/*.h)
-
-file(GLOB_RECURSE IO_SOURCES ./io/*.cc)
-file(GLOB_RECURSE IO_HEADERS ./io/*.h)
-
-file(GLOB_RECURSE MAP_SOURCES ./map/*.cc)
-file(GLOB_RECURSE MAP_HEADERS ./map/*.h)
-
-file(GLOB_RECURSE MATCH_SOURCES ./match/*.cc)
-file(GLOB_RECURSE MATCH_HEADERS ./match/*.h)
-
-file(GLOB_RECURSE OPTIMIZE_SOURCES ./optimize/*.cc)
-file(GLOB_RECURSE OPTIMIZE_HEADERS ./optimize/*.h)
-
-file(GLOB_RECURSE PUBLISHER_SOURCES ./publisher/*.cc)
-file(GLOB_RECURSE PUBLISHER_HEADERS ./publisher/*.h)
-
-file(GLOB_RECURSE SOLVER_SOURCES ./solver/*.cc)
-file(GLOB_RECURSE SOLVER_HEADERS ./solver/*.h)
-
-file(GLOB_RECURSE TRACK_SOURCES ./track/*.cc)
-file(GLOB_RECURSE TRACK_HEADERS ./track/*.h)
-
-file(GLOB_RECURSE UTIL_SOURCES ./util/*.cc)
-file(GLOB_RECURSE UTIL_HEADERS ./util/*.h)
-
 add_library(${PROJECT_NAME} SHARED
-        type.h
-        system.h system.cc
-        config.h config.cc
-        ${CAMERA_SOURCES} ${CAMERA_HEADERS}
-        ${DATA_SOURCES} ${DATA_HEADERS}
-        ${FEATURE_SOURCES} ${FEATURE_HEADERS}
-        ${INITIALIZE_SOURCES} ${INITIALIZE_HEADERS}
-        ${IO_SOURCES} ${IO_HEADERS}
-        ${MAP_SOURCES} ${MAP_HEADERS}
-        ${MATCH_SOURCES} ${MATCH_HEADERS}
-        ${OPTIMIZE_SOURCES} ${OPTIMIZE_HEADERS}
-        ${PUBLISHER_SOURCES} ${PUBLISHER_HEADERS}
-        ${SOLVER_SOURCES} ${SOLVER_HEADERS}
-        ${TRACK_SOURCES} ${TRACK_HEADERS}
-        ${MATCH_SOURCES} ${MATCH_HEADERS}
-        ${UTIL_SOURCES} ${UTIL_HEADERS})
+        ${CMAKE_CURRENT_SOURCE_DIR}/config.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/system.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/tracking_module.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mapping_module.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/global_optimization_module.cc)
+
+add_subdirectory(camera)
+add_subdirectory(data)
+add_subdirectory(feature)
+add_subdirectory(initialize)
+add_subdirectory(io)
+add_subdirectory(match)
+add_subdirectory(module)
+add_subdirectory(optimize)
+add_subdirectory(publish)
+add_subdirectory(solve)
+add_subdirectory(util)
+
+target_sources(${PROJECT_NAME} PRIVATE)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         OUTPUT_NAME openvslam

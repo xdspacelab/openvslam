@@ -15,12 +15,12 @@ namespace data {
 std::mutex map_database::mtx_database_;
 
 map_database::map_database() {
-    spdlog::debug("CONSTRUCT: map_database");
+    spdlog::debug("CONSTRUCT: data::map_database");
 }
 
 map_database::~map_database() {
     clear();
-    spdlog::debug("DESTRUCT: map_database");
+    spdlog::debug("DESTRUCT: data::map_database");
 }
 
 void map_database::add_keyframe(keyframe* keyfrm) {

@@ -22,8 +22,8 @@ graph_optimizer::graph_optimizer(data::map_database* map_db, const bool fix_scal
         : map_db_(map_db), fix_scale_(fix_scale) {}
 
 void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr_keyfrm,
-                               const map::keyframe_Sim3_pairs_t& non_corrected_Sim3s,
-                               const map::keyframe_Sim3_pairs_t& pre_corrected_Sim3s,
+                               const module::keyframe_Sim3_pairs_t& non_corrected_Sim3s,
+                               const module::keyframe_Sim3_pairs_t& pre_corrected_Sim3s,
                                const std::map<data::keyframe*, std::set<data::keyframe*>>& loop_connections) const {
     // 1. optimizerを構築
 

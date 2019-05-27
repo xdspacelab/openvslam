@@ -4,7 +4,7 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/match/robust.h"
-#include "openvslam/solver/essential_solver.h"
+#include "openvslam/solve/essential_solver.h"
 
 #ifdef USE_DBOW2
 #include <DBoW2/FeatureVector.h>
@@ -207,7 +207,7 @@ unsigned int robust::match_frame_and_keyframe(data::frame& frm, data::keyframe* 
     brute_force_match(frm, keyfrm, matches);
 
     // eight-point RANSACでインライアのみを抽出
-    solver::essential_solver solver(frm.bearings_, keyfrm->bearings_, matches);
+    solve::essential_solver solver(frm.bearings_, keyfrm->bearings_, matches);
     solver.find_via_ransac(50, false);
     if (!solver.solution_is_valid()) {
         return 0;

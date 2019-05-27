@@ -18,10 +18,10 @@ class keyframe;
 class landmark;
 } // namespace data
 
-namespace publisher {
+namespace publish {
 class frame_publisher;
 class map_publisher;
-} // namespace publisher
+} // namespace publish
 
 } // namespace openvslam
 
@@ -29,8 +29,8 @@ namespace socket_publisher {
 
 class data_serializer {
 public:
-    data_serializer(const std::shared_ptr<openvslam::publisher::frame_publisher>& frame_publisher,
-                    const std::shared_ptr<openvslam::publisher::map_publisher>& map_publisher,
+    data_serializer(const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
+                    const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher,
                     const unsigned int image_width, const unsigned int image_height);
 
     std::string serialize_messages(const std::vector<std::string>& tags, const std::vector<std::string>& messages);
@@ -42,8 +42,8 @@ public:
     static std::string serialized_reset_signal_;
 
 private:
-    const std::shared_ptr<openvslam::publisher::frame_publisher> frame_publisher_;
-    const std::shared_ptr<openvslam::publisher::map_publisher> map_publisher_;
+    const std::shared_ptr<openvslam::publish::frame_publisher> frame_publisher_;
+    const std::shared_ptr<openvslam::publish::map_publisher> map_publisher_;
     const unsigned int image_width_;
     const unsigned int image_height_;
     std::unique_ptr<std::unordered_map<unsigned int, double>> keyframe_hash_map_;

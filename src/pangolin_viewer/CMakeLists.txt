@@ -1,5 +1,6 @@
 add_library(pangolin_viewer SHARED
-        viewer.cc color_scheme.cc)
+        viewer.cc
+        color_scheme.cc)
 
 set_target_properties(pangolin_viewer PROPERTIES
         OUTPUT_NAME pangolin_viewer
