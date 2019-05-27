@@ -4,7 +4,7 @@
 #include "openvslam/match/bow_tree.h"
 #include "openvslam/match/projection.h"
 #include "openvslam/module/loop_detector.h"
-#include "openvslam/solver/sim3_solver.h"
+#include "openvslam/solve/sim3_solver.h"
 #include "openvslam/util/converter.h"
 
 #include <spdlog/spdlog.h>
@@ -299,7 +299,7 @@ bool loop_detector::select_loop_candidate_via_Sim3(const std::vector<data::keyfr
         // keyframe1: current keyframe, keyframe2: candidate keyframe
         // estimate Sim3 of 2->1 (candidate->current)
 
-        solver::sim3_solver solver(cur_keyfrm_, candidate, curr_match_lms_observed_in_cand, fix_scale_in_Sim3_estimation_);
+        solve::sim3_solver solver(cur_keyfrm_, candidate, curr_match_lms_observed_in_cand, fix_scale_in_Sim3_estimation_);
         solver.set_ransac_parameters(0.999, 20, 300);
         const auto estimated = solver.estimate();
         if (!estimated) {

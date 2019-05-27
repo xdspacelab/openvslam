@@ -1,10 +1,10 @@
-#include "openvslam/solver/common.h"
-#include "openvslam/solver/fundamental_solver.h"
+#include "openvslam/solve/common.h"
+#include "openvslam/solve/fundamental_solver.h"
 #include "openvslam/util/converter.h"
 #include "openvslam/util/random_array.h"
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 fundamental_solver::fundamental_solver(const std::vector<cv::KeyPoint>& undist_keypts_1, const std::vector<cv::KeyPoint>& undist_keypts_2,
                                        const std::vector<std::pair<int, int>>& matches_12, const float sigma)
@@ -97,7 +97,7 @@ void fundamental_solver::find_via_ransac(const unsigned int max_num_iter, const 
     }
 
     // スコアをもう一度計算する
-    const Mat33_t normalized_F_21 = solver::fundamental_solver::compute_F_21(inlier_normalized_keypts_1, inlier_normalized_keypts_2);
+    const Mat33_t normalized_F_21 = solve::fundamental_solver::compute_F_21(inlier_normalized_keypts_1, inlier_normalized_keypts_2);
     best_F_21_ = transform_2_t * normalized_F_21 * transform_1;
     best_score_ = check_inliers(best_F_21_, is_inlier_match_);
 }

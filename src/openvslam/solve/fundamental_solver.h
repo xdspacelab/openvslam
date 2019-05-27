@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_SOLVER_FUNDAMENTAL_SOLVER_H
-#define OPENVSLAM_SOLVER_FUNDAMENTAL_SOLVER_H
+#ifndef OPENVSLAM_SOLVE_FUNDAMENTAL_SOLVER_H
+#define OPENVSLAM_SOLVE_FUNDAMENTAL_SOLVER_H
 
 #include "openvslam/camera/base.h"
 
@@ -8,7 +8,7 @@
 #include <opencv2/opencv.hpp>
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 class fundamental_solver {
 public:
@@ -121,7 +121,7 @@ fundamental_solver::fundamental_solver(T* shot_1, T* shot_2, const std::vector<s
     assert(shot_2->camera_->model_type_ == camera::model_type_t::Perspective);
 }
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam
 
-#endif // OPENVSLAM_SOLVER_FUNDAMENTAL_SOLVER_H
+#endif // OPENVSLAM_SOLVE_FUNDAMENTAL_SOLVER_H

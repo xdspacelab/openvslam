@@ -1,7 +1,7 @@
 #include "helper/bearing_vector.h"
 
 #include "openvslam/type.h"
-#include "openvslam/solver/essential_solver.h"
+#include "openvslam/solve/essential_solver.h"
 #include "openvslam/util/random_array.h"
 
 #include <Eigen/Geometry>
@@ -35,7 +35,7 @@ TEST(essential_solver, check_E_solution_1) {
     }
 
     // E行列を求める
-    solver::essential_solver solver(bearings_1, bearings_2, matches_12);
+    solve::essential_solver solver(bearings_1, bearings_2, matches_12);
     solver.find_via_ransac(100);
     Mat33_t E_21 = solver.get_best_E_21();
 
@@ -74,7 +74,7 @@ TEST(essential_solver, check_E_solution_2) {
     }
 
     // E行列を求める
-    solver::essential_solver solver(bearings_1, bearings_2, matches_12);
+    solve::essential_solver solver(bearings_1, bearings_2, matches_12);
     solver.find_via_ransac(100);
     Mat33_t E_21 = solver.get_best_E_21();
 

@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_SOLVER_SIM3_SOLVER_H
-#define OPENVSLAM_SOLVER_SIM3_SOLVER_H
+#ifndef OPENVSLAM_SOLVE_SIM3_SOLVER_H
+#define OPENVSLAM_SOLVE_SIM3_SOLVER_H
 
 #include "openvslam/data/keyframe.h"
 
@@ -8,7 +8,7 @@
 #include <opencv2/opencv.hpp>
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 class sim3_solver {
 public:
@@ -114,7 +114,7 @@ protected:
     unsigned int max_num_iterations_;
 };
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam
 
-#endif // OPENVSLAM_SOLVER_SIM3_SOLVER_H
+#endif // OPENVSLAM_SOLVE_SIM3_SOLVER_H

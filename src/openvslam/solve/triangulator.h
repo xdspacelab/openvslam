@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_SOLVER_TRIANGULATOR_H
-#define OPENVSLAM_SOLVER_TRIANGULATOR_H
+#ifndef OPENVSLAM_SOLVE_TRIANGULATOR_H
+#define OPENVSLAM_SOLVE_TRIANGULATOR_H
 
 #include "openvslam/type.h"
 
@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 class triangulator {
 public:
@@ -89,7 +89,7 @@ Vec3_t triangulator::triangulate(const Vec3_t& bearing_1, const Vec3_t& bearing_
     return singular_vector.block<3, 1>(0, 0) / singular_vector(3);
 }
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam
 
-#endif // OPENVSLAM_SOLVER_TRIANGULATOR_H
+#endif // OPENVSLAM_SOLVE_TRIANGULATOR_H

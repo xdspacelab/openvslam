@@ -1,7 +1,7 @@
-#include "openvslam/solver/common.h"
+#include "openvslam/solve/common.h"
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 void normalize(const std::vector<cv::KeyPoint>& keypts, std::vector<cv::Point2f>& normalized_pts, Mat33_t& transform) {
     float mean_x = 0;

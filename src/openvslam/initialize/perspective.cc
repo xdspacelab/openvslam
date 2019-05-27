@@ -2,9 +2,9 @@
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/initialize/perspective.h"
-#include "openvslam/solver/homography_solver.h"
-#include "openvslam/solver/fundamental_solver.h"
-#include "openvslam/solver/triangulator.h"
+#include "openvslam/solve/homography_solver.h"
+#include "openvslam/solve/fundamental_solver.h"
+#include "openvslam/solve/triangulator.h"
 
 #include <thread>
 
@@ -74,10 +74,10 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
     }
 
     // HとFを並列で計算
-    auto homography_solver = solver::homography_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, sigma_);
-    auto fundamental_solver = solver::fundamental_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, sigma_);
-    std::thread thread_for_H(&solver::homography_solver::find_via_ransac, &homography_solver, max_num_iters_, true);
-    std::thread thread_for_F(&solver::fundamental_solver::find_via_ransac, &fundamental_solver, max_num_iters_, true);
+    auto homography_solver = solve::homography_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, sigma_);
+    auto fundamental_solver = solve::fundamental_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, sigma_);
+    std::thread thread_for_H(&solve::homography_solver::find_via_ransac, &homography_solver, max_num_iters_, true);
+    std::thread thread_for_F(&solve::fundamental_solver::find_via_ransac, &fundamental_solver, max_num_iters_, true);
     thread_for_H.join();
     thread_for_F.join();
 
@@ -118,7 +118,7 @@ bool perspective::reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vec
     eigen_alloc_vector<Mat33_t> init_rots;
     eigen_alloc_vector<Vec3_t> init_transes;
     eigen_alloc_vector<Vec3_t> init_normals;
-    if (!solver::homography_solver::decompose(H_ref_to_cur, ref_cam_matrix_, cur_cam_matrix_, init_rots, init_transes, init_normals)) {
+    if (!solve::homography_solver::decompose(H_ref_to_cur, ref_cam_matrix_, cur_cam_matrix_, init_rots, init_transes, init_normals)) {
         return false;
     }
 
@@ -191,7 +191,7 @@ bool perspective::reconstruct_with_F(const Mat33_t& F_ref_to_cur, const std::vec
     // https://en.wikipedia.org/wiki/Essential_matrix#Determining_R_and_t_from_E
     eigen_alloc_vector<Mat33_t> init_rots;
     eigen_alloc_vector<Vec3_t> init_transes;
-    if (!solver::fundamental_solver::decompose(F_ref_to_cur, ref_cam_matrix_, cur_cam_matrix_, init_rots, init_transes)) {
+    if (!solve::fundamental_solver::decompose(F_ref_to_cur, ref_cam_matrix_, cur_cam_matrix_, init_rots, init_transes)) {
         return false;
     }
 
@@ -289,7 +289,7 @@ unsigned int perspective::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t
         const auto& ref_undist_keypt = ref_undist_keypts_.at(ref_cur_matches_.at(i).first);
         const auto& cur_undist_keypt = cur_undist_keypts_.at(ref_cur_matches_.at(i).second);
 
-        const Vec3_t pos_c_in_ref = solver::triangulator::triangulate(ref_undist_keypt.pt, cur_undist_keypt.pt, P_ref, P_cur);
+        const Vec3_t pos_c_in_ref = solve::triangulator::triangulate(ref_undist_keypt.pt, cur_undist_keypt.pt, P_ref, P_cur);
 
         if (!std::isfinite(pos_c_in_ref(0))
             || !std::isfinite(pos_c_in_ref(1))

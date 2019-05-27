@@ -1,4 +1,4 @@
-#include "openvslam/solver/pnp_solver.h"
+#include "openvslam/solve/pnp_solver.h"
 #include "openvslam/util/random_array.h"
 #include "openvslam/util/trigonometric.h"
 
@@ -10,7 +10,7 @@
 #include <opencv2/core/core.hpp>
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& bearings, const std::vector<cv::KeyPoint>& keypts,
                        const std::vector<float>& scale_factors, const std::vector<data::landmark*>& assoc_lms) {

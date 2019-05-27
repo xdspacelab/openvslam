@@ -1,10 +1,10 @@
-#include "openvslam/solver/common.h"
-#include "openvslam/solver/homography_solver.h"
+#include "openvslam/solve/common.h"
+#include "openvslam/solve/homography_solver.h"
 #include "openvslam/util/converter.h"
 #include "openvslam/util/random_array.h"
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 homography_solver::homography_solver(const std::vector<cv::KeyPoint>& undist_keypts_1, const std::vector<cv::KeyPoint>& undist_keypts_2,
                                      const std::vector<std::pair<int, int>>& matches_12, const float sigma)
@@ -97,7 +97,7 @@ void homography_solver::find_via_ransac(const unsigned int max_num_iter, const b
     }
 
     // スコアをもう一度計算する
-    const Mat33_t normalized_H_21 = solver::homography_solver::compute_H_21(inlier_normalized_keypts_1, inlier_normalized_keypts_2);
+    const Mat33_t normalized_H_21 = solve::homography_solver::compute_H_21(inlier_normalized_keypts_1, inlier_normalized_keypts_2);
     best_H_21_ = transform_2_inv * normalized_H_21 * transform_1;
     best_score_ = check_inliers(best_H_21_, is_inlier_match_);
 }

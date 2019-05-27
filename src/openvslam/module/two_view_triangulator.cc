@@ -1,6 +1,6 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/module/two_view_triangulator.h"
-#include "openvslam/solver/triangulator.h"
+#include "openvslam/solve/triangulator.h"
 
 namespace openvslam {
 namespace module {
@@ -52,7 +52,7 @@ bool two_view_triangulator::triangulate(const unsigned idx_1, const unsigned int
 
     // triangulate
     if (triangulate_with_two_cameras) {
-        pos_w = solver::triangulator::triangulate(ray_c_1, ray_c_2, cam_pose_1w_, cam_pose_2w_);
+        pos_w = solve::triangulator::triangulate(ray_c_1, ray_c_2, cam_pose_1w_, cam_pose_2w_);
     }
     else if (is_stereo_1 && cos_stereo_parallax_1 < cos_stereo_parallax_2) {
         pos_w = keyfrm_1_->triangulate_stereo(idx_1);

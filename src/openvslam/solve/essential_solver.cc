@@ -1,10 +1,10 @@
-#include "openvslam/solver/common.h"
-#include "openvslam/solver/essential_solver.h"
+#include "openvslam/solve/common.h"
+#include "openvslam/solve/essential_solver.h"
 #include "openvslam/util/converter.h"
 #include "openvslam/util/random_array.h"
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 essential_solver::essential_solver(const eigen_alloc_vector<Vec3_t>& bearings_1, const eigen_alloc_vector<Vec3_t>& bearings_2,
                                    const std::vector<std::pair<int, int>>& matches_12)
@@ -82,7 +82,7 @@ void essential_solver::find_via_ransac(const unsigned int max_num_iter, const bo
     }
 
     // スコアをもう一度計算する
-    best_E_21_ = solver::essential_solver::compute_E_21(inlier_bearing_1, inlier_bearing_2);
+    best_E_21_ = solve::essential_solver::compute_E_21(inlier_bearing_1, inlier_bearing_2);
     best_score_ = check_inliers(best_E_21_, is_inlier_match_);
 }
 

@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_SOLVER_UTIL_H
-#define OPENVSLAM_SOLVER_UTIL_H
+#ifndef OPENVSLAM_SOLVE_UTIL_H
+#define OPENVSLAM_SOLVE_UTIL_H
 
 #include "openvslam/type.h"
 
@@ -8,11 +8,11 @@
 #include <opencv2/opencv.hpp>
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 void normalize(const std::vector<cv::KeyPoint>& keypts, std::vector<cv::Point2f>& normalized_pts, Mat33_t& transform);
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam
 
-#endif // OPENVSLAM_SOLVER_UTIL_H
+#endif // OPENVSLAM_SOLVE_UTIL_H

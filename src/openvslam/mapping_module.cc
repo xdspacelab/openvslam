@@ -7,8 +7,7 @@
 #include "openvslam/match/fuse.h"
 #include "openvslam/match/robust.h"
 #include "openvslam/module/two_view_triangulator.h"
-#include "openvslam/solver/essential_solver.h"
-#include "openvslam/solver/triangulator.h"
+#include "openvslam/solve/essential_solver.h"
 
 #include <unordered_set>
 #include <thread>
@@ -246,7 +245,7 @@ void mapping_module::create_new_landmarks() {
         // then reject outliers using Essential matrix computed from the two camera poses
 
         // (cur bearing) * E_ngh_to_cur * (ngh bearing) = 0
-        const Mat33_t E_ngh_to_cur = solver::essential_solver::create_E_21(ngh_keyfrm, cur_keyfrm_);
+        const Mat33_t E_ngh_to_cur = solve::essential_solver::create_E_21(ngh_keyfrm, cur_keyfrm_);
 
         // vector of matches (idx in the current, idx in the neighbor)
         std::vector<std::pair<unsigned int, unsigned int>> matches;

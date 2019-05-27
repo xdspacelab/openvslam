@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_SOLVER_PNP_SOLVER_H
-#define OPENVSLAM_SOLVER_PNP_SOLVER_H
+#ifndef OPENVSLAM_SOLVE_PNP_SOLVER_H
+#define OPENVSLAM_SOLVE_PNP_SOLVER_H
 
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/frame.h"
@@ -8,7 +8,7 @@
 #include <opencv2/core/core.hpp>
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 class pnp_solver {
 public:
@@ -136,7 +136,7 @@ private:
     unsigned int max_num_iters_;
 };
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam
 
-#endif // OPENVSLAM_SOLVER_PNP_SOLVER_H
+#endif // OPENVSLAM_SOLVE_PNP_SOLVER_H

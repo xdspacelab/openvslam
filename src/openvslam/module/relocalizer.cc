@@ -2,7 +2,7 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/bow_database.h"
 #include "openvslam/module/relocalizer.h"
-#include "openvslam/solver/pnp_solver.h"
+#include "openvslam/solve/pnp_solver.h"
 
 #include <spdlog/spdlog.h>
 
@@ -33,7 +33,7 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
     }
     const auto num_candidates = reloc_candidates.size();
 
-    std::vector<std::unique_ptr<solver::pnp_solver>> pnp_solvers(num_candidates);
+    std::vector<std::unique_ptr<solve::pnp_solver>> pnp_solvers(num_candidates);
     std::vector<std::vector<data::landmark*>> matched_landmarks(num_candidates);
     std::vector<bool> is_discarded(num_candidates, false);
 
@@ -54,7 +54,7 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
             continue;
         }
 
-        pnp_solvers.at(i) = std::unique_ptr<solver::pnp_solver>(new solver::pnp_solver(curr_frm.bearings_, curr_frm.keypts_,
+        pnp_solvers.at(i) = std::unique_ptr<solve::pnp_solver>(new solve::pnp_solver(curr_frm.bearings_, curr_frm.keypts_,
                                                                                        curr_frm.scale_factors_, matched_landmarks.at(i)));
         pnp_solvers.at(i)->set_ransac_parameters(0.99, 10, 300);
         ++num_valid_candidates;

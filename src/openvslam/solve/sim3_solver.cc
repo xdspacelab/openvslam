@@ -1,7 +1,7 @@
 #include "openvslam/camera/base.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
-#include "openvslam/solver/sim3_solver.h"
+#include "openvslam/solve/sim3_solver.h"
 #include "openvslam/util/random_array.h"
 
 #include <vector>
@@ -10,7 +10,7 @@
 #include <opencv2/core/core.hpp>
 
 namespace openvslam {
-namespace solver {
+namespace solve {
 
 sim3_solver::sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
                          const std::vector<data::landmark*>& matched_lms_in_keyfrm_2, const bool fix_scale)

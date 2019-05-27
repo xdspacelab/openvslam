@@ -14,7 +14,7 @@ add_subdirectory(match)
 add_subdirectory(module)
 add_subdirectory(optimize)
 add_subdirectory(publish)
-add_subdirectory(solver)
+add_subdirectory(solve)
 add_subdirectory(util)
 
 target_sources(${PROJECT_NAME} PRIVATE)
