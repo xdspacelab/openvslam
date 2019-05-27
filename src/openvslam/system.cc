@@ -4,7 +4,6 @@
 #include "openvslam/mapping_module.h"
 #include "openvslam/global_optimization_module.h"
 #include "openvslam/camera/base.h"
-#include "openvslam/data/landmark.h"
 #include "openvslam/data/camera_database.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/data/bow_database.h"
