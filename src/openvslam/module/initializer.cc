@@ -15,11 +15,11 @@ namespace module {
 
 initializer::initializer(const std::shared_ptr<config>& cfg, data::map_database* map_db, data::bow_database* bow_db)
         : cfg_(cfg), map_db_(map_db), bow_db_(bow_db) {
-    spdlog::debug("CONSTRUCT: track::initializer");
+    spdlog::debug("CONSTRUCT: module::initializer");
 }
 
 initializer::~initializer() {
-    spdlog::debug("DESTRUCT: track::initializer");
+    spdlog::debug("DESTRUCT: module::initializer");
 }
 
 void initializer::reset() {

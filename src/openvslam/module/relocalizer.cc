@@ -16,11 +16,11 @@ relocalizer::relocalizer(data::bow_database* bow_db,
           min_num_bow_matches_(min_num_bow_matches), min_num_valid_obs_(min_num_valid_obs),
           bow_matcher_(bow_match_lowe_ratio, true), proj_matcher_(proj_match_lowe_ratio, true),
           pose_optimizer_() {
-    spdlog::debug("CONSTRUCT: relocalizer");
+    spdlog::debug("CONSTRUCT: module::relocalizer");
 }
 
 relocalizer::~relocalizer() {
-    spdlog::debug("DESTRUCT: relocalizer");
+    spdlog::debug("DESTRUCT: module::relocalizer");
 }
 
 bool relocalizer::relocalize(data::frame& curr_frm) {

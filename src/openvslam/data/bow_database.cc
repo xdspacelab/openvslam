@@ -8,12 +8,12 @@ namespace openvslam {
 namespace data {
 
 bow_database::bow_database(bow_vocabulary* bow_vocab) : bow_vocab_(bow_vocab) {
-    spdlog::debug("CONSTRUCT: bow_database");
+    spdlog::debug("CONSTRUCT: data::bow_database");
 }
 
 bow_database::~bow_database() {
     clear();
-    spdlog::debug("DESTRUCT: bow_database");
+    spdlog::debug("DESTRUCT: data::bow_database");
 }
 
 void bow_database::add_keyframe(keyframe* keyfrm) {
