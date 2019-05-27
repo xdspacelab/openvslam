@@ -122,7 +122,7 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 # OpenCV
-find_package(OpenCV 3.4)
+find_package(OpenCV 3.4 QUIET)
 if(NOT OpenCV_FOUND)
     find_package(OpenCV 4.0)
     if(NOT OpenCV_FOUND)
