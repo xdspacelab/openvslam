@@ -1,15 +1,16 @@
-#ifndef OPENVSLAM_MAP_LOCAL_MAP_CLEANER_H
-#define OPENVSLAM_MAP_LOCAL_MAP_CLEANER_H
+#ifndef OPENVSLAM_MODULE_LOCAL_MAP_CLEANER_H
+#define OPENVSLAM_MODULE_LOCAL_MAP_CLEANER_H
 
 #include <list>
 
 namespace openvslam {
 
 namespace data {
+class keyframe;
 class landmark;
 } // namespace data
 
-namespace map {
+namespace module {
 
 class local_map_cleaner {
 public:
@@ -59,7 +60,7 @@ public:
 
 private:
     //! origin keyframe ID
-    unsigned int origin_keyfrm_id_;
+    unsigned int origin_keyfrm_id_ = 0;
 
     //! flag which indicates the tracking camera is monocular or not
     const bool is_monocular_;
@@ -68,7 +69,7 @@ private:
     std::list<data::landmark*> fresh_landmarks_;
 };
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_LOCAL_MAP_CLEANER_H
+#endif // OPENVSLAM_MODULE_LOCAL_MAP_CLEANER_H

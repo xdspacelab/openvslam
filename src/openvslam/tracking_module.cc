@@ -1,15 +1,14 @@
 #include "openvslam/config.h"
 #include "openvslam/system.h"
+#include "openvslam/tracking_module.h"
+#include "openvslam/mapping_module.h"
+#include "openvslam/global_optimization_module.h"
 #include "openvslam/camera/base.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/data/bow_database.h"
 #include "openvslam/feature/orb_extractor.h"
-#include "openvslam/map/local_mapper.h"
-#include "openvslam/map/loop_closer.h"
 #include "openvslam/match/projection.h"
-#include "openvslam/track/frame_tracker.h"
-#include "openvslam/track/tracker.h"
 #include "openvslam/util/image_converter.h"
 
 #include <chrono>
@@ -18,14 +17,13 @@
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace track {
 
-tracker::tracker(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
-                 data::bow_vocabulary* bow_vocab, data::bow_database* bow_db)
-        : cfg_(cfg), camera_(cfg->camera_), system_(system),  map_db_(map_db), bow_vocab_(bow_vocab), bow_db_(bow_db),
+tracking_module::tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
+                                 data::bow_vocabulary* bow_vocab, data::bow_database* bow_db)
+        : cfg_(cfg), camera_(cfg->camera_), system_(system), map_db_(map_db), bow_vocab_(bow_vocab), bow_db_(bow_db),
           initializer_(cfg, map_db, bow_db), frame_tracker_(camera_, 10), relocalizer_(bow_db_), pose_optimizer_(),
-          keyfrm_inserter_(cfg_->camera_->setup_type_, cfg_->true_depth_thr_, map_db, bow_db, 0, cfg_->camera_->fps_){
-    spdlog::debug("CONSTRUCT: tracker");
+          keyfrm_inserter_(cfg_->camera_->setup_type_, cfg_->true_depth_thr_, map_db, bow_db, 0, cfg_->camera_->fps_) {
+    spdlog::debug("CONSTRUCT: tracking_module");
 
     extractor_left_ = new feature::orb_extractor(cfg_->orb_params_);
     if (camera_->setup_type_ == camera::setup_type_t::Monocular) {
@@ -37,32 +35,35 @@ tracker::tracker(const std::shared_ptr<config>& cfg, system* system, data::map_d
     }
 }
 
-tracker::~tracker() {
-    delete extractor_left_; extractor_left_ = nullptr;
-    delete extractor_right_; extractor_right_ = nullptr;
-    delete ini_extractor_left_; ini_extractor_left_ = nullptr;
+tracking_module::~tracking_module() {
+    delete extractor_left_;
+    extractor_left_ = nullptr;
+    delete extractor_right_;
+    extractor_right_ = nullptr;
+    delete ini_extractor_left_;
+    ini_extractor_left_ = nullptr;
 
-    spdlog::debug("DESTRUCT: tracker");
+    spdlog::debug("DESTRUCT: tracking_module");
 }
 
-void tracker::set_local_mapper(map::local_mapper* local_mapper) {
-    local_mapper_ = local_mapper;
-    keyfrm_inserter_.set_local_mapper(local_mapper);
+void tracking_module::set_mapping_module(mapping_module* mapper) {
+    mapper_ = mapper;
+    keyfrm_inserter_.set_mapping_module(mapper);
 }
 
-void tracker::set_loop_closer(map::loop_closer* loop_closer) {
-    loop_closer_ = loop_closer;
+void tracking_module::set_global_optimization_module(global_optimization_module* global_optimizer) {
+    global_optimizer_ = global_optimizer;
 }
 
-std::vector<cv::KeyPoint> tracker::get_initial_keypoints() const {
+std::vector<cv::KeyPoint> tracking_module::get_initial_keypoints() const {
     return initializer_.get_initial_keypoints();
 }
 
-std::vector<int> tracker::get_initial_matches() const {
+std::vector<int> tracking_module::get_initial_matches() const {
     return initializer_.get_initial_matches();
 }
 
-Mat44_t tracker::track_monocular_image(const cv::Mat& img, const double timestamp, const cv::Mat& mask) {
+Mat44_t tracking_module::track_monocular_image(const cv::Mat& img, const double timestamp, const cv::Mat& mask) {
     const auto start = std::chrono::system_clock::now();
 
     // color conversion
@@ -70,7 +71,7 @@ Mat44_t tracker::track_monocular_image(const cv::Mat& img, const double timestam
     util::convert_to_grayscale(img_gray_, camera_->color_order_);
 
     // create current frame object
-    if (tracking_state_ == tracking_state_t::NotInitialized || tracking_state_ == tracking_state_t::Initializing) {
+    if (tracking_state_ == tracker_state_t::NotInitialized || tracking_state_ == tracker_state_t::Initializing) {
         curr_frm_ = data::frame(img_gray_, timestamp, ini_extractor_left_, bow_vocab_, camera_, cfg_->true_depth_thr_, mask);
     }
     else {
@@ -85,7 +86,7 @@ Mat44_t tracker::track_monocular_image(const cv::Mat& img, const double timestam
     return curr_frm_.cam_pose_cw_;
 }
 
-Mat44_t tracker::track_stereo_image(const cv::Mat& left_img_rect, const cv::Mat& right_img_rect, const double timestamp, const cv::Mat& mask) {
+Mat44_t tracking_module::track_stereo_image(const cv::Mat& left_img_rect, const cv::Mat& right_img_rect, const double timestamp, const cv::Mat& mask) {
     const auto start = std::chrono::system_clock::now();
 
     // color conversion
@@ -105,7 +106,7 @@ Mat44_t tracker::track_stereo_image(const cv::Mat& left_img_rect, const cv::Mat&
     return curr_frm_.cam_pose_cw_;
 }
 
-Mat44_t tracker::track_RGBD_image(const cv::Mat& img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask) {
+Mat44_t tracking_module::track_RGBD_image(const cv::Mat& img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask) {
     const auto start = std::chrono::system_clock::now();
 
     // color and depth scale conversion
@@ -125,14 +126,14 @@ Mat44_t tracker::track_RGBD_image(const cv::Mat& img, const cv::Mat& depthmap, c
     return curr_frm_.cam_pose_cw_;
 }
 
-void tracker::reset() {
+void tracking_module::reset() {
     spdlog::info("resetting system");
 
     initializer_.reset();
     keyfrm_inserter_.reset();
 
-    local_mapper_->request_reset();
-    loop_closer_->request_reset();
+    mapper_->request_reset();
+    global_optimizer_->request_reset();
 
     bow_db_->clear();
     map_db_->clear();
@@ -143,12 +144,12 @@ void tracker::reset() {
 
     last_reloc_frm_id_ = 0;
 
-    tracking_state_ = tracking_state_t::NotInitialized;
+    tracking_state_ = tracker_state_t::NotInitialized;
 }
 
-void tracker::track() {
-    if (tracking_state_ == tracking_state_t::NotInitialized) {
-        tracking_state_ = tracking_state_t::Initializing;
+void tracking_module::track() {
+    if (tracking_state_ == tracker_state_t::NotInitialized) {
+        tracking_state_ = tracker_state_t::Initializing;
     }
 
     last_tracking_state_ = tracking_state_;
@@ -162,7 +163,7 @@ void tracker::track() {
     // fix map mutex
     std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
 
-    if (tracking_state_ == tracking_state_t::Initializing) {
+    if (tracking_state_ == tracker_state_t::Initializing) {
         if (!initialize()) {
             return;
         }
@@ -170,14 +171,14 @@ void tracker::track() {
         // reference keyframeとlocal keyframesとlocal landmarksを更新
         update_local_map();
 
-        // local mapperにkeyframesを渡しておく
+        // mapping moduleにkeyframesを渡しておく
         const auto keyfrms = map_db_->get_all_keyframes();
         for (const auto keyfrm : keyfrms) {
-            local_mapper_->queue_keyframe(keyfrm);
+            mapper_->queue_keyframe(keyfrm);
         }
 
         // tracking modeに移行
-        tracking_state_ = tracking_state_t::Tracking;
+        tracking_state_ = tracker_state_t::Tracking;
     }
     else {
         // 3次元点にreplaceを適用する
@@ -206,17 +207,17 @@ void tracker::track() {
         map_db_->update_frame_statistics(curr_frm_, !succeeded);
 
         // 状態遷移
-        tracking_state_ = succeeded ? tracking_state_t::Tracking : tracking_state_t::Lost;
+        tracking_state_ = succeeded ? tracker_state_t::Tracking : tracker_state_t::Lost;
 
         // 1秒以内にlostしたらリセットする
-        if (tracking_state_ == tracking_state_t::Lost && curr_frm_.id_ < camera_->fps_) {
+        if (tracking_state_ == tracker_state_t::Lost && curr_frm_.id_ < camera_->fps_) {
             spdlog::info("tracking lost soon after initialization");
             system_->request_reset();
             return;
         }
 
         // lostしていたらメッセージを表示する
-        if (last_tracking_state_ != tracking_state_t::Lost && tracking_state_ == tracking_state_t::Lost) {
+        if (last_tracking_state_ != tracker_state_t::Lost && tracking_state_ == tracker_state_t::Lost) {
             spdlog::info("tracking lost");
         }
 
@@ -249,26 +250,26 @@ void tracker::track() {
     }
 }
 
-bool tracker::initialize() {
+bool tracking_module::initialize() {
     initializer_.initialize(curr_frm_);
 
     // map構築に失敗(=Wrong)していたらreset
-    if (initializer_.get_status() == initialize::status_t::Wrong) {
+    if (initializer_.get_state() == module::initializer_state_t::Wrong) {
         reset();
         return false;
     }
 
     // initializeに失敗していたら(!=Succeeded)，次のフレームでinitializeを再試行するのでreturn
-    if (initializer_.get_status() != initialize::status_t::Succeeded) {
+    if (initializer_.get_state() != module::initializer_state_t::Succeeded) {
         return false;
     }
 
     return true;
 }
 
-bool tracker::track_current_frame() {
+bool tracking_module::track_current_frame() {
     bool succeeded;
-    if (tracking_state_ == tracking_state_t::Tracking) {
+    if (tracking_state_ == tracker_state_t::Tracking) {
         // trackingが成功していれば，通常のtrackingを続ける
         if (velocity_is_valid_ && last_reloc_frm_id_ + 2 < curr_frm_.id_) {
             succeeded = frame_tracker_.motion_based_track(curr_frm_, last_frm_, velocity_);
@@ -296,9 +297,9 @@ bool tracker::track_current_frame() {
     return succeeded;
 }
 
-bool tracker::localize_current_frame() {
+bool tracking_module::localize_current_frame() {
     bool succeeded;
-    if (tracking_state_ == tracking_state_t::Lost) {
+    if (tracking_state_ == tracker_state_t::Lost) {
         // trackingがlostしていれば，relocalizeを試みる
         succeeded = relocalizer_.relocalize(curr_frm_);
         if (succeeded) {
@@ -325,7 +326,7 @@ bool tracker::localize_current_frame() {
     return succeeded;
 }
 
-void tracker::update_motion_model() {
+void tracking_module::update_motion_model() {
     if (last_frm_.cam_pose_cw_is_valid_) {
         Mat44_t last_frm_cam_pose_wc = Mat44_t::Identity();
         last_frm_cam_pose_wc.block<3, 3>(0, 0) = last_frm_.get_rotation_inv();
@@ -339,7 +340,7 @@ void tracker::update_motion_model() {
     }
 }
 
-void tracker::apply_landmark_replace() {
+void tracking_module::apply_landmark_replace() {
     for (unsigned int idx = 0; idx < last_frm_.num_keypts_; ++idx) {
         auto lm = last_frm_.landmarks_.at(idx);
         if (!lm) {
@@ -353,7 +354,7 @@ void tracker::apply_landmark_replace() {
     }
 }
 
-void tracker::update_last_frame() {
+void tracking_module::update_last_frame() {
     // local map optimizationによってkeyframeの姿勢が変わっている可能性があるので，それに応じてlast frameの姿勢を更新
     auto last_ref_keyfrm = last_frm_.ref_keyfrm_;
     if (!last_ref_keyfrm) {
@@ -362,7 +363,7 @@ void tracker::update_last_frame() {
     last_frm_.set_cam_pose(last_cam_pose_from_ref_keyfrm_ * last_ref_keyfrm->get_cam_pose());
 }
 
-bool tracker::track_local_map() {
+bool tracking_module::track_local_map() {
     // reference keyframeとlocal keyframesとlocal landmarksを更新
     update_local_map();
 
@@ -413,7 +414,7 @@ bool tracker::track_local_map() {
     }
 }
 
-void tracker::update_local_map() {
+void tracking_module::update_local_map() {
     update_local_keyframes();
     update_local_landmarks();
 
@@ -421,7 +422,7 @@ void tracker::update_local_map() {
     map_db_->set_local_landmarks(local_landmarks_);
 }
 
-void tracker::update_local_keyframes() {
+void tracking_module::update_local_keyframes() {
     // current frameと隣接しているkeyframeについて，共有している3次元点の数を数える
     std::unordered_map<data::keyframe*, unsigned int> keyfrm_weights;
     for (unsigned int idx = 0; idx < curr_frm_.num_keypts_; ++idx) {
@@ -529,7 +530,7 @@ void tracker::update_local_keyframes() {
     }
 }
 
-void tracker::update_local_landmarks() {
+void tracking_module::update_local_landmarks() {
     local_landmarks_.clear();
 
     for (auto keyfrm : local_keyfrms_) {
@@ -552,7 +553,7 @@ void tracker::update_local_landmarks() {
     }
 }
 
-void tracker::search_local_landmarks() {
+void tracking_module::search_local_landmarks() {
     // current frameとすでに対応すしている3次元点は再投影する必要がないのでマークをつける
     for (auto& lm : curr_frm_.landmarks_) {
         if (!lm) {
@@ -599,7 +600,7 @@ void tracker::search_local_landmarks() {
     projection_matcher.match_frame_and_landmarks(curr_frm_, local_landmarks_, margin);
 }
 
-bool tracker::new_keyframe_is_needed() const {
+bool tracking_module::new_keyframe_is_needed() const {
     if (!mapping_is_enabled_) {
         return false;
     }
@@ -614,7 +615,7 @@ bool tracker::new_keyframe_is_needed() const {
     return keyfrm_inserter_.new_keyframe_is_needed(curr_frm_, num_tracked_lms_, *ref_keyfrm_);
 }
 
-void tracker::insert_new_keyframe() {
+void tracking_module::insert_new_keyframe() {
     // keyframe inserterでキーフレームを挿入
     const auto ref_keyfrm = keyfrm_inserter_.insert_new_keyframe(curr_frm_);
     // 挿入されたキーフレームのポインタをreference keyframeにセットする
@@ -622,22 +623,22 @@ void tracker::insert_new_keyframe() {
     curr_frm_.ref_keyfrm_ = ref_keyfrm_;
 }
 
-void tracker::request_pause() {
+void tracking_module::request_pause() {
     std::lock_guard<std::mutex> lock1(mtx_pause_);
     pause_is_requested_ = true;
 }
 
-bool tracker::pause_is_requested() const {
+bool tracking_module::pause_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     return pause_is_requested_;
 }
 
-bool tracker::is_paused() const {
+bool tracking_module::is_paused() const {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     return is_paused_;
 }
 
-void tracker::resume() {
+void tracking_module::resume() {
     std::lock_guard<std::mutex> lock(mtx_pause_);
 
     // 再開する処理を行う
@@ -647,7 +648,7 @@ void tracker::resume() {
     spdlog::info("resume tracker");
 }
 
-bool tracker::check_and_execute_pause() {
+bool tracking_module::check_and_execute_pause() {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     if (pause_is_requested_) {
         is_paused_ = true;
@@ -659,5 +660,4 @@ bool tracker::check_and_execute_pause() {
     }
 }
 
-} // namespace track
 } // namespace openvslam

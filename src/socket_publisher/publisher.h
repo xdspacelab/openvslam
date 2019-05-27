@@ -8,7 +8,6 @@
 
 namespace openvslam {
 
-// system
 class config;
 class system;
 

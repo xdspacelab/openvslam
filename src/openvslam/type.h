@@ -100,15 +100,6 @@ inline Vec2_t operator-(const cv::Point_<T>& v1, const Vec2_t& v2) {
     return v1 + (-v2);
 }
 
-// tracker states
-
-enum class tracking_state_t {
-    NotInitialized,
-    Initializing,
-    Tracking,
-    Lost
-};
-
 } // namespace openvslam
 
 #endif // OPENVSLAM_TYPE_H

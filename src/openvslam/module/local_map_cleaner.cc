@@ -1,9 +1,9 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
-#include "openvslam/map/local_map_cleaner.h"
+#include "openvslam/module/local_map_cleaner.h"
 
 namespace openvslam {
-namespace map {
+namespace module {
 
 local_map_cleaner::local_map_cleaner(const bool is_monocular)
         : is_monocular_(is_monocular) {}
@@ -173,5 +173,5 @@ void local_map_cleaner::count_redundant_observations(data::keyframe* keyfrm, uns
     }
 }
 
-} // namespace map
+} // namespace module
 } // namespace openvslam

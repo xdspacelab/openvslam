@@ -1,14 +1,17 @@
-#ifndef OPENVSLAM_MAP_LOCAL_MAPPER_H
-#define OPENVSLAM_MAP_LOCAL_MAPPER_H
+#ifndef OPENVSLAM_MAPPING_MODULE_H
+#define OPENVSLAM_MAPPING_MODULE_H
 
 #include "openvslam/camera/base.h"
-#include "openvslam/map/local_map_cleaner.h"
+#include "openvslam/module/local_map_cleaner.h"
 #include "openvslam/optimize/local_bundle_adjuster.h"
 
 #include <mutex>
 #include <atomic>
 
 namespace openvslam {
+
+class tracking_module;
+class global_optimization_module;
 
 namespace camera {
 class base;
@@ -19,46 +22,38 @@ class keyframe;
 class map_database;
 } // namespace data
 
-namespace track {
-class tracker;
-} // namespace track
-
-namespace map {
-
-class loop_closer;
-
-class local_mapper {
+class mapping_module {
 public:
     /**
      * Constructor
      */
-    local_mapper(data::map_database* map_db, const bool is_monocular);
+    mapping_module(data::map_database* map_db, const bool is_monocular);
 
     /**
      * Destructor
      */
-    ~local_mapper();
+    ~mapping_module();
 
     /**
-     * Set tracker
+     * Set the tracking module
      */
-    void set_tracker(track::tracker* tracker);
+    void set_tracking_module(tracking_module* tracker);
 
     /**
-     * Set loop closer
+     * Set the global optimization module
      */
-    void set_loop_closer(loop_closer* loop_closer);
+    void set_global_optimization_module(global_optimization_module* global_optimizer);
 
     //-----------------------------------------
     // main process
 
     /**
-     * Run main loop of local mapper
+     * Run main loop of the mapping module
      */
     void run();
 
     /**
-     * Queue a keyframe to process local mapping
+     * Queue a keyframe to process the mapping
      */
     void queue_keyframe(data::keyframe* keyfrm);
 
@@ -81,7 +76,7 @@ public:
     // management for reset process
 
     /**
-     * Request to reset the local mapper
+     * Request to reset the mapping module
      * (NOTE: this function waits for reset)
      */
     void request_reset();
@@ -90,28 +85,28 @@ public:
     // management for pause process
 
     /**
-     * Request to pause the local mapper
+     * Request to pause the mapping module
      * (NOTE: this function does not wait for reset)
      */
     void request_pause();
 
     /**
-     * Check if the local mapper is requested to be paused or not
+     * Check if the mapping module is requested to be paused or not
      */
     bool pause_is_requested() const;
 
     /**
-     * Check if the local mapper is paused or not
+     * Check if the mapping module is paused or not
      */
     bool is_paused() const;
 
     /**
-     * Set the flag to force to run the local mapper
+     * Set the flag to force to run the mapping module
      */
     bool set_force_to_run(const bool force_to_run);
 
     /**
-     * Resume local mapper
+     * Resume the mapping module
      */
     void resume();
 
@@ -119,13 +114,13 @@ public:
     // management for terminate process
 
     /**
-     * Request to terminate the local mapper
+     * Request to terminate the mapping module
      * (NOTE: this function does not wait for terminate)
      */
     void request_terminate();
 
     /**
-     * Check if the local mapper is terminated or not
+     * Check if the mapping module is terminated or not
      */
     bool is_terminated() const;
 
@@ -205,7 +200,7 @@ private:
     mutable std::mutex mtx_pause_;
 
     /**
-     * Pause the local mapper
+     * Pause the mapping module
      */
     void pause();
 
@@ -213,7 +208,7 @@ private:
     bool pause_is_requested_ = false;
     //! flag which indicates whether the main loop is paused or not
     bool is_paused_ = false;
-    //! flag to force the local mapper to be run
+    //! flag to force the mapping module to be run
     bool force_to_run_ = false;
 
     //-----------------------------------------
@@ -240,13 +235,13 @@ private:
     //-----------------------------------------
     // modules
 
-    //! tracker
-    track::tracker* tracker_ = nullptr;
-    //! loop closer
-    loop_closer* loop_closer_ = nullptr;
+    //! tracking module
+    tracking_module* tracker_ = nullptr;
+    //! global optimization module
+    global_optimization_module* global_optimizer_ = nullptr;
 
     //! local map cleaner
-    local_map_cleaner local_map_cleaner_;
+    module::local_map_cleaner local_map_cleaner_;
 
     //-----------------------------------------
     // database
@@ -286,11 +281,10 @@ private:
     //! flag for keyframe acceptability
     std::atomic<bool> keyfrm_acceptability_{true};
 
-    //! current keyframe which is used in the current local mapping
+    //! current keyframe which is used in the current mapping
     data::keyframe* cur_keyfrm_ = nullptr;
 };
 
-} // namespace map
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_LOCAL_MAPPER_H
+#endif // OPENVSLAM_MAPPING_MODULE_H

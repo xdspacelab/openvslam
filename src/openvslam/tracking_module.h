@@ -1,12 +1,12 @@
-#ifndef OPENVSLAM_TRACK_TRACKER_H
-#define OPENVSLAM_TRACK_TRACKER_H
+#ifndef OPENVSLAM_TRACKING_MODULE_H
+#define OPENVSLAM_TRACKING_MODULE_H
 
 #include "openvslam/type.h"
 #include "openvslam/data/frame.h"
-#include "openvslam/initialize/initializer.h"
-#include "openvslam/map/relocalizer.h"
-#include "openvslam/map/keyframe_inserter.h"
-#include "openvslam/track/frame_tracker.h"
+#include "openvslam/module/initializer.h"
+#include "openvslam/module/relocalizer.h"
+#include "openvslam/module/keyframe_inserter.h"
+#include "openvslam/module/frame_tracker.h"
 
 #include <mutex>
 
@@ -16,6 +16,8 @@
 namespace openvslam {
 
 class system;
+class mapping_module;
+class global_optimization_module;
 
 namespace data {
 class map_database;
@@ -26,25 +28,26 @@ namespace feature {
 class orb_extractor;
 } // namespace feature
 
-namespace map {
-class local_mapper;
-class loop_closer;
-} // namespace map
+// tracker state
+enum class tracker_state_t {
+    NotInitialized,
+    Initializing,
+    Tracking,
+    Lost
+};
 
-namespace track {
-
-class tracker {
+class tracking_module {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    tracker(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
-            data::bow_vocabulary* bow_vocab, data::bow_database* bow_db);
+    tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
+                    data::bow_vocabulary* bow_vocab, data::bow_database* bow_db);
 
-    ~tracker();
+    ~tracking_module();
 
-    void set_local_mapper(map::local_mapper* local_mapper);
+    void set_mapping_module(mapping_module* mapper);
 
-    void set_loop_closer(map::loop_closer* loop_closer);
+    void set_global_optimization_module(global_optimization_module* global_optimizer);
 
     std::vector<cv::KeyPoint> get_initial_keypoints() const;
 
@@ -99,8 +102,8 @@ public:
     camera::base* camera_;
 
     //! tracking states
-    tracking_state_t tracking_state_ = tracking_state_t::NotInitialized;
-    tracking_state_t last_tracking_state_ = tracking_state_t::NotInitialized;
+    tracker_state_t tracking_state_ = tracker_state_t::NotInitialized;
+    tracker_state_t last_tracking_state_ = tracker_state_t::NotInitialized;
 
     //! current frame and its image
     data::frame curr_frm_;
@@ -149,10 +152,10 @@ protected:
 
     //! system
     system* system_ = nullptr;
-    //! local mapper
-    map::local_mapper* local_mapper_ = nullptr;
-    //! loop closer
-    map::loop_closer* loop_closer_ = nullptr;
+    //! mapping module
+    mapping_module* mapper_ = nullptr;
+    //! global optimization module
+    global_optimization_module* global_optimizer_ = nullptr;
 
     // ORB extractors
     //! ORB extractor for left/monocular image
@@ -172,19 +175,19 @@ protected:
     data::bow_database* bow_db_ = nullptr;
 
     //! initializer
-    initialize::initializer initializer_;
+    module::initializer initializer_;
 
     //! frame tracker for current frame
-    const frame_tracker frame_tracker_;
+    const module::frame_tracker frame_tracker_;
 
     //! relocalizer
-    map::relocalizer relocalizer_;
+    module::relocalizer relocalizer_;
 
     //! pose optimizer
     const optimize::pose_optimizer pose_optimizer_;
 
     //! keyframe inserter
-    map::keyframe_inserter keyfrm_inserter_;
+    module::keyframe_inserter keyfrm_inserter_;
 
     //! reference keyframe
     data::keyframe* ref_keyfrm_ = nullptr;
@@ -222,7 +225,6 @@ protected:
     bool pause_is_requested_ = false;
 };
 
-} // namespace track
 } // namespace openvslam
 
-#endif // OPENVSLAM_TRACK_TRACKER_H
+#endif // OPENVSLAM_TRACKING_MODULE_H

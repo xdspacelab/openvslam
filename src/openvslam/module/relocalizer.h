@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_MAP_RELOCALIZER_H
-#define OPENVSLAM_MAP_RELOCALIZER_H
+#ifndef OPENVSLAM_MODULE_RELOCALIZER_H
+#define OPENVSLAM_MODULE_RELOCALIZER_H
 
 #include "openvslam/match/bow_tree.h"
 #include "openvslam/match/projection.h"
@@ -12,28 +12,24 @@ class frame;
 class bow_database;
 } // namespace data
 
-namespace map {
+namespace module {
 
 class relocalizer {
 public:
     /**
-     * Constructor for relocalizer class
-     * @param bow_db BoW database
-     * @param bow_match_lowe_ratio  lowe's ratio for BoW tree matcher
-     * @param proj_match_lowe_ratio lowe's ratio for projection matcher
-     * @param min_num_bow_matches minimum threshold of the bow matches
-     * @param min_num_valid_obs minimum threshold of valid observations
+     * Constructor
      */
     explicit relocalizer(data::bow_database* bow_db,
                          const double bow_match_lowe_ratio = 0.75, const double proj_match_lowe_ratio = 0.9,
                          const unsigned int min_num_bow_matches = 20, const unsigned int min_num_valid_obs = 50);
 
+    /**
+     * Destructor
+     */
     ~relocalizer();
 
     /**
      * Relocalize the specified frame
-     * @param curr_frm current frame
-     * @return relocalization succeeded or not
      */
     bool relocalize(data::frame& curr_frm);
 
@@ -49,7 +45,7 @@ private:
     const optimize::pose_optimizer pose_optimizer_;
 };
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_RELOCALIZER_H
+#endif // OPENVSLAM_MODULE_RELOCALIZER_H

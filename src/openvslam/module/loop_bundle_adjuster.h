@@ -1,15 +1,15 @@
-#ifndef OPENVSLAM_MAP_LOOP_BUNDLE_ADJUSTER_H
-#define OPENVSLAM_MAP_LOOP_BUNDLE_ADJUSTER_H
+#ifndef OPENVSLAM_MODULE_LOOP_BUNDLE_ADJUSTER_H
+#define OPENVSLAM_MODULE_LOOP_BUNDLE_ADJUSTER_H
 
 namespace openvslam {
+
+class mapping_module;
 
 namespace data {
 class map_database;
 } // namespace data
 
-namespace map {
-
-class local_mapper;
+namespace module {
 
 class loop_bundle_adjuster {
 public:
@@ -24,9 +24,9 @@ public:
     ~loop_bundle_adjuster() = default;
 
     /**
-     * Set local mapper
+     * Set the mapping module
      */
-    void set_local_mapper(local_mapper* local_mapper);
+    void set_mapping_module(mapping_module* mapper);
 
     /**
      * Count the number of loop BA execution
@@ -53,7 +53,7 @@ private:
     data::map_database* map_db_ = nullptr;
 
     //! mapping module
-    local_mapper* local_mapper_ = nullptr;
+    mapping_module* mapper_ = nullptr;
 
     //! number of iteration for optimization
     const unsigned int num_iter_ = 10;
@@ -74,7 +74,7 @@ private:
     bool loop_BA_is_running_ = false;
 };
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_LOOP_BUNDLE_ADJUSTER_H
+#endif // OPENVSLAM_MODULE_LOOP_BUNDLE_ADJUSTER_H

@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_MAP_TWO_VIEW_TRIANGULATOR_H
-#define OPENVSLAM_MAP_TWO_VIEW_TRIANGULATOR_H
+#ifndef OPENVSLAM_MODULE_TWO_VIEW_TRIANGULATOR_H
+#define OPENVSLAM_MODULE_TWO_VIEW_TRIANGULATOR_H
 
 #include "openvslam/type.h"
 
@@ -13,7 +13,7 @@ namespace data {
 class keyframe;
 } // namespace data
 
-namespace map {
+namespace module {
 
 class two_view_triangulator {
 public:
@@ -23,7 +23,7 @@ public:
      * Constructor
      */
     explicit two_view_triangulator(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
-                                   const float rays_parallax_deg_thr=1.0);
+                                   const float rays_parallax_deg_thr = 1.0);
 
     /**
      * Destructor
@@ -44,7 +44,7 @@ private:
     /**
      * Check reprojection error is within the acceptable threshold
      */
-    template <typename T>
+    template<typename T>
     bool check_reprojection_error(const Vec3_t& pos_w, const Mat33_t& rot_cw, const Vec3_t& trans_cw, camera::base* camera,
                                   const cv::Point_<T>& keypt, const float x_right, const float sigma_sq, const bool is_stereo) const;
 
@@ -105,7 +105,7 @@ inline bool two_view_triangulator::check_scale_factors(const Vec3_t& pos_w, cons
     return ratio_octave / ratio_dists < ratio_factor_ && ratio_dists / ratio_octave < ratio_factor_;
 }
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_TWO_VIEW_TRIANGULATOR_H
+#endif // OPENVSLAM_MODULE_TWO_VIEW_TRIANGULATOR_H

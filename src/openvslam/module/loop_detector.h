@@ -1,8 +1,8 @@
-#ifndef OPENVSLAM_MAP_LOOP_DETECTOR_H
-#define OPENVSLAM_MAP_LOOP_DETECTOR_H
+#ifndef OPENVSLAM_MODULE_LOOP_DETECTOR_H
+#define OPENVSLAM_MODULE_LOOP_DETECTOR_H
 
 #include "openvslam/data/bow_vocabulary.h"
-#include "openvslam/map/type.h"
+#include "openvslam/module/type.h"
 #include "openvslam/optimize/transform_optimizer.h"
 
 #include <atomic>
@@ -14,7 +14,7 @@ class keyframe;
 class bow_database;
 } // namespace data
 
-namespace map {
+namespace module {
 
 class loop_detector {
 public:
@@ -123,7 +123,7 @@ private:
     data::keyframe* selected_candidate_ = nullptr;
 
     //! previously detected keyframe sets as loop candidate
-    std::vector<keyframe_set> cont_detected_keyfrm_sets_;
+    keyframe_sets cont_detected_keyfrm_sets_;
     //! loop candidate for validation
     std::vector<data::keyframe*> loop_candidates_to_validate_;
 
@@ -144,7 +144,7 @@ private:
     static constexpr unsigned int min_continuity_ = 3;
 };
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_LOOP_DETECTOR_H
+#endif // OPENVSLAM_MODULE_LOOP_DETECTOR_H

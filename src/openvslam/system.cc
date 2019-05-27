@@ -1,15 +1,15 @@
 #include "openvslam/system.h"
 #include "openvslam/config.h"
+#include "openvslam/tracking_module.h"
+#include "openvslam/mapping_module.h"
+#include "openvslam/global_optimization_module.h"
 #include "openvslam/camera/base.h"
-#include "openvslam/io/trajectory_io.h"
-#include "openvslam/io/map_database_io.h"
-#include "openvslam/track/tracker.h"
-#include "openvslam/map/local_mapper.h"
-#include "openvslam/map/loop_closer.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/camera_database.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/data/bow_database.h"
+#include "openvslam/io/trajectory_io.h"
+#include "openvslam/io/map_database_io.h"
 #include "openvslam/publisher/map_publisher.h"
 #include "openvslam/publisher/frame_publisher.h"
 
@@ -50,7 +50,8 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     }
     catch (const std::exception& e) {
         spdlog::critical("wrong path to vocabulary");
-        delete bow_vocab_; bow_vocab_ = nullptr;
+        delete bow_vocab_;
+        bow_vocab_ = nullptr;
         exit(EXIT_FAILURE);
     }
 #else
@@ -72,35 +73,42 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     frame_publisher_ = std::shared_ptr<publisher::frame_publisher>(new publisher::frame_publisher(cfg_, map_db_));
     map_publisher_ = std::shared_ptr<publisher::map_publisher>(new publisher::map_publisher(cfg_, map_db_));
 
-    // tracker
-    tracker_ = new track::tracker(cfg_, this, map_db_, bow_vocab_, bow_db_);
-    // local mapper
-    local_mapper_ = new map::local_mapper(map_db_, camera_->setup_type_ == camera::setup_type_t::Monocular);
-    // loop closer
-    loop_closer_ = new map::loop_closer(map_db_, bow_db_, bow_vocab_, camera_->setup_type_ != camera::setup_type_t::Monocular);
+    // tracking module
+    tracker_ = new tracking_module(cfg_, this, map_db_, bow_vocab_, bow_db_);
+    // mapping module
+    mapper_ = new mapping_module(map_db_, camera_->setup_type_ == camera::setup_type_t::Monocular);
+    // global optimization module
+    global_optimizer_ = new global_optimization_module(map_db_, bow_db_, bow_vocab_, camera_->setup_type_ != camera::setup_type_t::Monocular);
 
     // connect modules each other
-    tracker_->set_local_mapper(local_mapper_);
-    tracker_->set_loop_closer(loop_closer_);
-    local_mapper_->set_tracker(tracker_);
-    local_mapper_->set_loop_closer(loop_closer_);
-    loop_closer_->set_tracker(tracker_);
-    loop_closer_->set_local_mapper(local_mapper_);
+    tracker_->set_mapping_module(mapper_);
+    tracker_->set_global_optimization_module(global_optimizer_);
+    mapper_->set_tracking_module(tracker_);
+    mapper_->set_global_optimization_module(global_optimizer_);
+    global_optimizer_->set_tracking_module(tracker_);
+    global_optimizer_->set_mapping_module(mapper_);
 }
 
 system::~system() {
-    loop_closer_thread_.reset(nullptr);
-    delete loop_closer_; loop_closer_ = nullptr;
+    global_optimization_thread_.reset(nullptr);
+    delete global_optimizer_;
+    global_optimizer_ = nullptr;
 
-    local_mapper_thread_.reset(nullptr);
-    delete local_mapper_; local_mapper_ = nullptr;
+    mapping_thread_.reset(nullptr);
+    delete mapper_;
+    mapper_ = nullptr;
 
-    delete tracker_; tracker_ = nullptr;
+    delete tracker_;
+    tracker_ = nullptr;
 
-    delete bow_db_; bow_db_ = nullptr;
-    delete map_db_; map_db_ = nullptr;
-    delete cam_db_; cam_db_ = nullptr;
-    delete bow_vocab_; bow_vocab_ = nullptr;
+    delete bow_db_;
+    bow_db_ = nullptr;
+    delete map_db_;
+    map_db_ = nullptr;
+    delete cam_db_;
+    cam_db_ = nullptr;
+    delete bow_vocab_;
+    bow_vocab_ = nullptr;
 
     spdlog::debug("DESTRUCT: system");
 }
@@ -110,27 +118,27 @@ void system::startup(const bool need_initialize) {
     system_is_running_ = true;
 
     if (!need_initialize) {
-        tracker_->tracking_state_ = tracking_state_t::Lost;
+        tracker_->tracking_state_ = tracker_state_t::Lost;
     }
 
-    local_mapper_thread_ = std::unique_ptr<std::thread>(new std::thread(&openvslam::map::local_mapper::run, local_mapper_));
-    loop_closer_thread_ = std::unique_ptr<std::thread>(new std::thread(&openvslam::map::loop_closer::run, loop_closer_));
+    mapping_thread_ = std::unique_ptr<std::thread>(new std::thread(&openvslam::mapping_module::run, mapper_));
+    global_optimization_thread_ = std::unique_ptr<std::thread>(new std::thread(&openvslam::global_optimization_module::run, global_optimizer_));
 }
 
 void system::shutdown() {
     // terminate the other threads
-    local_mapper_->request_terminate();
-    loop_closer_->request_terminate();
+    mapper_->request_terminate();
+    global_optimizer_->request_terminate();
     // wait until they stop
-    while (!local_mapper_->is_terminated()
-           || !loop_closer_->is_terminated()
-           || loop_closer_->loop_BA_is_running()) {
+    while (!mapper_->is_terminated()
+           || !global_optimizer_->is_terminated()
+           || global_optimizer_->loop_BA_is_running()) {
         std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
 
     // wait until the threads stop
-    local_mapper_thread_->join();
-    loop_closer_thread_->join();
+    mapping_thread_->join();
+    global_optimization_thread_->join();
 
     spdlog::info("shutdown SLAM system");
     system_is_running_ = false;
@@ -178,7 +186,7 @@ void system::enable_mapping_module() {
         spdlog::critical("please call system::enable_mapping_module() after system::startup()");
     }
     // resume the mapping module
-    local_mapper_->resume();
+    mapper_->resume();
     // inform to the tracking module
     tracker_->set_mapping_module_status(true);
 }
@@ -189,9 +197,9 @@ void system::disable_mapping_module() {
         spdlog::critical("please call system::disable_mapping_module() after system::startup()");
     }
     // pause the mapping module
-    local_mapper_->request_pause();
+    mapper_->request_pause();
     // wait until it stops
-    while (!local_mapper_->is_paused()) {
+    while (!mapper_->is_paused()) {
         std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
     // inform to the tracking module
@@ -199,29 +207,29 @@ void system::disable_mapping_module() {
 }
 
 bool system::mapping_module_is_enabled() const {
-    return !local_mapper_->is_paused() && !local_mapper_->is_terminated();
+    return !mapper_->is_paused() && !mapper_->is_terminated();
 }
 
 void system::enable_loop_detector() {
     std::lock_guard<std::mutex> lock(mtx_loop_detector_);
-    loop_closer_->enable_loop_detector();
+    global_optimizer_->enable_loop_detector();
 }
 
 void system::disable_loop_detector() {
     std::lock_guard<std::mutex> lock(mtx_loop_detector_);
-    loop_closer_->disable_loop_detector();
+    global_optimizer_->disable_loop_detector();
 }
 
 bool system::loop_detector_is_enabled() const {
-    return loop_closer_->loop_detector_is_enabled();
+    return global_optimizer_->loop_detector_is_enabled();
 }
 
 bool system::loop_BA_is_running() const {
-    return loop_closer_->loop_BA_is_running();
+    return global_optimizer_->loop_BA_is_running();
 }
 
 void system::abort_loop_BA() {
-    loop_closer_->abort_loop_BA();
+    global_optimizer_->abort_loop_BA();
 }
 
 Mat44_t system::track_for_monocular(const cv::Mat& img, const double timestamp, const cv::Mat& mask) {
@@ -232,7 +240,7 @@ Mat44_t system::track_for_monocular(const cv::Mat& img, const double timestamp, 
     const Mat44_t cam_pose_cw = tracker_->track_monocular_image(img, timestamp, mask);
 
     frame_publisher_->update(tracker_);
-    if (tracker_->tracking_state_ == tracking_state_t::Tracking) {
+    if (tracker_->tracking_state_ == tracker_state_t::Tracking) {
         map_publisher_->set_current_cam_pose(cam_pose_cw);
     }
 
@@ -247,7 +255,7 @@ Mat44_t system::track_for_stereo(const cv::Mat& left_img, const cv::Mat& right_i
     const Mat44_t cam_pose_cw = tracker_->track_stereo_image(left_img, right_img, timestamp, mask);
 
     frame_publisher_->update(tracker_);
-    if (tracker_->tracking_state_ == tracking_state_t::Tracking) {
+    if (tracker_->tracking_state_ == tracker_state_t::Tracking) {
         map_publisher_->set_current_cam_pose(cam_pose_cw);
     }
 
@@ -262,7 +270,7 @@ Mat44_t system::track_for_RGBD(const cv::Mat& rgb_img, const cv::Mat& depthmap, 
     const Mat44_t cam_pose_cw = tracker_->track_RGBD_image(rgb_img, depthmap, timestamp, mask);
 
     frame_publisher_->update(tracker_);
-    if (tracker_->tracking_state_ == tracking_state_t::Tracking) {
+    if (tracker_->tracking_state_ == tracker_state_t::Tracking) {
         map_publisher_->set_current_cam_pose(cam_pose_cw);
     }
 
@@ -310,30 +318,30 @@ void system::check_reset_request() {
 }
 
 void system::pause_other_threads() const {
-    // local mapperを止める
-    if (local_mapper_ && !local_mapper_->is_terminated()) {
-        local_mapper_->request_pause();
-        while (!local_mapper_->is_paused() && !local_mapper_->is_terminated()) {
+    // pause the mapping module
+    if (mapper_ && !mapper_->is_terminated()) {
+        mapper_->request_pause();
+        while (!mapper_->is_paused() && !mapper_->is_terminated()) {
             std::this_thread::sleep_for(std::chrono::microseconds(5000));
         }
     }
-    // loop closerを止める
-    if (loop_closer_ && !loop_closer_->is_terminated()) {
-        loop_closer_->request_pause();
-        while (!loop_closer_->is_paused() && !loop_closer_->is_terminated()) {
+    // pause the global optimization module
+    if (global_optimizer_ && !global_optimizer_->is_terminated()) {
+        global_optimizer_->request_pause();
+        while (!global_optimizer_->is_paused() && !global_optimizer_->is_terminated()) {
             std::this_thread::sleep_for(std::chrono::microseconds(5000));
         }
     }
 }
 
 void system::resume_other_threads() const {
-    // loop closerを再開する
-    if (loop_closer_) {
-        loop_closer_->resume();
+    // resume the global optimization module
+    if (global_optimizer_) {
+        global_optimizer_->resume();
     }
-    // local mapperを再開する
-    if (local_mapper_) {
-        local_mapper_->resume();
+    // resume the mapping module
+    if (mapper_) {
+        mapper_->resume();
     }
 }
 

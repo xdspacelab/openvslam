@@ -1,13 +1,13 @@
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/bow_database.h"
-#include "openvslam/map/relocalizer.h"
+#include "openvslam/module/relocalizer.h"
 #include "openvslam/solver/pnp_solver.h"
 
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace map {
+namespace module {
 
 relocalizer::relocalizer(data::bow_database* bow_db,
                          const double bow_match_lowe_ratio, const double proj_match_lowe_ratio,
@@ -171,5 +171,5 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
     return false;
 }
 
-} // namespace map
+} // namespace module
 } // namespace openvslam

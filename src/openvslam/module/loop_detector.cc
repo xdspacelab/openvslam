@@ -1,16 +1,16 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/bow_database.h"
-#include "openvslam/map/loop_detector.h"
 #include "openvslam/match/bow_tree.h"
 #include "openvslam/match/projection.h"
+#include "openvslam/module/loop_detector.h"
 #include "openvslam/solver/sim3_solver.h"
 #include "openvslam/util/converter.h"
 
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace map {
+namespace module {
 
 loop_detector::loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale_in_Sim3_estimation)
         : bow_db_(bow_db), bow_vocab_(bow_vocab), transform_optimizer_(fix_scale_in_Sim3_estimation),
@@ -217,7 +217,7 @@ keyframe_sets loop_detector::find_continuously_detected_keyframe_sets(const keyf
     // count up the number of the detection of each of the keyframe sets
 
     // buffer to store continuity and keyframe set
-    std::vector<keyframe_set> curr_cont_detected_keyfrm_sets;
+    keyframe_sets curr_cont_detected_keyfrm_sets;
 
     // check the already counted keyframe sets to prevent from counting the same set twice
     std::map<std::set<data::keyframe*>, bool> already_checked;
@@ -361,5 +361,5 @@ void loop_detector::set_loop_correct_keyframe_id(const unsigned int loop_correct
     prev_loop_correct_keyfrm_id_ = loop_correct_keyfrm_id;
 }
 
-} // namespace map
+} // namespace module
 } // namespace openvslam

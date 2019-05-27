@@ -5,12 +5,12 @@
 #include "openvslam/match/bow_tree.h"
 #include "openvslam/match/projection.h"
 #include "openvslam/match/robust.h"
-#include "openvslam/track/frame_tracker.h"
+#include "openvslam/module/frame_tracker.h"
 
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace track {
+namespace module {
 
 frame_tracker::frame_tracker(camera::base* camera, const unsigned int num_matches_thr)
         : camera_(camera), num_matches_thr_(num_matches_thr), pose_optimizer_() {}
@@ -139,13 +139,11 @@ unsigned int frame_tracker::discard_outliers(data::frame& curr_frm) const {
             continue;
         }
 
-        // TODO: ここのassertionで落ちるときがある
-        // assert(lm->has_observation());
         ++num_valid_matches;
     }
 
     return num_valid_matches;
 }
 
-} // namespace track
+} // namespace module
 } // namespace openvslam

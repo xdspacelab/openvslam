@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_INITIALIZE_INITIALIZER_H
-#define OPENVSLAM_INITIALIZE_INITIALIZER_H
+#ifndef OPENVSLAM_MODULE_INITIALIZER_H
+#define OPENVSLAM_MODULE_INITIALIZER_H
 
 #include "openvslam/data/frame.h"
 
@@ -16,24 +16,23 @@ class bow_database;
 } // namespace data
 
 namespace initialize {
+class base;
+} // namespace initialize
 
-//! initialization status
-enum class status_t {
+namespace module {
+
+// initializer state
+enum class initializer_state_t {
     NotReady,
     Initializing,
     Wrong,
     Succeeded
 };
 
-class base;
-
 class initializer {
 public:
     /**
      * Constructor
-     * @param cfg
-     * @param map_db
-     * @param bow_db
      */
     initializer(const std::shared_ptr<config>& cfg, data::map_database* map_db, data::bow_database* bow_db);
 
@@ -48,27 +47,22 @@ public:
     void reset();
 
     /**
-     * Get initialization status
-     * @return
+     * Get initialization state
      */
-    status_t get_status() const;
+    initializer_state_t get_state() const;
 
     /**
      * Get keypoints of the initial frame
-     * @return
      */
     std::vector<cv::KeyPoint> get_initial_keypoints() const;
 
     /**
      * Get initial matches between the initial and current frames
-     * @return
      */
     std::vector<int> get_initial_matches() const;
 
     /**
      * Initialize with the current frame
-     * @param curr_frm
-     * @return
      */
     bool initialize(data::frame& curr_frm);
 
@@ -80,34 +74,28 @@ private:
     //! BoW database
     data::bow_database* bow_db_ = nullptr;
     //! initializer status
-    status_t status_ = status_t::NotReady;
+    initializer_state_t state_ = initializer_state_t::NotReady;
 
     //-----------------------------------------
     // for monocular camera model
 
     /**
      * Create initializer for monocular
-     * @param curr_frm
      */
     void create_initializer(data::frame& curr_frm);
 
     /**
      * Try to initialize a map with monocular camera setup
-     * @param curr_frm
-     * @return initial map should be created or not
      */
     bool try_initialize_for_monocular(data::frame& curr_frm);
 
     /**
      * Create an initial map with monocular camera setup
-     * @param curr_frm
-     * @return initial map is successfully created or not
      */
     bool create_map_for_monocular(data::frame& curr_frm);
 
     /**
      * Scaling up or down a initial map
-     * @param scale
      */
     void scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_keyfrm, const double scale);
 
@@ -125,20 +113,16 @@ private:
 
     /**
      * Try to initialize a map with stereo or RGBD camera setup
-     * @param curr_frm
-     * @return initial map should be created or not
      */
     bool try_initialize_for_stereo(data::frame& curr_frm);
 
     /**
      * Create an initial map with stereo or RGBD camera setup
-     * @param curr_frm
-     * @return initial map is successfully created or not
      */
     bool create_map_for_stereo(data::frame& curr_frm);
 };
 
-} // namespace initialize
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_INITIALIZE_INITIALIZER_H
+#endif // OPENVSLAM_MODULE_INITIALIZER_H

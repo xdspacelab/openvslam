@@ -1,5 +1,8 @@
-#ifndef OPENVSLAM_VIEWER_FRAME_PUBLISHER_H
-#define OPENVSLAM_VIEWER_FRAME_PUBLISHER_H
+#ifndef OPENVSLAM_PUBLISH_FRAME_PUBLISHER_H
+#define OPENVSLAM_PUBLISH_FRAME_PUBLISHER_H
+
+#include "openvslam/config.h"
+#include "openvslam/tracking_module.h"
 
 #include <mutex>
 #include <vector>
@@ -8,13 +11,11 @@
 
 namespace openvslam {
 
+class tracking_module;
+
 namespace data {
 class map_database;
 } // namespace data
-
-namespace track {
-class tracker;
-} // namespace track
 
 namespace publisher {
 
@@ -22,8 +23,6 @@ class frame_publisher {
 public:
     /**
      * Constructor
-     * @param cfg
-     * @param map_db
      */
     frame_publisher(const std::shared_ptr<config>& cfg, data::map_database* map_db,
                     const unsigned int img_width = 1024);
@@ -36,15 +35,12 @@ public:
     /**
      * Update tracking information
      * NOTE: should be accessed from system thread
-     * @param tracker
      */
-    void update(track::tracker* tracker);
+    void update(tracking_module* tracker);
 
     /**
      * Get the current image with tracking information
      * NOTE: should be accessed from viewer thread
-     * @param draw_text
-     * @return an image with/without tracking information
      */
     cv::Mat draw_frame(const bool draw_text = true);
 
@@ -57,7 +53,7 @@ protected:
                                      const std::vector<bool>& is_tracked, const bool mapping_is_enabled,
                                      const float mag = 1.0) const;
 
-    void draw_info_text(cv::Mat& img, tracking_state_t tracking_state, const unsigned int num_tracked,
+    void draw_info_text(cv::Mat& img, const tracker_state_t tracking_state, const unsigned int num_tracked,
                         const double elapsed_ms, const bool mapping_is_enabled) const;
 
     // colors (BGR)
@@ -78,7 +74,7 @@ protected:
     //! raw img
     cv::Mat img_;
     //! tracking state
-    tracking_state_t tracking_state_;
+    tracker_state_t tracking_state_;
 
     //! initial keypoints
     std::vector<cv::KeyPoint> init_keypts_;
@@ -101,4 +97,4 @@ protected:
 } // namespace publisher
 } // namespace openvslam
 
-#endif // OPENVSLAM_VIEWER_FRAME_PUBLISHER_H
+#endif // OPENVSLAM_PUBLISH_FRAME_PUBLISHER_H

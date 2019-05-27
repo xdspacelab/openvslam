@@ -1,9 +1,9 @@
 #include "openvslam/data/keyframe.h"
-#include "openvslam/map/two_view_triangulator.h"
+#include "openvslam/module/two_view_triangulator.h"
 #include "openvslam/solver/triangulator.h"
 
 namespace openvslam {
-namespace map {
+namespace module {
 
 two_view_triangulator::two_view_triangulator(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
                                              const float rays_parallax_deg_thr)
@@ -88,7 +88,7 @@ bool two_view_triangulator::triangulate(const unsigned idx_1, const unsigned int
     return true;
 }
 
-template <typename T>
+template<typename T>
 bool two_view_triangulator::check_reprojection_error(const Vec3_t& pos_w, const Mat33_t& rot_cw, const Vec3_t& trans_cw, camera::base* const camera,
                                                      const cv::Point_<T>& keypt, const float x_right, const float sigma_sq, const bool is_stereo) const {
     assert(is_stereo ^ (x_right < 0));
@@ -120,5 +120,5 @@ bool two_view_triangulator::check_reprojection_error(const Vec3_t& pos_w, const 
     return true;
 }
 
-} // namespace map
+} // namespace module
 } // namespace openvslam

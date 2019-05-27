@@ -1,6 +1,5 @@
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
-#include "openvslam/track/tracker.h"
 #include "openvslam/publisher/frame_publisher.h"
 
 #include <spdlog/spdlog.h>
@@ -21,7 +20,7 @@ frame_publisher::~frame_publisher() {
 
 cv::Mat frame_publisher::draw_frame(const bool draw_text) {
     cv::Mat img;
-    tracking_state_t tracking_state;
+    tracker_state_t tracking_state;
     std::vector<cv::KeyPoint> init_keypts;
     std::vector<int> init_matches;
     std::vector<cv::KeyPoint> curr_keypts;
@@ -38,7 +37,7 @@ cv::Mat frame_publisher::draw_frame(const bool draw_text) {
         tracking_state = tracking_state_;
 
         // copy tracking information
-        if (tracking_state == tracking_state_t::Initializing) {
+        if (tracking_state == tracker_state_t::Initializing) {
             init_keypts = init_keypts_;
             init_matches = init_matches_;
         }
@@ -66,11 +65,11 @@ cv::Mat frame_publisher::draw_frame(const bool draw_text) {
     // draw keypoints
     unsigned int num_tracked = 0;
     switch (tracking_state) {
-        case tracking_state_t::Initializing: {
+        case tracker_state_t::Initializing: {
             num_tracked = draw_initial_points(img, init_keypts, init_matches, curr_keypts, mag);
             break;
         }
-        case tracking_state_t::Tracking: {
+        case tracker_state_t::Tracking: {
             num_tracked = draw_tracked_points(img, curr_keypts, is_tracked, mapping_is_enabled, mag);
             break;
         }
@@ -137,22 +136,22 @@ unsigned int frame_publisher::draw_tracked_points(cv::Mat& img, const std::vecto
     return num_tracked;
 }
 
-void frame_publisher::draw_info_text(cv::Mat& img, tracking_state_t tracking_state, const unsigned int num_tracked,
+void frame_publisher::draw_info_text(cv::Mat& img, const tracker_state_t tracking_state, const unsigned int num_tracked,
                                      const double elapsed_ms, const bool mapping_is_enabled) const {
     // create text info
     std::stringstream ss;
     switch (tracking_state) {
-        case tracking_state_t::NotInitialized: {
+        case tracker_state_t::NotInitialized: {
             ss << "WAITING FOR IMAGES ";
             break;
         }
-        case tracking_state_t::Initializing: {
+        case tracker_state_t::Initializing: {
             ss << "INITIALIZE | ";
             ss << "KP: " << num_tracked << ", ";
             ss << "track time: " << std::fixed << std::setprecision(0) << elapsed_ms << "ms";
             break;
         }
-        case tracking_state_t::Tracking: {
+        case tracker_state_t::Tracking: {
             ss << (mapping_is_enabled ? "MAPPING | " : "LOCALIZATION | ");
             ss << "KF: " << map_db_->get_num_keyframes() << ", ";
             ss << "LM: " << map_db_->get_num_landmarks() << ", ";
@@ -160,7 +159,7 @@ void frame_publisher::draw_info_text(cv::Mat& img, tracking_state_t tracking_sta
             ss << "track time: " << std::fixed << std::setprecision(0) << elapsed_ms << "ms";
             break;
         }
-        case tracking_state_t::Lost: {
+        case tracker_state_t::Lost: {
             ss << "LOST | ";
             ss << "track time: " << std::fixed << std::setprecision(0) << elapsed_ms << "ms";
             break;
@@ -180,7 +179,7 @@ void frame_publisher::draw_info_text(cv::Mat& img, tracking_state_t tracking_sta
     cv::putText(img, ss.str(), cv::Point(5, img.rows - 5), cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar{255, 255, 255}, 1, 8);
 }
 
-void frame_publisher::update(track::tracker* tracker) {
+void frame_publisher::update(tracking_module* tracker) {
     std::lock_guard<std::mutex> lock(mtx_);
 
     tracker->img_gray_.copyTo(img_);
@@ -194,12 +193,12 @@ void frame_publisher::update(track::tracker* tracker) {
     is_tracked_ = std::vector<bool>(num_curr_keypts, false);
 
     switch (tracking_state_) {
-        case tracking_state_t::Initializing: {
+        case tracker_state_t::Initializing: {
             init_keypts_ = tracker->get_initial_keypoints();
             init_matches_ = tracker->get_initial_matches();
             break;
         }
-        case tracking_state_t::Tracking: {
+        case tracker_state_t::Tracking: {
             for (unsigned int i = 0; i < num_curr_keypts; ++i) {
                 auto lm = tracker->curr_frm_.landmarks_.at(i);
                 if (!lm) {

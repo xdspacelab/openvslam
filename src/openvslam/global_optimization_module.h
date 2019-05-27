@@ -1,11 +1,11 @@
-#ifndef OPENVSLAM_MAP_LOOP_CLOSER_H
-#define OPENVSLAM_MAP_LOOP_CLOSER_H
+#ifndef OPENVSLAM_GLOBAL_OPTIMIZATION_MODULE_H
+#define OPENVSLAM_GLOBAL_OPTIMIZATION_MODULE_H
 
 #include "openvslam/type.h"
 #include "openvslam/data/bow_vocabulary.h"
-#include "openvslam/map/type.h"
-#include "openvslam/map/loop_detector.h"
-#include "openvslam/map/loop_bundle_adjuster.h"
+#include "openvslam/module/type.h"
+#include "openvslam/module/loop_detector.h"
+#include "openvslam/module/loop_bundle_adjuster.h"
 #include "openvslam/optimize/graph_optimizer.h"
 
 #include <list>
@@ -14,43 +14,38 @@
 
 namespace openvslam {
 
+class tracking_module;
+class mapping_module;
+
 namespace data {
 class keyframe;
 class bow_database;
 class map_database;
 } // namespace data
 
-namespace track {
-class tracker;
-} // namespace track
-
-namespace map {
-
-class local_mapper;
-
-class loop_closer {
+class global_optimization_module {
 public:
-    loop_closer() = delete;
+    global_optimization_module() = delete;
 
     /**
      * Constructor
      */
-    loop_closer(data::map_database* map_db, data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale);
+    global_optimization_module(data::map_database* map_db, data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale);
 
     /**
      * Destructor
      */
-    ~loop_closer();
+    ~global_optimization_module();
 
     /**
-     * Set tracker
+     * Set the tracking module
      */
-    void set_tracker(track::tracker* tracker);
+    void set_tracking_module(tracking_module* tracker);
 
     /**
-     * Set local mapper
+     * Set the mapping module
      */
-    void set_local_mapper(map::local_mapper* local_mapper);
+    void set_mapping_module(mapping_module* mapper);
 
     //-----------------------------------------
     // interfaces to ON/OFF loop detector
@@ -74,7 +69,7 @@ public:
     // main process
 
     /**
-     * Run main loop of loop closer
+     * Run main loop of the global optimization module
      */
     void run();
 
@@ -87,7 +82,7 @@ public:
     // management for reset process
 
     /**
-     * Request to reset the loop closer
+     * Request to reset the global optimization module
      * (NOTE: this function waits for reset)
      */
     void request_reset();
@@ -96,23 +91,23 @@ public:
     // management for pause process
 
     /**
-     * Request to pause loop closer
+     * Request to pause the global optimization module
      * (NOTE: this function does not wait for pause)
      */
     void request_pause();
 
     /**
-     * Check if the loop closer is requested to be paused or not
+     * Check if the global optimization module is requested to be paused or not
      */
     bool pause_is_requested() const;
 
     /**
-     * Check if the loop closer is paused or not
+     * Check if the global optimization module is paused or not
      */
     bool is_paused() const;
 
     /**
-     * Resume loop closer
+     * Resume the global optimization module
      */
     void resume();
 
@@ -120,13 +115,13 @@ public:
     // management for terminate process
 
     /**
-     * Request to terminate the loop closer
+     * Request to terminate the global optimization module
      * (NOTE: this function does not wait for terminate)
      */
     void request_terminate();
 
     /**
-     * Check if the loop closer is terminated or not
+     * Check if the global optimization module is terminated or not
      */
     bool is_terminated() const;
 
@@ -156,30 +151,30 @@ private:
     /**
      * Compute Sim3s (world to covisibility) which are prior to loop correction
      */
-    keyframe_Sim3_pairs_t get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const;
+    module::keyframe_Sim3_pairs_t get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const;
 
     /**
      * Compute Sim3s (world to covisibility) which are corrected using the estimated Sim3 of the current keyframe
      */
-    keyframe_Sim3_pairs_t get_Sim3s_after_loop_correction(const Mat44_t& cam_pose_wc_before_correction, const g2o::Sim3& g2o_Sim3_cw_after_correction,
-                                                          const std::vector<data::keyframe*>& neighbors) const;
+    module::keyframe_Sim3_pairs_t get_Sim3s_after_loop_correction(const Mat44_t& cam_pose_wc_before_correction, const g2o::Sim3& g2o_Sim3_cw_after_correction,
+                                                                  const std::vector<data::keyframe*>& neighbors) const;
 
     /**
      * Correct the positions of the landmarks which are seen in covisibilities
      */
-    void correct_covisibility_landmarks(const keyframe_Sim3_pairs_t& Sim3s_nw_before_correction,
-                                        const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
+    void correct_covisibility_landmarks(const module::keyframe_Sim3_pairs_t& Sim3s_nw_before_correction,
+                                        const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     /**
      * Correct the camera poses of the covisibilities
      */
-    void correct_covisibility_keyframes(const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
+    void correct_covisibility_keyframes(const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     /**
      * Detect and replace duplicated landmarks
      */
     void replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_match_lms_observed_in_cand,
-                                      const keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
+                                      const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     /**
      * Extract the new connections which will be created AFTER loop correction
@@ -245,15 +240,15 @@ private:
     //-----------------------------------------
     // modules
 
-    //! tracker
-    track::tracker* tracker_ = nullptr;
-    //! local mapper
-    local_mapper* local_mapper_ = nullptr;
+    //! tracking module
+    tracking_module* tracker_ = nullptr;
+    //! mapping module
+    mapping_module* mapper_ = nullptr;
 
     //! loop detector
-    loop_detector loop_detector_;
+    module::loop_detector loop_detector_;
     //! loop bundle adjuster
-    loop_bundle_adjuster loop_bundle_adjuster_;
+    module::loop_bundle_adjuster loop_bundle_adjuster_;
 
     //-----------------------------------------
     // database
@@ -290,7 +285,6 @@ private:
     std::unique_ptr<std::thread> thread_for_loop_BA_ = nullptr;
 };
 
-} // namespace map
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_LOOP_CLOSER_H
+#endif // OPENVSLAM_GLOBAL_OPTIMIZATION_MODULE_H

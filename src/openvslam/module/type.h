@@ -1,10 +1,10 @@
-#ifndef OPENVSLAM_MAP_TYPE_H
-#define OPENVSLAM_MAP_TYPE_H
+#ifndef OPENVSLAM_MODULE_TYPE_H
+#define OPENVSLAM_MODULE_TYPE_H
 
 #include <g2o/types/sim3/types_seven_dof_expmap.h>
 
 namespace openvslam {
-namespace map {
+namespace module {
 
 // 相互参照を避けるためにここでtypedefしておく
 typedef std::map<data::keyframe*, g2o::Sim3, std::less<data::keyframe*>,
@@ -32,9 +32,9 @@ struct keyframe_set {
     }
 };
 
-using keyframe_sets = std::vector<keyframe_set>;
+using keyframe_sets = eigen_alloc_vector<keyframe_set>;
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_TYPE_H
+#endif // OPENVSLAM_MODULE_TYPE_H

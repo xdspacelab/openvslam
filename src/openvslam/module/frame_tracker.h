@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_TRACK_FRAME_TRACKER_H
-#define OPENVSLAM_TRACK_FRAME_TRACKER_H
+#ifndef OPENVSLAM_MODULE_FRAME_TRACKER_H
+#define OPENVSLAM_MODULE_FRAME_TRACKER_H
 
 #include "openvslam/type.h"
 #include "openvslam/optimize/pose_optimizer.h"
@@ -15,7 +15,7 @@ class frame;
 class keyframe;
 } // namespace data
 
-namespace track {
+namespace module {
 
 class frame_tracker {
 public:
@@ -36,7 +36,7 @@ private:
     const optimize::pose_optimizer pose_optimizer_;
 };
 
-} // namespace track
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_TRACK_FRAME_TRACKER_H
+#endif // OPENVSLAM_MODULE_FRAME_TRACKER_H

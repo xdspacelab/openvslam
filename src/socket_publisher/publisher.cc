@@ -67,10 +67,10 @@ void publisher::run() {
 
 void publisher::callback(const std::string& message) {
     if (message == "localization_mode_true") {
-        system_->deactivate_mapping_module();
+        system_->disable_mapping_module();
     }
     else if (message == "localization_mode_false") {
-        system_->activate_mapping_module();
+        system_->enable_mapping_module();
     }
     else if (message == "reset") {
         system_->request_reset();

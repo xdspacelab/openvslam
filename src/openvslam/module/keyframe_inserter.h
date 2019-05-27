@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_MAP_KEYFRAME_INSERTER_H
-#define OPENVSLAM_MAP_KEYFRAME_INSERTER_H
+#ifndef OPENVSLAM_MODULE_KEYFRAME_INSERTER_H
+#define OPENVSLAM_MODULE_KEYFRAME_INSERTER_H
 
 #include "openvslam/camera/base.h"
 #include "openvslam/data/frame.h"
@@ -9,13 +9,13 @@
 
 namespace openvslam {
 
+class mapping_module;
+
 namespace data {
 class map_database;
 } // namespace data
 
-namespace map {
-
-class local_mapper;
+namespace module {
 
 class keyframe_inserter {
 public:
@@ -25,32 +25,24 @@ public:
 
     virtual ~keyframe_inserter() = default;
 
-    void set_local_mapper(map::local_mapper* local_mapper);
+    void set_mapping_module(mapping_module* mapper);
 
     void reset();
 
     /**
      * Check the new keyframe is needed or not
-     * @param curr_frm
-     * @param num_tracked_lms
-     * @param ref_keyfrm
-     * @return
      */
     bool new_keyframe_is_needed(const data::frame& curr_frm, const unsigned int num_tracked_lms,
                                 const data::keyframe& ref_keyfrm) const;
 
     /**
      * Insert the new keyframe derived from the current frame
-     * @param curr_frm
-     * @return
      */
     data::keyframe* insert_new_keyframe(data::frame& curr_frm);
 
 private:
     /**
-     * Queue the new keyframe to the local mapper
-     * @param keyfrm
-     * @return
+     * Queue the new keyframe to the mapping module
      */
     void queue_keyframe(data::keyframe* keyfrm);
 
@@ -64,8 +56,8 @@ private:
     //! BoW database
     data::bow_database* bow_db_;
 
-    //! local mapper
-    map::local_mapper* local_mapper_;
+    //! mapping module
+    mapping_module* mapper_;
 
     //! min number of frames to insert keyframe
     const unsigned int min_num_frms_;
@@ -76,7 +68,7 @@ private:
     unsigned int frm_id_of_last_keyfrm_ = 0;
 };
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
 
-#endif // OPENVSLAM_MAP_KEYFRAME_INSERTER_H
+#endif // OPENVSLAM_MODULE_KEYFRAME_INSERTER_H

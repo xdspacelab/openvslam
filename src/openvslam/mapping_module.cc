@@ -1,12 +1,12 @@
 #include "openvslam/type.h"
+#include "openvslam/mapping_module.h"
+#include "openvslam/global_optimization_module.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
-#include "openvslam/map/local_mapper.h"
-#include "openvslam/map/two_view_triangulator.h"
-#include "openvslam/map/loop_closer.h"
 #include "openvslam/match/fuse.h"
 #include "openvslam/match/robust.h"
+#include "openvslam/module/two_view_triangulator.h"
 #include "openvslam/solver/essential_solver.h"
 #include "openvslam/solver/triangulator.h"
 
@@ -16,27 +16,26 @@
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace map {
 
-local_mapper::local_mapper(data::map_database* map_db, const bool is_monocular)
+mapping_module::mapping_module(data::map_database* map_db, const bool is_monocular)
         : local_map_cleaner_(is_monocular), map_db_(map_db),
           local_bundle_adjuster_(), is_monocular_(is_monocular) {
-    spdlog::debug("CONSTRUCT: map::local_mapper");
+    spdlog::debug("CONSTRUCT: mapping_module");
 }
 
-local_mapper::~local_mapper() {
-    spdlog::debug("DESTRUCT: map::local_mapper");
+mapping_module::~mapping_module() {
+    spdlog::debug("DESTRUCT: mapping_module");
 }
 
-void local_mapper::set_tracker(track::tracker* tracker) {
+void mapping_module::set_tracking_module(tracking_module* tracker) {
     tracker_ = tracker;
 }
 
-void local_mapper::set_loop_closer(loop_closer* loop_closer) {
-    loop_closer_ = loop_closer;
+void mapping_module::set_global_optimization_module(global_optimization_module* global_optimizer) {
+    global_optimizer_ = global_optimizer;
 }
 
-void local_mapper::run() {
+void mapping_module::run() {
     spdlog::info("start mapping module");
 
     is_terminated_ = false;
@@ -61,8 +60,8 @@ void local_mapper::run() {
             while (keyframe_is_queued()) {
                 // create and extend the map with the new keyframe
                 mapping_with_new_keyframe();
-                // send the new keyframe to the loop closer
-                loop_closer_->queue_keyframe(cur_keyfrm_);
+                // send the new keyframe to the global optimization module
+                global_optimizer_->queue_keyframe(cur_keyfrm_);
             }
             // pause and wait
             pause();
@@ -89,8 +88,8 @@ void local_mapper::run() {
 
         // create and extend the map with the new keyframe
         mapping_with_new_keyframe();
-        // send the new keyframe to the loop closer
-        loop_closer_->queue_keyframe(cur_keyfrm_);
+        // send the new keyframe to the global optimization module
+        global_optimizer_->queue_keyframe(cur_keyfrm_);
 
         // LOCK end
         set_keyframe_acceptability(true);
@@ -99,35 +98,35 @@ void local_mapper::run() {
     spdlog::info("terminate mapping module");
 }
 
-void local_mapper::queue_keyframe(data::keyframe* keyfrm) {
+void mapping_module::queue_keyframe(data::keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
     keyfrms_queue_.push_back(keyfrm);
     abort_local_BA_ = true;
 }
 
-unsigned int local_mapper::get_num_queued_keyframes() const {
+unsigned int mapping_module::get_num_queued_keyframes() const {
     std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
     return keyfrms_queue_.size();
 }
 
-bool local_mapper::keyframe_is_queued() const {
+bool mapping_module::keyframe_is_queued() const {
     std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
     return !keyfrms_queue_.empty();
 }
 
-bool local_mapper::get_keyframe_acceptability() const {
+bool mapping_module::get_keyframe_acceptability() const {
     return keyfrm_acceptability_;
 }
 
-void local_mapper::set_keyframe_acceptability(const bool acceptability) {
+void mapping_module::set_keyframe_acceptability(const bool acceptability) {
     keyfrm_acceptability_ = acceptability;
 }
 
-void local_mapper::abort_local_BA() {
+void mapping_module::abort_local_BA() {
     abort_local_BA_ = true;
 }
 
-void local_mapper::mapping_with_new_keyframe() {
+void mapping_module::mapping_with_new_keyframe() {
     // dequeue
     {
         std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
@@ -167,7 +166,7 @@ void local_mapper::mapping_with_new_keyframe() {
     local_map_cleaner_.remove_redundant_keyframes(cur_keyfrm_);
 }
 
-void local_mapper::store_new_keyframe() {
+void mapping_module::store_new_keyframe() {
     // compute BoW feature vector
     cur_keyfrm_->compute_bow();
 
@@ -200,11 +199,11 @@ void local_mapper::store_new_keyframe() {
     map_db_->add_keyframe(cur_keyfrm_);
 }
 
-void local_mapper::create_new_landmarks() {
+void mapping_module::create_new_landmarks() {
     // get the covisibilities of `cur_keyfrm_`
     // in order to triangulate landmarks between `cur_keyfrm_` and each of the covisibilities
     constexpr unsigned int num_covisibilities = 10;
-    const auto cur_covisibilities = cur_keyfrm_->get_top_n_covisibilities(num_covisibilities * (is_monocular_ ?  2 : 1));
+    const auto cur_covisibilities = cur_keyfrm_->get_top_n_covisibilities(num_covisibilities * (is_monocular_ ? 2 : 1));
 
     // lowe's_ratio will not be used
     match::robust robust_matcher(0.0, false);
@@ -256,9 +255,9 @@ void local_mapper::create_new_landmarks() {
     }
 }
 
-void local_mapper::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
-                                                  const std::vector<std::pair<unsigned int, unsigned int>>& matches) {
-    const two_view_triangulator triangulator(keyfrm_1, keyfrm_2, 1.0);
+void mapping_module::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
+                                                    const std::vector<std::pair<unsigned int, unsigned int>>& matches) {
+    const module::two_view_triangulator triangulator(keyfrm_1, keyfrm_2, 1.0);
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -298,7 +297,7 @@ void local_mapper::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, data
     }
 }
 
-void local_mapper::update_new_keyframe() {
+void mapping_module::update_new_keyframe() {
     // get the targets to check landmark fusion
     const auto fuse_tgt_keyfrms = get_second_order_covisibilities(is_monocular_ ? 20 : 10, 5);
 
@@ -322,8 +321,8 @@ void local_mapper::update_new_keyframe() {
     cur_keyfrm_->update_connections();
 }
 
-std::unordered_set<data::keyframe*> local_mapper::get_second_order_covisibilities(const unsigned int first_order_thr,
-                                                                                  const unsigned int second_order_thr) {
+std::unordered_set<data::keyframe*> mapping_module::get_second_order_covisibilities(const unsigned int first_order_thr,
+                                                                                    const unsigned int second_order_thr) {
     const auto cur_covisibilities = cur_keyfrm_->get_top_n_covisibilities(first_order_thr);
 
     std::unordered_set<data::keyframe*> fuse_tgt_keyfrms;
@@ -359,7 +358,7 @@ std::unordered_set<data::keyframe*> local_mapper::get_second_order_covisibilitie
     return fuse_tgt_keyfrms;
 }
 
-void local_mapper::fuse_landmark_duplication(const std::unordered_set<data::keyframe*>& fuse_tgt_keyfrms) {
+void mapping_module::fuse_landmark_duplication(const std::unordered_set<data::keyframe*>& fuse_tgt_keyfrms) {
     match::fuse matcher;
 
     {
@@ -403,7 +402,7 @@ void local_mapper::fuse_landmark_duplication(const std::unordered_set<data::keyf
     }
 }
 
-void local_mapper::request_reset() {
+void mapping_module::request_reset() {
     {
         std::lock_guard<std::mutex> lock(mtx_reset_);
         reset_is_requested_ = true;
@@ -421,12 +420,12 @@ void local_mapper::request_reset() {
     }
 }
 
-bool local_mapper::reset_is_requested() const {
+bool mapping_module::reset_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     return reset_is_requested_;
 }
 
-void local_mapper::reset() {
+void mapping_module::reset() {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     spdlog::info("reset mapping module");
     keyfrms_queue_.clear();
@@ -434,30 +433,30 @@ void local_mapper::reset() {
     reset_is_requested_ = false;
 }
 
-void local_mapper::request_pause() {
+void mapping_module::request_pause() {
     std::lock_guard<std::mutex> lock1(mtx_pause_);
     pause_is_requested_ = true;
     std::lock_guard<std::mutex> lock2(mtx_keyfrm_queue_);
     abort_local_BA_ = true;
 }
 
-bool local_mapper::is_paused() const {
+bool mapping_module::is_paused() const {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     return is_paused_;
 }
 
-bool local_mapper::pause_is_requested() const {
+bool mapping_module::pause_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     return pause_is_requested_ && !force_to_run_;
 }
 
-void local_mapper::pause() {
+void mapping_module::pause() {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     spdlog::info("pause mapping module");
     is_paused_ = true;
 }
 
-bool local_mapper::set_force_to_run(const bool force_to_run) {
+bool mapping_module::set_force_to_run(const bool force_to_run) {
     std::lock_guard<std::mutex> lock(mtx_pause_);
 
     if (force_to_run && is_paused_) {
@@ -468,7 +467,7 @@ bool local_mapper::set_force_to_run(const bool force_to_run) {
     return true;
 }
 
-void local_mapper::resume() {
+void mapping_module::resume() {
     std::lock_guard<std::mutex> lock1(mtx_pause_);
     std::lock_guard<std::mutex> lock2(mtx_terminate_);
 
@@ -489,27 +488,26 @@ void local_mapper::resume() {
     spdlog::info("resume mapping module");
 }
 
-void local_mapper::request_terminate() {
+void mapping_module::request_terminate() {
     std::lock_guard<std::mutex> lock(mtx_terminate_);
     terminate_is_requested_ = true;
 }
 
-bool local_mapper::is_terminated() const {
+bool mapping_module::is_terminated() const {
     std::lock_guard<std::mutex> lock(mtx_terminate_);
     return is_terminated_;
 }
 
-bool local_mapper::terminate_is_requested() const {
+bool mapping_module::terminate_is_requested() const {
     std::lock_guard<std::mutex> lock(mtx_terminate_);
     return terminate_is_requested_;
 }
 
-void local_mapper::terminate() {
+void mapping_module::terminate() {
     std::lock_guard<std::mutex> lock1(mtx_pause_);
     std::lock_guard<std::mutex> lock2(mtx_terminate_);
     is_paused_ = true;
     is_terminated_ = true;
 }
 
-} // namespace map
 } // namespace openvslam

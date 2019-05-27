@@ -1,11 +1,11 @@
+#include "openvslam/mapping_module.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/bow_database.h"
 #include "openvslam/data/map_database.h"
-#include "openvslam/map/local_mapper.h"
-#include "openvslam/map/keyframe_inserter.h"
+#include "openvslam/module/keyframe_inserter.h"
 
 namespace openvslam {
-namespace map {
+namespace module {
 
 keyframe_inserter::keyframe_inserter(const camera::setup_type_t setup_type, const float true_depth_thr,
                                      data::map_database* map_db, data::bow_database* bow_db,
@@ -14,8 +14,8 @@ keyframe_inserter::keyframe_inserter(const camera::setup_type_t setup_type, cons
           map_db_(map_db), bow_db_(bow_db),
           min_num_frms_(min_num_frms), max_num_frms_(max_num_frms) {}
 
-void keyframe_inserter::set_local_mapper(map::local_mapper* local_mapper) {
-    local_mapper_ = local_mapper;
+void keyframe_inserter::set_mapping_module(mapping_module* mapper) {
+    mapper_ = mapper;
 }
 
 void keyframe_inserter::reset() {
@@ -24,9 +24,9 @@ void keyframe_inserter::reset() {
 
 bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, const unsigned int num_tracked_lms,
                                                const data::keyframe& ref_keyfrm) const {
-    assert(local_mapper_);
-    // local mapperが停止しているときはキーフレームが追加できない
-    if (local_mapper_->is_paused() || local_mapper_->pause_is_requested()) {
+    assert(mapper_);
+    // mapping moduleが停止しているときはキーフレームが追加できない
+    if (mapper_->is_paused() || mapper_->pause_is_requested()) {
         return false;
     }
 
@@ -57,17 +57,17 @@ bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, cons
     // 3次元点と対応しているものが100点以下 && 3次元点と対応していないものが70点以上
     const bool nearer_view = (num_tracked <= 100) && (70 <= num_valid_depths - num_tracked);
 
-    // local mapperが処理中かどうか
-    const bool local_mapper_is_idle = local_mapper_->get_keyframe_acceptability();
+    // mappingが処理中かどうか
+    const bool mapper_is_idle = mapper_->get_keyframe_acceptability();
 
     // 最新のキーフレームで観測している3次元点数に対するる，現在のフレームで観測している3次元点数の割合の閾値
     constexpr unsigned int num_tracked_lms_thr = 15;
     const float lms_ratio_thr = (setup_type_ == camera::setup_type_t::Monocular) ? 0.9 : ((num_keyfrms < 2) ? 0.4 : 0.8);
 
     // 条件A1: 前回のキーフレーム挿入からmax_num_frames_以上経過していたらキーフレームを追加する
-    const bool cond_a1 = frm_id_of_last_keyfrm_ + max_num_frms_ <= curr_frm.id_ ;
-    // 条件A2: min_num_frames_以上経過していて,local mapperが待機状態であればキーフレームを追加する
-    const bool cond_a2 = (frm_id_of_last_keyfrm_ + min_num_frms_ <= curr_frm.id_) && local_mapper_is_idle;
+    const bool cond_a1 = frm_id_of_last_keyfrm_ + max_num_frms_ <= curr_frm.id_;
+    // 条件A2: min_num_frames_以上経過していて,mapping moduleが待機状態であればキーフレームを追加する
+    const bool cond_a2 = (frm_id_of_last_keyfrm_ + min_num_frms_ <= curr_frm.id_) && mapper_is_idle;
     // 条件A3: 前回のキーフレームから視点が移動してたらキーフレームを追加する
     const bool cond_a3 = (setup_type_ != camera::setup_type_t::Monocular) && (num_tracked_lms < num_reliable_lms * 0.25 || nearer_view);
 
@@ -84,15 +84,15 @@ bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, cons
         return false;
     }
 
-    if (local_mapper_is_idle) {
-        // local mapperが処理中でなければ，とりあえずkeyframeを追加しておく
+    if (mapper_is_idle) {
+        // mapping moduleが処理中でなければ，とりあえずkeyframeを追加しておく
         return true;
     }
 
-    // local mapperが処理中だったら，local BAを止めてキーフレームを追加する
+    // mapping moduleが処理中だったら，local BAを止めてキーフレームを追加する
     if (setup_type_ != camera::setup_type_t::Monocular) {
-        if (local_mapper_->get_num_queued_keyframes() < 3) {
-            local_mapper_->abort_local_BA();
+        if (mapper_->get_num_queued_keyframes() < 3) {
+            mapper_->abort_local_BA();
             return true;
         }
     }
@@ -101,8 +101,8 @@ bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, cons
 }
 
 data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
-    // local mapperを(強制的に)動かす
-    if (!local_mapper_->set_force_to_run(true)) {
+    // mapping moduleを(強制的に)動かす
+    if (!mapper_->set_force_to_run(true)) {
         return nullptr;
     }
 
@@ -111,7 +111,7 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
 
     frm_id_of_last_keyfrm_ = curr_frm.id_;
 
-    // monocularだったらkeyframeをlocal mapperにqueueして終わり
+    // monocularだったらkeyframeをmapping moduleにqueueして終わり
     if (setup_type_ == camera::setup_type_t::Monocular) {
         queue_keyframe(keyfrm);
         return keyfrm;
@@ -177,9 +177,9 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
 }
 
 void keyframe_inserter::queue_keyframe(data::keyframe* keyfrm) {
-    local_mapper_->queue_keyframe(keyfrm);
-    local_mapper_->set_force_to_run(false);
+    mapper_->queue_keyframe(keyfrm);
+    mapper_->set_force_to_run(false);
 }
 
-} // namespace map
+} // namespace module
 } // namespace openvslam

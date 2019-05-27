@@ -14,6 +14,9 @@
 namespace openvslam {
 
 class config;
+class tracking_module;
+class mapping_module;
+class global_optimization_module;
 
 namespace camera {
 class base;
@@ -24,15 +27,6 @@ class camera_database;
 class map_database;
 class bow_database;
 } // namespace data
-
-namespace map {
-class local_mapper;
-class loop_closer;
-} // namespace map
-
-namespace track {
-class tracker;
-} // namespace track
 
 namespace publisher {
 class map_publisher;
@@ -206,7 +200,7 @@ public:
 
 private:
     /**
-     * Check reset request of hte system
+     * Check reset request of the system
      */
     void check_reset_request();
 
@@ -238,17 +232,17 @@ private:
     data::bow_database* bow_db_ = nullptr;
 
     //! tracker
-    track::tracker* tracker_ = nullptr;
+    tracking_module* tracker_ = nullptr;
 
-    //! local mapper
-    map::local_mapper* local_mapper_ = nullptr;
-    //! local mapper thread
-    std::unique_ptr<std::thread> local_mapper_thread_ = nullptr;
+    //! mapping module
+    mapping_module* mapper_ = nullptr;
+    //! mapping thread
+    std::unique_ptr<std::thread> mapping_thread_ = nullptr;
 
-    //! loop closer
-    map::loop_closer* loop_closer_ = nullptr;
-    //! loop closer thread
-    std::unique_ptr<std::thread> loop_closer_thread_ = nullptr;
+    //! global optimization module
+    global_optimization_module* global_optimizer_ = nullptr;
+    //! global optimization thread
+    std::unique_ptr<std::thread> global_optimization_thread_ = nullptr;
 
     //! frame publisher
     std::shared_ptr<publisher::frame_publisher> frame_publisher_ = nullptr;

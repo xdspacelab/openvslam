@@ -2,16 +2,16 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
-#include "openvslam/initialize/initializer.h"
 #include "openvslam/initialize/bearing_vector.h"
 #include "openvslam/initialize/perspective.h"
 #include "openvslam/match/area.h"
+#include "openvslam/module/initializer.h"
 #include "openvslam/optimize/global_bundle_adjuster.h"
 
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace initialize {
+namespace module {
 
 initializer::initializer(const std::shared_ptr<config>& cfg, data::map_database* map_db, data::bow_database* bow_db)
         : cfg_(cfg), map_db_(map_db), bow_db_(bow_db) {
@@ -23,12 +23,13 @@ initializer::~initializer() {
 }
 
 void initializer::reset() {
-    delete initializer_; initializer_ = nullptr;
-    status_ = status_t::NotReady;
+    delete initializer_;
+    initializer_ = nullptr;
+    state_ = initializer_state_t::NotReady;
 }
 
-status_t initializer::get_status() const {
-    return status_;
+initializer_state_t initializer::get_state() const {
+    return state_;
 }
 
 std::vector<cv::KeyPoint> initializer::get_initial_keypoints() const {
@@ -43,7 +44,7 @@ bool initializer::initialize(data::frame& curr_frm) {
     switch (cfg_->camera_->setup_type_) {
         case camera::setup_type_t::Monocular: {
             // initializerが構築されていない時は構築する
-            if (status_ == status_t::NotReady) {
+            if (state_ == initializer_state_t::NotReady) {
                 create_initializer(curr_frm);
                 return false;
             }
@@ -55,11 +56,11 @@ bool initializer::initialize(data::frame& curr_frm) {
 
             // マップ構築が正しく行えたらinitialize成功
             create_map_for_monocular(curr_frm);
-            return status_ == status_t::Succeeded;
+            return state_ == initializer_state_t::Succeeded;
         }
         case camera::setup_type_t::Stereo:
         case camera::setup_type_t::RGBD: {
-            status_ = status_t::Initializing;
+            state_ = initializer_state_t::Initializing;
 
             // initializeを試みて，成功したらマップ構築を試行
             if (!try_initialize_for_stereo(curr_frm)) {
@@ -68,7 +69,7 @@ bool initializer::initialize(data::frame& curr_frm) {
 
             // マップ構築が正しく行えたらinitialize成功
             create_map_for_stereo(curr_frm);
-            return status_ == status_t::Succeeded;
+            return state_ == initializer_state_t::Succeeded;
         }
         default: {
             throw std::runtime_error("Undefined camera setup");
@@ -90,7 +91,8 @@ void initializer::create_initializer(data::frame& curr_frm) {
     std::fill(init_matches_.begin(), init_matches_.end(), -1);
 
     // initializerを構築
-    delete initializer_; initializer_ = nullptr;
+    delete initializer_;
+    initializer_ = nullptr;
     switch (init_frm_.camera_->model_type_) {
         case camera::model_type_t::Perspective:
         case camera::model_type_t::Fisheye: {
@@ -103,11 +105,11 @@ void initializer::create_initializer(data::frame& curr_frm) {
         }
     }
 
-    status_ = status_t::Initializing;
+    state_ = initializer_state_t::Initializing;
 }
 
 bool initializer::try_initialize_for_monocular(data::frame& curr_frm) {
-    assert(status_ == status_t::Initializing);
+    assert(state_ == initializer_state_t::Initializing);
 
     match::area matcher(0.9, true);
     const auto num_matches = matcher.match_in_consistent_area(init_frm_, curr_frm, prev_matched_coords_, init_matches_, 100);
@@ -124,7 +126,7 @@ bool initializer::try_initialize_for_monocular(data::frame& curr_frm) {
 }
 
 bool initializer::create_map_for_monocular(data::frame& curr_frm) {
-    assert(status_ == status_t::Initializing);
+    assert(state_ == initializer_state_t::Initializing);
 
     eigen_alloc_vector<Vec3_t> init_triangulated_pts;
     {
@@ -150,7 +152,8 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
         cam_pose_cw.block<3, 1>(0, 3) = initializer_->get_translation_ref_to_cur();
         curr_frm.set_cam_pose(cam_pose_cw);
 
-        delete initializer_; initializer_ = nullptr;
+        delete initializer_;
+        initializer_ = nullptr;
     }
 
     // 初期キーフレームを作成
@@ -207,7 +210,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
 
     if (curr_keyfrm->get_n_tracked_landmarks(1) < 100 && median_depth < 0) {
         spdlog::info("seems to be wrong initialization, resetting");
-        status_ = status_t::Wrong;
+        state_ = initializer_state_t::Wrong;
         return false;
     }
 
@@ -220,7 +223,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
     map_db_->origin_keyfrm_ = init_keyfrm;
 
     spdlog::info("new map created with {} points: frame {} - frame {}", map_db_->get_num_landmarks(), init_frm_.id_, curr_frm.id_);
-    status_ = status_t::Succeeded;
+    state_ = initializer_state_t::Succeeded;
     return true;
 }
 
@@ -241,12 +244,12 @@ void initializer::scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_ke
 }
 
 bool initializer::try_initialize_for_stereo(data::frame& curr_frm) {
-    assert(status_ == status_t::Initializing);
-    return  500 <= curr_frm.num_keypts_;
+    assert(state_ == initializer_state_t::Initializing);
+    return 500 <= curr_frm.num_keypts_;
 }
 
 bool initializer::create_map_for_stereo(data::frame& curr_frm) {
-    assert(status_ == status_t::Initializing);
+    assert(state_ == initializer_state_t::Initializing);
 
     // 初期キーフレームを作成
     curr_frm.set_cam_pose(Mat44_t::Identity());
@@ -289,9 +292,9 @@ bool initializer::create_map_for_stereo(data::frame& curr_frm) {
     map_db_->origin_keyfrm_ = curr_keyfrm;
 
     spdlog::info("new map created with {} points", map_db_->get_num_landmarks());
-    status_ = status_t::Succeeded;
+    state_ = initializer_state_t::Succeeded;
     return true;
 }
 
-} // namespace initialize
+} // namespace module
 } // namespace openvslam

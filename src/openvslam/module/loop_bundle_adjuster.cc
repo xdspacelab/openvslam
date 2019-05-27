@@ -1,8 +1,8 @@
+#include "openvslam/mapping_module.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
-#include "openvslam/map/local_mapper.h"
-#include "openvslam/map/loop_bundle_adjuster.h"
+#include "openvslam/module/loop_bundle_adjuster.h"
 #include "openvslam/optimize/global_bundle_adjuster.h"
 
 #include <thread>
@@ -10,13 +10,13 @@
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace map {
+namespace module {
 
 loop_bundle_adjuster::loop_bundle_adjuster(data::map_database* map_db, const unsigned int num_iter)
         : map_db_(map_db), num_iter_(num_iter) {}
 
-void loop_bundle_adjuster::set_local_mapper(local_mapper* local_mapper) {
-    local_mapper_ = local_mapper;
+void loop_bundle_adjuster::set_mapping_module(mapping_module* mapper) {
+    mapper_ = mapper;
 }
 
 void loop_bundle_adjuster::count_loop_BA_execution() {
@@ -64,8 +64,8 @@ void loop_bundle_adjuster::optimize(const unsigned int identifier) {
         spdlog::info("updating the map with pose propagation");
 
         // stop mapping module
-        local_mapper_->request_pause();
-        while (!local_mapper_->is_paused() && !local_mapper_->is_terminated()) {
+        mapper_->request_pause();
+        while (!mapper_->is_paused() && !mapper_->is_terminated()) {
             std::this_thread::sleep_for(std::chrono::microseconds(1000));
         }
 
@@ -138,12 +138,12 @@ void loop_bundle_adjuster::optimize(const unsigned int identifier) {
             }
         }
 
-        local_mapper_->resume();
+        mapper_->resume();
         loop_BA_is_running_ = false;
 
         spdlog::info("updated the map");
     }
 }
 
-} // namespace map
+} // namespace module
 } // namespace openvslam
