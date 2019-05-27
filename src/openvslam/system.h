@@ -28,10 +28,10 @@ class map_database;
 class bow_database;
 } // namespace data
 
-namespace publisher {
+namespace publish {
 class map_publisher;
 class frame_publisher;
-} // namespace publisher
+} // namespace publish
 
 class system {
 public:
@@ -84,12 +84,12 @@ public:
     /**
      * Get the map publisher
      */
-    const std::shared_ptr<publisher::map_publisher> get_map_publisher() const;
+    const std::shared_ptr<publish::map_publisher> get_map_publisher() const;
 
     /**
      * Get the frame publisher
      */
-    const std::shared_ptr<publisher::frame_publisher> get_frame_publisher() const;
+    const std::shared_ptr<publish::frame_publisher> get_frame_publisher() const;
 
     //-----------------------------------------
     // module management
@@ -245,9 +245,9 @@ private:
     std::unique_ptr<std::thread> global_optimization_thread_ = nullptr;
 
     //! frame publisher
-    std::shared_ptr<publisher::frame_publisher> frame_publisher_ = nullptr;
+    std::shared_ptr<publish::frame_publisher> frame_publisher_ = nullptr;
     //! map publisher
-    std::shared_ptr<publisher::map_publisher> map_publisher_ = nullptr;
+    std::shared_ptr<publish::map_publisher> map_publisher_ = nullptr;
 
     //! system running status flag
     std::atomic<bool> system_is_running_{false};

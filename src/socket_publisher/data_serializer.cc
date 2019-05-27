@@ -2,8 +2,8 @@
 
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
-#include "openvslam/publisher/frame_publisher.h"
-#include "openvslam/publisher/map_publisher.h"
+#include "openvslam/publish/frame_publisher.h"
+#include "openvslam/publish/map_publisher.h"
 
 // map_segment.pb.h will be generated into build/src/socket_publisher/ when make
 #include "map_segment.pb.h"
@@ -12,8 +12,8 @@ namespace socket_publisher {
 
 std::string data_serializer::serialized_reset_signal_{};
 
-data_serializer::data_serializer(const std::shared_ptr<openvslam::publisher::frame_publisher>& frame_publisher,
-                                 const std::shared_ptr<openvslam::publisher::map_publisher>& map_publisher,
+data_serializer::data_serializer(const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
+                                 const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher,
                                  const unsigned int image_width, const unsigned int image_height)
         : frame_publisher_(frame_publisher), map_publisher_(map_publisher),
           image_width_(image_width), image_height_(image_height),

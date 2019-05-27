@@ -10,8 +10,8 @@
 #include "openvslam/data/bow_database.h"
 #include "openvslam/io/trajectory_io.h"
 #include "openvslam/io/map_database_io.h"
-#include "openvslam/publisher/map_publisher.h"
-#include "openvslam/publisher/frame_publisher.h"
+#include "openvslam/publish/map_publisher.h"
+#include "openvslam/publish/frame_publisher.h"
 
 #include <thread>
 
@@ -70,8 +70,8 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     bow_db_ = new data::bow_database(bow_vocab_);
 
     // frame and map publisher
-    frame_publisher_ = std::shared_ptr<publisher::frame_publisher>(new publisher::frame_publisher(cfg_, map_db_));
-    map_publisher_ = std::shared_ptr<publisher::map_publisher>(new publisher::map_publisher(cfg_, map_db_));
+    frame_publisher_ = std::shared_ptr<publish::frame_publisher>(new publish::frame_publisher(cfg_, map_db_));
+    map_publisher_ = std::shared_ptr<publish::map_publisher>(new publish::map_publisher(cfg_, map_db_));
 
     // tracking module
     tracker_ = new tracking_module(cfg_, this, map_db_, bow_vocab_, bow_db_);
@@ -172,11 +172,11 @@ void system::save_map_database(const std::string& path) const {
     resume_other_threads();
 }
 
-const std::shared_ptr<publisher::map_publisher> system::get_map_publisher() const {
+const std::shared_ptr<publish::map_publisher> system::get_map_publisher() const {
     return map_publisher_;
 }
 
-const std::shared_ptr<publisher::frame_publisher> system::get_frame_publisher() const {
+const std::shared_ptr<publish::frame_publisher> system::get_frame_publisher() const {
     return frame_publisher_;
 }
 

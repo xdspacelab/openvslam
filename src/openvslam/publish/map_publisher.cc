@@ -1,20 +1,20 @@
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/map_database.h"
-#include "openvslam/publisher/map_publisher.h"
+#include "openvslam/publish/map_publisher.h"
 
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace publisher {
+namespace publish {
 
 map_publisher::map_publisher(const std::shared_ptr<config>& cfg, data::map_database* map_db)
         : cfg_(cfg), map_db_(map_db) {
-    spdlog::debug("CONSTRUCT: publisher::map_publisher");
+    spdlog::debug("CONSTRUCT: publish::map_publisher");
 }
 
 map_publisher::~map_publisher() {
-    spdlog::debug("DESTRUCT: publisher::map_publisher");
+    spdlog::debug("DESTRUCT: publish::map_publisher");
 }
 
 void map_publisher::set_current_cam_pose(const Mat44_t& cam_pose_cw) {
@@ -40,5 +40,5 @@ unsigned int map_publisher::get_landmarks(std::vector<data::landmark*>& all_land
     return map_db_->get_num_landmarks();
 }
 
-} // namespace publisher
+} // namespace publish
 } // namespace openvslam

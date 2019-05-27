@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_VIEWER_MAP_PUBLISHER_H
-#define OPENVSLAM_VIEWER_MAP_PUBLISHER_H
+#ifndef OPENVSLAM_PUBLISH_MAP_PUBLISHER_H
+#define OPENVSLAM_PUBLISH_MAP_PUBLISHER_H
 
 #include "openvslam/type.h"
 
@@ -15,7 +15,7 @@ class landmark;
 class map_database;
 } // namespace data
 
-namespace publisher {
+namespace publish {
 
 class map_publisher {
 public:
@@ -75,7 +75,7 @@ private:
     Mat44_t cam_pose_cw_ = Mat44_t::Identity();
 };
 
-} // namespace publisher
+} // namespace publish
 } // namespace openvslam
 
-#endif // OPENVSLAM_VIEWER_MAP_PUBLISHER_H
+#endif // OPENVSLAM_PUBLISH_MAP_PUBLISHER_H

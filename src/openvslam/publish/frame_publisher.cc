@@ -1,21 +1,21 @@
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
-#include "openvslam/publisher/frame_publisher.h"
+#include "openvslam/publish/frame_publisher.h"
 
 #include <spdlog/spdlog.h>
 
 namespace openvslam {
-namespace publisher {
+namespace publish {
 
 frame_publisher::frame_publisher(const std::shared_ptr<config>& cfg, data::map_database* map_db,
                                  const unsigned int img_width)
         : cfg_(cfg), map_db_(map_db), img_width_(img_width),
           img_(cv::Mat(480, img_width_, CV_8UC3, cv::Scalar(0, 0, 0))) {
-    spdlog::debug("CONSTRUCT: publisher::frame_publisher");
+    spdlog::debug("CONSTRUCT: publish::frame_publisher");
 }
 
 frame_publisher::~frame_publisher() {
-    spdlog::debug("DESTRUCT: publisher::frame_publisher");
+    spdlog::debug("DESTRUCT: publish::frame_publisher");
 }
 
 cv::Mat frame_publisher::draw_frame(const bool draw_text) {
@@ -220,5 +220,5 @@ void frame_publisher::update(tracking_module* tracker) {
     }
 }
 
-} // namespace publisher
+} // namespace publish
 } // namespace openvslam

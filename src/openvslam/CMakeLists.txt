@@ -13,7 +13,7 @@ add_subdirectory(io)
 add_subdirectory(match)
 add_subdirectory(module)
 add_subdirectory(optimize)
-add_subdirectory(publisher)
+add_subdirectory(publish)
 add_subdirectory(solver)
 add_subdirectory(util)
 

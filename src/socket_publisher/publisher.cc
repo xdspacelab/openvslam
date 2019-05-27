@@ -1,13 +1,13 @@
 #include "socket_publisher/publisher.h"
 
 #include "openvslam/system.h"
-#include "openvslam/publisher/frame_publisher.h"
+#include "openvslam/publish/frame_publisher.h"
 
 namespace socket_publisher {
 
 publisher::publisher(const std::shared_ptr<openvslam::config>& cfg, openvslam::system* system,
-                     const std::shared_ptr<openvslam::publisher::frame_publisher>& frame_publisher,
-                     const std::shared_ptr<openvslam::publisher::map_publisher>& map_publisher)
+                     const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
+                     const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher)
         : system_(system),
           emitting_interval_(cfg->yaml_node_["Socket.emitting_interval"].as<unsigned int>(15000)),
           image_quality_(cfg->yaml_node_["Socket.image_quality"].as<unsigned int>(20)),

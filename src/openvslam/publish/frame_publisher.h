@@ -17,7 +17,7 @@ namespace data {
 class map_database;
 } // namespace data
 
-namespace publisher {
+namespace publish {
 
 class frame_publisher {
 public:
@@ -94,7 +94,7 @@ protected:
     std::vector<bool> is_tracked_;
 };
 
-} // namespace publisher
+} // namespace publish
 } // namespace openvslam
 
 #endif // OPENVSLAM_PUBLISH_FRAME_PUBLISHER_H

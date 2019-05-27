@@ -4,14 +4,14 @@
 #include "openvslam/system.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
-#include "openvslam/publisher/frame_publisher.h"
-#include "openvslam/publisher/map_publisher.h"
+#include "openvslam/publish/frame_publisher.h"
+#include "openvslam/publish/map_publisher.h"
 
 namespace pangolin_viewer {
 
 viewer::viewer(const std::shared_ptr<openvslam::config>& cfg, openvslam::system* system,
-               const std::shared_ptr<openvslam::publisher::frame_publisher>& frame_publisher,
-               const std::shared_ptr<openvslam::publisher::map_publisher>& map_publisher)
+               const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
+               const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher)
         : system_(system), frame_publisher_(frame_publisher), map_publisher_(map_publisher),
           interval_ms_(1000.0f / cfg->yaml_node_["PangolinViewer.fps"].as<float>(30.0)),
           viewpoint_x_(cfg->yaml_node_["PangolinViewer.viewpoint_x"].as<float>(0.0)),

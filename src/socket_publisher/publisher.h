@@ -11,10 +11,10 @@ namespace openvslam {
 class config;
 class system;
 
-namespace publisher {
+namespace publish {
 class frame_publisher;
 class map_publisher;
-} // namespace publisher
+} // namespace publish
 
 } // namespace openvslam
 
@@ -23,8 +23,8 @@ namespace socket_publisher {
 class publisher {
 public:
     publisher(const std::shared_ptr<openvslam::config>& cfg, openvslam::system* system,
-              const std::shared_ptr<openvslam::publisher::frame_publisher>& frame_publisher,
-              const std::shared_ptr<openvslam::publisher::map_publisher>& map_publisher);
+              const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
+              const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher);
 
     void run();
 
