@@ -161,7 +161,7 @@ public:
     const double timestamp_;
 
     // local mapの更新の際に重複を避けるために用いられる変数
-    unsigned int ref_frm_id_in_tracking_ = 0;
+    unsigned int identifier_in_local_map_update_ = 0;
 
     // local BAの際に重複を避けるために用いられる変数
     unsigned int lead_keyfrm_id_in_local_BA_ = 0;

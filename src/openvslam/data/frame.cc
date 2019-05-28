@@ -170,7 +170,7 @@ void frame::compute_bow() {
 }
 
 bool frame::is_observable(landmark* lm, const float ray_cos_thr) const {
-    lm->is_observed_in_tracking_ = false;
+    lm->is_observable_in_tracking_ = false;
 
     // グローバル基準の3次元点座標
     const Vec3_t pos_w = lm->get_pos_in_world();
@@ -206,7 +206,7 @@ bool frame::is_observable(landmark* lm, const float ray_cos_thr) const {
     const auto pred_scale_level = lm->predict_scale_level(cam_to_lm_dist, this);
 
     // tracking用のパラメータをセット
-    lm->is_observed_in_tracking_ = true;
+    lm->is_observable_in_tracking_ = true;
     lm->x_in_tracking_ = reproj(0);
     lm->y_in_tracking_ = reproj(1);
     lm->x_right_in_tracking_ = x_right;

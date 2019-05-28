@@ -112,10 +112,10 @@ public:
     float x_in_tracking_;
     float y_in_tracking_;
     float x_right_in_tracking_;
-    bool is_observed_in_tracking_;
+    bool is_observable_in_tracking_;
     int scale_level_in_tracking_;
-    unsigned int ref_frm_id_in_tracking_ = 0;
-    unsigned int last_frm_id_in_tracking_ = 0;
+    unsigned int identifier_in_local_map_update_ = 0;
+    unsigned int identifier_in_local_lm_search_ = 0;
 
     // local BAの際に重複を避けるために用いられる変数
     unsigned int lead_keyfrm_id_in_local_BA_ = 0;

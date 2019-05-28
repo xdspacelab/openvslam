@@ -134,8 +134,8 @@ unsigned int frame_tracker::discard_outliers(data::frame& curr_frm) const {
         if (curr_frm.outlier_flags_.at(idx)) {
             curr_frm.landmarks_.at(idx) = nullptr;
             curr_frm.outlier_flags_.at(idx) = false;
-            lm->is_observed_in_tracking_ = false;
-            lm->last_frm_id_in_tracking_ = curr_frm.id_;
+            lm->is_observable_in_tracking_ = false;
+            lm->identifier_in_local_lm_search_ = curr_frm.id_;
             continue;
         }
 
