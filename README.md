@@ -1,4 +1,4 @@
-# OpenVSLAM: Versatile Visual SLAM Framework
+# OpenVSLAM: a Versatile Visual SLAM Framework
 [![wercker status](https://app.wercker.com/status/8b02a43f48216385658bb3857aae5fd8/s/ "wercker status")](https://app.wercker.com/project/byKey/8b02a43f48216385658bb3857aae5fd8)
 [![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/en/master/?badge=master)
 
@@ -27,6 +27,8 @@ Please see the `*.cc` files in `./example` directory or check [Simple Tutorial](
 
 We provided [documentation](https://openvslam.readthedocs.io/) for installation and tutorial.
 Please contact us via [GitHub issues](https://github.com/xdspacelab/openvslam/issues) if you have any questions or notice any bugs about the software.
+
+References are presented [here](https://openvslam.readthedocs.io/en/master/overview.html#reference).
 
 ## Installation
 
