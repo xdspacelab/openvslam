@@ -42,11 +42,10 @@ bool two_view_triangulator::triangulate(const unsigned idx_1, const unsigned int
     const auto cos_stereo_parallax = std::min(cos_stereo_parallax_1, cos_stereo_parallax_2);
 
     // select to use "linear triangulation" or "stereo triangulation"
-    // threshold of minimum angle of the two rays (=1.0deg)
-    constexpr double cos_rays_parallax_thr = 0.99984769515;
+    // threshold of minimum angle of the two rays
     const bool triangulate_with_two_cameras =
             // check if the sufficient parallax is provided
-            ((!is_stereo_1 && !is_stereo_2) && 0.0 < cos_rays_parallax && cos_rays_parallax < cos_rays_parallax_thr)
+            ((!is_stereo_1 && !is_stereo_2) && 0.0 < cos_rays_parallax && cos_rays_parallax < cos_rays_parallax_thr_)
             // check if the parallax between the two cameras is larger than the stereo parallax
             || ((is_stereo_1 || is_stereo_2) && 0.0 < cos_rays_parallax && cos_rays_parallax < cos_stereo_parallax);
 
