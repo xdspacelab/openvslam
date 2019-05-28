@@ -251,12 +251,6 @@ private:
     module::loop_bundle_adjuster loop_bundle_adjuster_;
 
     //-----------------------------------------
-    // database
-
-    //! map database
-    data::map_database* map_db_;
-
-    //-----------------------------------------
     // keyframe queue
 
     //! mutex for access to keyframe queue

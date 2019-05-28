@@ -12,8 +12,7 @@ namespace openvslam {
 
 global_optimization_module::global_optimization_module(data::map_database* map_db, data::bow_database* bow_db,
                                                        data::bow_vocabulary* bow_vocab, const bool fix_scale)
-        : loop_detector_(bow_db, bow_vocab, fix_scale), loop_bundle_adjuster_(map_db),
-          map_db_(map_db), graph_optimizer_(map_db, fix_scale) {
+        : loop_detector_(bow_db, bow_vocab, fix_scale), loop_bundle_adjuster_(map_db), graph_optimizer_(map_db, fix_scale) {
     spdlog::debug("CONSTRUCT: global_optimization_module");
 }
 
