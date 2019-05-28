@@ -276,7 +276,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
 
     constexpr unsigned int cell_size = 64;
 
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp parallel for
 #endif
     for (unsigned int level = 0; level < orb_params_.num_levels_; ++level) {
@@ -299,7 +299,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
         std::vector<cv::KeyPoint> keypts_to_distribute;
         keypts_to_distribute.reserve(orb_params_.max_num_keypts_ * 10);
 
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp parallel for
 #endif
         for (unsigned int i = 0; i < num_rows; ++i) {
@@ -312,7 +312,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                 max_y = max_border_y;
             }
 
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp parallel for
 #endif
             for (unsigned int j = 0; j < num_cols; ++j) {
@@ -348,7 +348,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                 }
 
                 // 特徴点をスケールごとに集める
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp critical
 #endif
                 {

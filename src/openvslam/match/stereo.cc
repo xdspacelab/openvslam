@@ -25,7 +25,7 @@ void stereo::compute(std::vector<float>& stereo_x_right, std::vector<float>& dep
     std::vector<std::pair<int, int>> correlation_and_idx_left;
     correlation_and_idx_left.reserve(num_keypts_);
 
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp parallel for
 #endif
     for (unsigned int idx_left = 0; idx_left < num_keypts_; ++idx_left) {
@@ -84,7 +84,7 @@ void stereo::compute(std::vector<float>& stereo_x_right, std::vector<float>& dep
         depths.at(idx_left) = focal_x_baseline_ / best_disp;
         stereo_x_right.at(idx_left) = best_x_right;
         // こっちはcritical指定が必要
-#ifdef _OPENMP
+#ifdef USE_OPENMP
 #pragma omp critical
 #endif
         {
