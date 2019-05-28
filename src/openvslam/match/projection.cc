@@ -11,7 +11,7 @@ unsigned int projection::match_frame_and_landmarks(data::frame& frm, const std::
     unsigned int num_matches = 0;
 
     for (auto local_lm : local_landmarks) {
-        if (!local_lm->is_observed_in_tracking_) {
+        if (!local_lm->is_observable_in_tracking_) {
             continue;
         }
         if (local_lm->will_be_erased()) {

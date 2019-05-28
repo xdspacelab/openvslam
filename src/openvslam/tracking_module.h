@@ -40,108 +40,187 @@ class tracking_module {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    /**
+     * Constructor
+     */
     tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
                     data::bow_vocabulary* bow_vocab, data::bow_database* bow_db);
 
+    /**
+     * Destructor
+     */
     ~tracking_module();
 
+    /**
+     * Set the mapping module
+     */
     void set_mapping_module(mapping_module* mapper);
 
+    /**
+     * Set the global optimization module
+     */
     void set_global_optimization_module(global_optimization_module* global_optimizer);
 
-    std::vector<cv::KeyPoint> get_initial_keypoints() const;
-
-    std::vector<int> get_initial_matches() const;
-
-    Mat44_t track_monocular_image(const cv::Mat& img, const double timestamp, const cv::Mat& mask = cv::Mat{});
-
-    Mat44_t track_stereo_image(const cv::Mat& left_img_rect, const cv::Mat& right_img_rect, const double timestamp, const cv::Mat& mask = cv::Mat{});
-
-    Mat44_t track_RGBD_image(const cv::Mat& img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask = cv::Mat{});
-
-    //! reset databases
-    void reset();
-
-    //! set mapping module status
-    void set_mapping_module_status(const bool mapping_is_enabled) {
-        std::lock_guard<std::mutex> lock(mtx_mapping_);
-        mapping_is_enabled_ = mapping_is_enabled;
-    }
-
-    //! get mapping module status
-    bool get_mapping_module_status() const {
-        std::lock_guard<std::mutex> lock(mtx_mapping_);
-        return mapping_is_enabled_;
-    }
+    //-----------------------------------------
+    // interfaces
 
     /**
-     * Request to pause tracker
+     * Set mapping module status
+     */
+    void set_mapping_module_status(const bool mapping_is_enabled);
+
+
+    /**
+     * Get mapping module status
+     */
+    bool get_mapping_module_status() const;
+
+    /**
+     * Get the keypoints of the initial frame
+     */
+    std::vector<cv::KeyPoint> get_initial_keypoints() const;
+
+    /**
+     * Get the keypoint matches between the initial frame and the current frame
+     */
+    std::vector<int> get_initial_matches() const;
+
+    /**
+     * Track monocular image
+     */
+    Mat44_t track_monocular_image(const cv::Mat& img, const double timestamp, const cv::Mat& mask = cv::Mat{});
+
+    /**
+     * Track stereo image
+     * (NOTE: left and right images must be stereo-rectified)
+     */
+    Mat44_t track_stereo_image(const cv::Mat& left_img_rect, const cv::Mat& right_img_rect, const double timestamp, const cv::Mat& mask = cv::Mat{});
+
+    /**
+     * Track RGBD image
+     * (NOTE: RGB and depth images must be aligned)
+     */
+    Mat44_t track_RGBD_image(const cv::Mat& img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask = cv::Mat{});
+
+    //-----------------------------------------
+    // management for reset process
+
+    /**
+     * Reset the databases
+     */
+    void reset();
+
+    //-----------------------------------------
+    // management for pause process
+
+    /**
+     * Request to pause the tracking module
      */
     void request_pause();
 
     /**
-     * Check if pause is requested or not
-     * @return
+     * Check if the pause of the tracking module is requested or not
      */
     bool pause_is_requested() const;
 
     /**
-     * Check if tracker is paused or not
-     * @return
+     * Check if the tracking module is paused or not
      */
     bool is_paused() const;
 
     /**
-     * Resume tracker
+     * Resume the tracking module
      */
     void resume();
 
+    //-----------------------------------------
+    // variables
+
     //! config
     const std::shared_ptr<config> cfg_;
-    //! camera model (== cfg_->camera_)
+
+    //! camera model (equals to cfg_->camera_)
     camera::base* camera_;
 
-    //! tracking states
+    //! latest tracking state
     tracker_state_t tracking_state_ = tracker_state_t::NotInitialized;
+    //! last tracking state
     tracker_state_t last_tracking_state_ = tracker_state_t::NotInitialized;
 
     //! current frame and its image
     data::frame curr_frm_;
+    //! image of the current frame
     cv::Mat img_gray_;
 
     //! elapsed microseconds for each tracking
     double elapsed_ms_ = 0.0;
 
 protected:
-    // TODO: camera setupに応じてtrack関数を分ける
+    //-----------------------------------------
+    // tracking processes
+
+    /**
+     * Main stream of the tracking module
+     */
     void track();
 
+    /**
+     * Try to initialize with the current frame
+     */
     bool initialize();
 
+    /**
+     * Track the current frame
+     */
     bool track_current_frame();
 
+    /**
+     * Localize the current frame
+     */
     bool localize_current_frame();
 
+    /**
+     * Update the motion model using the current and last frames
+     */
     void update_motion_model();
 
+    /**
+     * Replace the landmarks if the `replaced` member has the valid pointer
+     */
     void apply_landmark_replace();
+
+    /**
+     * Update the camera pose of the last frame
+     */
     void update_last_frame();
 
     /**
-     * Update local map and optimize the camera pose of current frame
-     * @return
+     * Optimize the camera pose of current frame
      */
-    bool track_local_map();
+    bool optimize_current_frame_with_local_map();
 
+    /**
+     * Update the local map
+     */
     void update_local_map();
+
+    /**
+     * Update the local keyframes
+     */
     void update_local_keyframes();
+
+    /**
+     * Update the local landmarks
+     */
     void update_local_landmarks();
 
+    /**
+     * Acquire more 2D-3D matches after initial camera pose estimation
+     */
     void search_local_landmarks();
 
     /**
      * Check the new keyframe is needed or not
-     * @return
      */
     bool new_keyframe_is_needed() const;
 
@@ -196,32 +275,48 @@ protected:
     //! local landmarks
     std::vector<data::landmark*> local_landmarks_;
 
-    //! current frameのインライア数
+    //! the number of tracked keyframes in the current keyframe
     unsigned int num_tracked_lms_ = 0;
 
-    //! 前回のframe
+    //! last frame
     data::frame last_frm_;
-    //! relocalizeに成功した時のframe ID
+
+    //! latest frame ID which succeded in relocalization
     unsigned int last_reloc_frm_id_ = 0;
 
     //! motion model
-    bool velocity_is_valid_ = false;
     Mat44_t velocity_;
+    //! motion model is valid or not
+    bool velocity_is_valid_ = false;
 
     //! current camera pose from reference keyframe
     //! (to update last camera pose at the beginning of each tracking)
     Mat44_t last_cam_pose_from_ref_keyfrm_;
 
     //-----------------------------------------
-    //! mapping module status
+    // mapping module status
+
+    //! mutex for mapping module status
     mutable std::mutex mtx_mapping_;
+
+    //! mapping module is enabled or not
     bool mapping_is_enabled_ = true;
 
     //-----------------------------------------
-    //! need mutex for access to pause procedure
+    // management for pause process
+
+    //! mutex for pause process
     mutable std::mutex mtx_pause_;
+
+    /**
+     * Check the request frame and pause the tracking module
+     */
     bool check_and_execute_pause();
+
+    //! the tracking module is paused or not
     bool is_paused_ = false;
+
+    //! Pause of the tracking module is requested or not
     bool pause_is_requested_ = false;
 };
 

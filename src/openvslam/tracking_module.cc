@@ -55,6 +55,16 @@ void tracking_module::set_global_optimization_module(global_optimization_module*
     global_optimizer_ = global_optimizer;
 }
 
+void tracking_module::set_mapping_module_status(const bool mapping_is_enabled) {
+    std::lock_guard<std::mutex> lock(mtx_mapping_);
+    mapping_is_enabled_ = mapping_is_enabled;
+}
+
+bool tracking_module::get_mapping_module_status() const {
+    std::lock_guard<std::mutex> lock(mtx_mapping_);
+    return mapping_is_enabled_;
+}
+
 std::vector<cv::KeyPoint> tracking_module::get_initial_keypoints() const {
     return initializer_.get_initial_keypoints();
 }
@@ -160,7 +170,7 @@ void tracking_module::track() {
         std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
 
-    // fix map mutex
+    // LOCK the map database
     std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
 
     if (tracking_state_ == tracker_state_t::Initializing) {
@@ -168,23 +178,27 @@ void tracking_module::track() {
             return;
         }
 
-        // reference keyframeとlocal keyframesとlocal landmarksを更新
+        // update the reference keyframe, local keyframes, and local landmarks
         update_local_map();
 
-        // mapping moduleにkeyframesを渡しておく
+        // pass all of the keyframes to the mapping module
         const auto keyfrms = map_db_->get_all_keyframes();
         for (const auto keyfrm : keyfrms) {
             mapper_->queue_keyframe(keyfrm);
         }
 
-        // tracking modeに移行
+        // state transition to Tracking mode
         tracking_state_ = tracker_state_t::Tracking;
     }
     else {
-        // 3次元点にreplaceを適用する
+        // apply replace of landmarks observed in the last frame
         apply_landmark_replace();
-        // last frameの姿勢を更新(local BAでreference keyframeが更新されている可能性があるので)
+        // update the camera pose of the last frame
+        // because the mapping module might optimize the camera pose of the last frame's reference keyframe
         update_last_frame();
+
+        // set the reference keyframe of the current frame
+        curr_frm_.ref_keyfrm_ = ref_keyfrm_;
 
         bool succeeded;
         if (mapping_is_enabled_) {
@@ -192,86 +206,87 @@ void tracking_module::track() {
             succeeded = track_current_frame();
         }
         else {
-            // localization mode;
+            // localization mode
             succeeded = localize_current_frame();
         }
 
-        curr_frm_.ref_keyfrm_ = ref_keyfrm_;
-
-        // local mapの情報を更新
+        // update the local map and optimize the camera pose of the current frame
         if (succeeded) {
-            succeeded = track_local_map();
+            update_local_map();
+            succeeded = optimize_current_frame_with_local_map();
         }
 
-        // 評価用のframe statisticsを更新
+        // update the motion model
+        if (succeeded) {
+            update_motion_model();
+        }
+
+        // update the frame statistics
         map_db_->update_frame_statistics(curr_frm_, !succeeded);
 
-        // 状態遷移
+        // state transition
         tracking_state_ = succeeded ? tracker_state_t::Tracking : tracker_state_t::Lost;
 
-        // 1秒以内にlostしたらリセットする
+        // if tracking is failed soon after initialization, reset the databases
         if (tracking_state_ == tracker_state_t::Lost && curr_frm_.id_ < camera_->fps_) {
             spdlog::info("tracking lost soon after initialization");
             system_->request_reset();
             return;
         }
 
-        // lostしていたらメッセージを表示する
+        // show message if tracking has been lost
         if (last_tracking_state_ != tracker_state_t::Lost && tracking_state_ == tracker_state_t::Lost) {
             spdlog::info("tracking lost");
         }
 
-        // キーフレームを追加するか判断する
+        // check to insert the new keyframe derived from the current frame
         if (succeeded && new_keyframe_is_needed()) {
             insert_new_keyframe();
         }
 
-        // current frameのtrackingが成功している場合はmotion modelを更新しておく
-        if (succeeded) {
-            // 等速運動モデルを更新
-            update_motion_model();
-
-            // BAでアウトライアにされたものは排除する(keyframeを追加した後に行う必要がある)
-            for (unsigned int idx = 0; idx < curr_frm_.num_keypts_; ++idx) {
-                if (curr_frm_.landmarks_.at(idx) && curr_frm_.outlier_flags_.at(idx)) {
-                    curr_frm_.landmarks_.at(idx) = nullptr;
-                }
+        // tidy up observations
+        for (unsigned int idx = 0; idx < curr_frm_.num_keypts_; ++idx) {
+            if (curr_frm_.landmarks_.at(idx) && curr_frm_.outlier_flags_.at(idx)) {
+                curr_frm_.landmarks_.at(idx) = nullptr;
             }
         }
     }
 
-    // last frameを更新する
+    // update last frame
     last_frm_ = curr_frm_;
-
-    // ref_keyfrm_からの相対姿勢を保持しておく
-    // (次回のtracking開始時に，ref_keyfrm_の姿勢が更新されていた際にlast frameの位置の更新を行うため)
+    // store the relative pose from the reference keyframe to the current frame
+    // to update the camera pose at the beginning of the next tracking process
     if (curr_frm_.cam_pose_cw_is_valid_) {
         last_cam_pose_from_ref_keyfrm_ = curr_frm_.cam_pose_cw_ * curr_frm_.ref_keyfrm_->get_cam_pose_inv();
     }
 }
 
 bool tracking_module::initialize() {
+    // try to initialize with the current frame
     initializer_.initialize(curr_frm_);
 
-    // map構築に失敗(=Wrong)していたらreset
+    // if map building was failed -> reset the map database
     if (initializer_.get_state() == module::initializer_state_t::Wrong) {
-        reset();
+        // reset
+        system_->request_reset();
         return false;
     }
 
-    // initializeに失敗していたら(!=Succeeded)，次のフレームでinitializeを再試行するのでreturn
+    // if initializing was failed -> try to initialize with the next frame
     if (initializer_.get_state() != module::initializer_state_t::Succeeded) {
         return false;
     }
 
+    // succeeded
     return true;
 }
 
 bool tracking_module::track_current_frame() {
     bool succeeded;
     if (tracking_state_ == tracker_state_t::Tracking) {
-        // trackingが成功していれば，通常のtrackingを続ける
+        // Tracking mode
         if (velocity_is_valid_ && last_reloc_frm_id_ + 2 < curr_frm_.id_) {
+            // if the motion model is valid
             succeeded = frame_tracker_.motion_based_track(curr_frm_, last_frm_, velocity_);
             if (!succeeded) {
                 succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
@@ -281,6 +296,7 @@ bool tracking_module::track_current_frame() {
             }
         }
         else {
+            // if the motion model is invalid
             succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
             if (!succeeded) {
                 succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
@@ -288,7 +304,8 @@ bool tracking_module::track_current_frame() {
         }
     }
     else {
-        // trackingがlostしていれば，relocalizeを試みる
+        // Lost mode
+        // try to relocalize
         succeeded = relocalizer_.relocalize(curr_frm_);
         if (succeeded) {
             last_reloc_frm_id_ = curr_frm_.id_;
@@ -300,14 +317,17 @@ bool tracking_module::track_current_frame() {
 bool tracking_module::localize_current_frame() {
     bool succeeded;
     if (tracking_state_ == tracker_state_t::Lost) {
-        // trackingがlostしていれば，relocalizeを試みる
+        // Lost mode
+        // try to relocalize
         succeeded = relocalizer_.relocalize(curr_frm_);
         if (succeeded) {
             last_reloc_frm_id_ = curr_frm_.id_;
         }
     }
     else {
+        // Tracking mode
         if (velocity_is_valid_) {
+            // if the motion model is valid
             succeeded = frame_tracker_.motion_based_track(curr_frm_, last_frm_, velocity_);
             if (!succeeded) {
                 succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
@@ -317,6 +337,7 @@ bool tracking_module::localize_current_frame() {
             }
         }
         else {
+            // if the motion model is invalid
             succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
             if (!succeeded) {
                 succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
@@ -355,7 +376,6 @@ void tracking_module::apply_landmark_replace() {
 }
 
 void tracking_module::update_last_frame() {
-    // local map optimizationによってkeyframeの姿勢が変わっている可能性があるので，それに応じてlast frameの姿勢を更新
     auto last_ref_keyfrm = last_frm_.ref_keyfrm_;
     if (!last_ref_keyfrm) {
         return;
@@ -363,17 +383,14 @@ void tracking_module::update_last_frame() {
     last_frm_.set_cam_pose(last_cam_pose_from_ref_keyfrm_ * last_ref_keyfrm->get_cam_pose());
 }
 
-bool tracking_module::track_local_map() {
-    // reference keyframeとlocal keyframesとlocal landmarksを更新
-    update_local_map();
-
-    // local landmarksをcurrent frameに再投影して2D-3D対応を求める
+bool tracking_module::optimize_current_frame_with_local_map() {
+    // acquire more 2D-3D matches by reprojection the local landmarks to the current frame
     search_local_landmarks();
 
-    // pose optimizationを走らせる
+    // optimize the pose
     pose_optimizer_.optimize(&curr_frm_);
 
-    // 3次元点と対応している特徴点の数をカウントする
+    // count up the number of tracked landmarks
     num_tracked_lms_ = 0;
     for (unsigned int idx = 0; idx < curr_frm_.num_keypts_; ++idx) {
         auto lm = curr_frm_.landmarks_.at(idx);
@@ -382,48 +399,49 @@ bool tracking_module::track_local_map() {
         }
 
         if (!curr_frm_.outlier_flags_.at(idx)) {
-            // BAでインライアだった場合
+            // the observation has been considered as inlier in the pose optimization
             assert(lm->has_observation());
-            // 3次元点との対応が得られたのでカウンタを増やす
-            lm->increase_num_found();
+            // count up
             ++num_tracked_lms_;
+            // increment the number of tracked frame
+            lm->increase_num_found();
         }
         else {
-            // BAでアウトライアだった場合
-            // 3次元点との対応を削除する
+            // the observation has been considered as outlier in the pose optimization
+            // remove the observation
             curr_frm_.landmarks_.at(idx) = nullptr;
         }
     }
 
-    // 3次元点と対応している特徴点の数の閾値
     constexpr unsigned int num_tracked_lms_thr = 20;
 
-    // relocalizeしてすぐは閾値を厳しくする
+    // if recently relocalized, use the more strict threshold
     if (curr_frm_.id_ < last_reloc_frm_id_ + camera_->fps_ && num_tracked_lms_ < 2 * num_tracked_lms_thr) {
         spdlog::debug("local map tracking failed: {} matches < {}", num_tracked_lms_, 2 * num_tracked_lms_thr);
         return false;
     }
 
-    // 閾値を超えていればtracking成功
+    // check the threshold of the number of tracked landmarks
     if (num_tracked_lms_ < num_tracked_lms_thr) {
         spdlog::debug("local map tracking failed: {} matches < {}", num_tracked_lms_, num_tracked_lms_thr);
         return false;
     }
-    else {
-        return true;
-    }
+
+    return true;
 }
 
 void tracking_module::update_local_map() {
     update_local_keyframes();
     update_local_landmarks();
 
-    // 可視化用
     map_db_->set_local_landmarks(local_landmarks_);
 }
 
 void tracking_module::update_local_keyframes() {
-    // current frameと隣接しているkeyframeについて，共有している3次元点の数を数える
+    constexpr unsigned int max_num_local_keyfrms = 60;
+
+    // count the number of sharing landmarks between the current frame and each of the neighbor keyframes
+    // key: keyframe, value: number of sharing landmarks
     std::unordered_map<data::keyframe*, unsigned int> keyfrm_weights;
     for (unsigned int idx = 0; idx < curr_frm_.num_keypts_; ++idx) {
         auto lm = curr_frm_.landmarks_.at(idx);
@@ -432,6 +450,7 @@ void tracking_module::update_local_keyframes() {
         }
         if (lm->will_be_erased()) {
             curr_frm_.landmarks_.at(idx) = nullptr;
+            continue;
         }
 
         const auto observations = lm->get_observations();
@@ -444,13 +463,14 @@ void tracking_module::update_local_keyframes() {
         return;
     }
 
+    // set the aforementioned keyframes as local keyframes
+    // and find the nearest keyframe
     unsigned int max_weight = 0;
     data::keyframe* nearest_covisibility = nullptr;
 
     local_keyfrms_.clear();
     local_keyfrms_.reserve(3 * keyfrm_weights.size());
 
-    // 3次元点を共有しているキーフレームを集計する
     for (auto& keyfrm_weight : keyfrm_weights) {
         auto keyfrm = keyfrm_weight.first;
         const auto weight = keyfrm_weight.second;
@@ -460,70 +480,62 @@ void tracking_module::update_local_keyframes() {
         }
 
         local_keyfrms_.push_back(keyfrm);
-        keyfrm->ref_frm_id_in_tracking_ = curr_frm_.id_;
 
-        // nearest covisibilityを求める
-        if (weight > max_weight) {
+        // avoid duplication
+        keyfrm->identifier_in_local_map_update_ = curr_frm_.id_;
+
+        // update the nearest keyframe
+        if (max_weight < weight) {
             max_weight = weight;
             nearest_covisibility = keyfrm;
         }
     }
 
-    // local keyframesと隣接しているものと更に隣接しているものを追加する
-    for (std::vector<data::keyframe*>::const_iterator iter = local_keyfrms_.begin(), end = local_keyfrms_.end(); iter != end; ++iter) {
-        // TODO: ここの閾値を増やし過ぎるとtrackingが落ちやすくなる
-        if (local_keyfrms_.size() > 80) {
+    // add the second-order keyframes to the local landmarks
+    auto add_local_keyframe = [this](data::keyframe* keyfrm) {
+        if (!keyfrm) {
+            return false;
+        }
+        if (keyfrm->will_be_erased()) {
+            return false;
+        }
+        // avoid duplication
+        if (keyfrm->identifier_in_local_map_update_ == curr_frm_.id_) {
+            return false;
+        }
+        keyfrm->identifier_in_local_map_update_ = curr_frm_.id_;
+        local_keyfrms_.push_back(keyfrm);
+        return true;
+    };
+    for (auto iter = local_keyfrms_.cbegin(), end = local_keyfrms_.cend(); iter != end; ++iter) {
+        if (max_num_local_keyfrms < local_keyfrms_.size()) {
             break;
         }
 
         auto keyfrm = *iter;
 
-        // 隣接keyframe
+        // covisibilities of the neighbor keyframe
         const auto neighbors = keyfrm->get_top_n_covisibilities(10);
         for (auto neighbor : neighbors) {
-            if (neighbor->will_be_erased()) {
-                continue;
+            if (add_local_keyframe(neighbor)) {
+                break;
             }
-            // 重複を避ける
-            if (neighbor->ref_frm_id_in_tracking_ == curr_frm_.id_) {
-                continue;
-            }
-
-            local_keyfrms_.push_back(neighbor);
-            neighbor->ref_frm_id_in_tracking_ = curr_frm_.id_;
-            break;
         }
 
-        // spanning treeのchildren
+        // children of the spanning tree
         const auto spanning_children = keyfrm->get_spanning_children();
         for (auto child : spanning_children) {
-            if (child->will_be_erased()) {
-                continue;
+            if (add_local_keyframe(child)) {
+                break;
             }
-            // 重複を避ける
-            if (child->ref_frm_id_in_tracking_ == curr_frm_.id_) {
-                continue;
-            }
-
-            local_keyfrms_.push_back(child);
-            child->ref_frm_id_in_tracking_ = curr_frm_.id_;
-            break;
         }
 
-        // spanning treeのparent
+        // parent of the spanning tree
         auto parent = keyfrm->get_spanning_parent();
-        if (!parent) {
-            continue;
-        }
-        // 重複を避ける
-        if (parent->ref_frm_id_in_tracking_ == curr_frm_.id_) {
-            continue;
-        }
-
-        local_keyfrms_.push_back(parent);
-        parent->ref_frm_id_in_tracking_ = curr_frm_.id_;
+        add_local_keyframe(parent);
     }
 
+    // update the reference keyframe with the nearest one
     if (nearest_covisibility) {
         ref_keyfrm_ = nearest_covisibility;
         curr_frm_.ref_keyfrm_ = ref_keyfrm_;
@@ -543,19 +555,21 @@ void tracking_module::update_local_landmarks() {
             if (lm->will_be_erased()) {
                 continue;
             }
-            if (lm->ref_frm_id_in_tracking_ == curr_frm_.id_) {
+
+            // avoid duplication
+            if (lm->identifier_in_local_map_update_ == curr_frm_.id_) {
                 continue;
             }
+            lm->identifier_in_local_map_update_ = curr_frm_.id_;
 
             local_landmarks_.push_back(lm);
-            lm->ref_frm_id_in_tracking_ = curr_frm_.id_;
         }
     }
 }
 
 void tracking_module::search_local_landmarks() {
-    // current frameとすでに対応すしている3次元点は再投影する必要がないのでマークをつける
-    for (auto& lm : curr_frm_.landmarks_) {
+    // select the landmarks which can be reprojected from the ones observed in the current frame
+    for (auto lm : curr_frm_.landmarks_) {
         if (!lm) {
             continue;
         }
@@ -564,25 +578,29 @@ void tracking_module::search_local_landmarks() {
             continue;
         }
 
+        // this landmark cannot be reprojected
+        // because already observed in the current frame
+        lm->is_observable_in_tracking_ = false;
+        lm->identifier_in_local_lm_search_ = curr_frm_.id_;
+
+        // this landmark is observable from the current frame
         lm->increase_num_visible();
-        lm->last_frm_id_in_tracking_ = curr_frm_.id_;
-        lm->is_observed_in_tracking_ = false;
     }
 
     unsigned int num_lms_to_reproj = 0;
 
     for (auto lm : local_landmarks_) {
-        // マークが付いているものはスルー
-        if (lm->last_frm_id_in_tracking_ == curr_frm_.id_) {
+        // avoid the landmarks which cannot be reprojected (== observed in the current frame)
+        if (lm->identifier_in_local_lm_search_ == curr_frm_.id_) {
             continue;
         }
         if (lm->will_be_erased()) {
             continue;
         }
 
-        // 再投影して可観測かどうかをチェックする
-        // & 再投影したときの再投影点をframeに登録する
+        // check the observability
         if (curr_frm_.is_observable(lm, 0.5)) {
+            // this landmark is observable from the current frame
             lm->increase_num_visible();
             ++num_lms_to_reproj;
         }
@@ -592,7 +610,7 @@ void tracking_module::search_local_landmarks() {
         return;
     }
 
-    // 再投影点の情報を使って2D(current frame)-3D(local landmarks)のマッチングを得る
+    // acquire more 2D-3D matches by projecting the local landmarks to the current frame
     match::projection projection_matcher(0.8);
     const float margin = (curr_frm_.id_ < last_reloc_frm_id_ + 2)
                          ? 20.0 : ((camera_->setup_type_ == camera::setup_type_t::RGBD)
@@ -606,19 +624,20 @@ bool tracking_module::new_keyframe_is_needed() const {
     }
 
     // relocalizeしてから1秒以上経過していなければキーフレームを追加しない
+    // cannnot insert the new keyframe in a second after relocalization
     const auto num_keyfrms = map_db_->get_num_keyframes();
     if (cfg_->camera_->fps_ < num_keyfrms && curr_frm_.id_ < last_reloc_frm_id_ + cfg_->camera_->fps_) {
         return false;
     }
 
-    // keyframe inserterでキーフレームとしての妥当性をチェック
+    // check the new keyframe is needed
     return keyfrm_inserter_.new_keyframe_is_needed(curr_frm_, num_tracked_lms_, *ref_keyfrm_);
 }
 
 void tracking_module::insert_new_keyframe() {
-    // keyframe inserterでキーフレームを挿入
+    // insert the new keyframe
     const auto ref_keyfrm = keyfrm_inserter_.insert_new_keyframe(curr_frm_);
-    // 挿入されたキーフレームのポインタをreference keyframeにセットする
+    // set the reference keyframe with the new keyframe
     ref_keyfrm_ = ref_keyfrm ? ref_keyfrm : ref_keyfrm_;
     curr_frm_.ref_keyfrm_ = ref_keyfrm_;
 }
@@ -641,18 +660,17 @@ bool tracking_module::is_paused() const {
 void tracking_module::resume() {
     std::lock_guard<std::mutex> lock(mtx_pause_);
 
-    // 再開する処理を行う
     is_paused_ = false;
     pause_is_requested_ = false;
 
-    spdlog::info("resume tracker");
+    spdlog::info("resume tracking module");
 }
 
 bool tracking_module::check_and_execute_pause() {
     std::lock_guard<std::mutex> lock(mtx_pause_);
     if (pause_is_requested_) {
         is_paused_ = true;
-        spdlog::info("pause tracker");
+        spdlog::info("pause tracking module");
         return true;
     }
     else {
