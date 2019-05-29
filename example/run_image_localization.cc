@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
     auto vocab_file_path = op.add<popl::Value<std::string>>("v", "vocab", "vocabulary file path");
     auto img_dir_path = op.add<popl::Value<std::string>>("i", "img-dir", "directory path which contains images");
     auto setting_file_path = op.add<popl::Value<std::string>>("s", "setting", "setting file path");
-    auto map_db_path = op.add<popl::Value<std::string>>("d", "map-db", "path to a prebuilt map database");
+    auto map_db_path = op.add<popl::Value<std::string>>("p", "map-db", "path to a prebuilt map database");
     auto mapping = op.add<popl::Switch>("", "mapping", "perform mapping as well as localization");
     auto mask_img_path = op.add<popl::Value<std::string>>("", "mask", "mask image path", "");
     auto frame_skip = op.add<popl::Value<unsigned int>>("", "frame-skip", "interval of frame skip", 1);

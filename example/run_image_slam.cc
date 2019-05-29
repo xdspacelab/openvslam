@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
     auto auto_term = op.add<popl::Switch>("", "auto-term", "automatically terminate the viewer");
     auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
     auto eval_log = op.add<popl::Switch>("", "eval-log", "store trajectory and tracking times for evaluation");
-    auto map_db_path = op.add<popl::Value<std::string>>("d", "map-db", "store a map database at this path after SLAM", "");
+    auto map_db_path = op.add<popl::Value<std::string>>("p", "map-db", "store a map database at this path after SLAM", "");
     try {
         op.parse(argc, argv);
     }
