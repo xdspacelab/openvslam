@@ -35,7 +35,6 @@ void local_bundle_adjuster::optimize(openvslam::data::keyframe* curr_keyfrm, boo
     std::unordered_map<unsigned int, data::keyframe*> local_keyfrms;
 
     local_keyfrms[curr_keyfrm->id_] = curr_keyfrm;
-    curr_keyfrm->lead_keyfrm_id_in_local_BA_ = curr_keyfrm->id_;
     const auto curr_covisibilities = curr_keyfrm->get_covisibilities();
     for (auto local_keyfrm : curr_covisibilities) {
         if (!local_keyfrm) {

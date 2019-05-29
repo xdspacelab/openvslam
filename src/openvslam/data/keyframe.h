@@ -163,10 +163,6 @@ public:
     // local mapの更新の際に重複を避けるために用いられる変数
     unsigned int identifier_in_local_map_update_ = 0;
 
-    // local BAの際に重複を避けるために用いられる変数
-    unsigned int lead_keyfrm_id_in_local_BA_ = 0;
-    unsigned int lead_keyfrm_id_in_fixed_BA_ = 0;
-
     // loop BAの際に姿勢伝播を行うために用いられる関数
     Mat44_t cam_pose_cw_after_loop_BA_;
     Mat44_t cam_pose_cw_before_BA_;

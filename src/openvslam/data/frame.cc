@@ -169,49 +169,28 @@ void frame::compute_bow() {
     }
 }
 
-bool frame::is_observable(landmark* lm, const float ray_cos_thr) const {
-    lm->is_observable_in_tracking_ = false;
-
-    // グローバル基準の3次元点座標
+bool frame::can_observe(landmark* lm, const float ray_cos_thr,
+                        Vec2_t& reproj, float& x_right, unsigned int& pred_scale_level) const {
     const Vec3_t pos_w = lm->get_pos_in_world();
 
-    // 画像上に再投影する
-    Vec2_t reproj;
-    float x_right;
-
     const bool in_image = camera_->reproject_to_image(rot_cw_, trans_cw_, pos_w, reproj, x_right);
-
-    // 画像外に再投影された場合は不可視
     if (!in_image) {
         return false;
     }
 
-    // ORBスケールの範囲内であるかを確認
     const Vec3_t cam_to_lm_vec = pos_w - cam_center_;
     const auto cam_to_lm_dist = cam_to_lm_vec.norm();
-
     if (!lm->is_inside_in_orb_scale(cam_to_lm_dist)) {
         return false;
     }
 
-    // 3次元点の平均観測ベクトルとの角度を計算し，閾値より大きければ破棄
     const Vec3_t obs_mean_normal = lm->get_obs_mean_normal();
     const auto ray_cos = cam_to_lm_vec.dot(obs_mean_normal) / cam_to_lm_dist;
-
     if (ray_cos < ray_cos_thr) {
         return false;
     }
 
-    // 3次元点が可視であると仮定して，スケールレベルを推定
-    const auto pred_scale_level = lm->predict_scale_level(cam_to_lm_dist, this);
-
-    // tracking用のパラメータをセット
-    lm->is_observable_in_tracking_ = true;
-    lm->x_in_tracking_ = reproj(0);
-    lm->y_in_tracking_ = reproj(1);
-    lm->x_right_in_tracking_ = x_right;
-    lm->scale_level_in_tracking_ = pred_scale_level;
-
+    pred_scale_level = lm->predict_scale_level(cam_to_lm_dist, this);
     return true;
 }
 

@@ -52,12 +52,12 @@ private:
     const float true_depth_thr_;
 
     //! map database
-    data::map_database* map_db_;
+    data::map_database* map_db_ = nullptr;
     //! BoW database
-    data::bow_database* bow_db_;
+    data::bow_database* bow_db_ = nullptr;
 
     //! mapping module
-    mapping_module* mapper_;
+    mapping_module* mapper_ = nullptr;
 
     //! min number of frames to insert keyframe
     const unsigned int min_num_frms_;

@@ -18,7 +18,7 @@ landmark::landmark(const unsigned int id, const unsigned int first_keyfrm_id,
                    const unsigned int num_visible, const unsigned int num_found,
                    map_database* map_db)
         : id_(id), first_keyfrm_id_(first_keyfrm_id), pos_w_(pos_w), ref_keyfrm_(ref_keyfrm),
-          num_visible_(num_visible), num_found_(num_found), map_db_(map_db) {}
+          num_observable_(num_visible), num_observed_(num_found), map_db_(map_db) {}
 
 void landmark::set_pos_in_world(const Vec3_t& pos_w) {
     std::lock_guard<std::mutex> lock(mtx_position_);
@@ -301,7 +301,7 @@ void landmark::replace(landmark* lm) {
         return;
     }
 
-    int num_visible, num_found;
+    unsigned int num_observable, num_observed;
     std::map<keyframe*, unsigned int> observations;
     {
         std::lock_guard<std::mutex> lock1(mtx_observations_);
@@ -309,8 +309,8 @@ void landmark::replace(landmark* lm) {
         observations = observations_;
         observations_.clear();
         will_be_erased_ = true;
-        num_visible = num_visible_;
-        num_found = num_found_;
+        num_observable = num_observable_;
+        num_observed = num_observed_;
         replaced_ = lm;
     }
 
@@ -326,8 +326,8 @@ void landmark::replace(landmark* lm) {
         }
     }
 
-    lm->increase_num_found(num_found);
-    lm->increase_num_visible(num_visible);
+    lm->increase_num_observed(num_observed);
+    lm->increase_num_observable(num_observable);
     lm->compute_descriptor();
 
     map_db_->erase_landmark(this);
@@ -339,27 +339,27 @@ landmark* landmark::get_replaced() const {
     return replaced_;
 }
 
-void landmark::increase_num_visible(unsigned int num_visible) {
+void landmark::increase_num_observable(unsigned int num_observable) {
     std::lock_guard<std::mutex> lock(mtx_observations_);
-    num_visible_ += num_visible;
+    num_observable_ += num_observable;
 }
 
-void landmark::increase_num_found(unsigned int num_found) {
+void landmark::increase_num_observed(unsigned int num_observed) {
     std::lock_guard<std::mutex> lock(mtx_observations_);
-    num_found_ += num_found;
+    num_observed_ += num_observed;
 }
 
-float landmark::get_found_per_visible_ratio() const {
+float landmark::get_observed_ratio() const {
     std::lock_guard<std::mutex> lock(mtx_observations_);
-    return static_cast<float>(num_found_) / num_visible_;
+    return static_cast<float>(num_observed_) / num_observable_;
 }
 
 nlohmann::json landmark::to_json() const {
     return {{"1st_keyfrm", first_keyfrm_id_},
             {"pos_w", {pos_w_(0), pos_w_(1), pos_w_(2)}},
             {"ref_keyfrm", ref_keyfrm_->id_},
-            {"n_vis", num_visible_},
-            {"n_fnd", num_found_}};
+            {"n_vis", num_observable_},
+            {"n_fnd", num_observed_}};
 }
 
 } // namespace data

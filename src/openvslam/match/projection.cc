@@ -21,7 +21,7 @@ unsigned int projection::match_frame_and_landmarks(data::frame& frm, const std::
         const auto pred_scale_level = local_lm->scale_level_in_tracking_;
 
         // 3次元点を再投影した点が存在するcellの特徴点を取得
-        const auto indices_in_cell = frm.get_keypoints_in_cell(local_lm->x_in_tracking_, local_lm->y_in_tracking_,
+        const auto indices_in_cell = frm.get_keypoints_in_cell(local_lm->reproj_in_tracking_(0), local_lm->reproj_in_tracking_(1),
                                                                margin * frm.scale_factors_.at(pred_scale_level),
                                                                pred_scale_level - 1, pred_scale_level);
         if (indices_in_cell.empty()) {

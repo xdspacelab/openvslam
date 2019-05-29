@@ -13,7 +13,7 @@ void local_map_cleaner::reset() {
 }
 
 unsigned int local_map_cleaner::remove_redundant_landmarks(const unsigned int cur_keyfrm_id) {
-    constexpr float found_per_visible_ratio_thr = 0.25;
+    constexpr float observed_ratio_thr = 0.3;
     constexpr unsigned int num_reliable_keyfrms = 2;
     const unsigned int num_obs_thr = is_monocular_ ? 2 : 3;
 
@@ -32,7 +32,7 @@ unsigned int local_map_cleaner::remove_redundant_landmarks(const unsigned int cu
             // remove `lm` from the buffer
             lm_state = lm_state_t::Valid;
         }
-        else if (lm->get_found_per_visible_ratio() < found_per_visible_ratio_thr) {
+        else if (lm->get_observed_ratio() < observed_ratio_thr) {
             // if `lm` is not reliable
             // remove `lm` from the buffer and the database
             lm_state = lm_state_t::Invalid;

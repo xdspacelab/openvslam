@@ -132,11 +132,9 @@ public:
 
     /**
      * Check observability of the landmark
-     * @param lm
-     * @param ray_cos_thr
-     * @return
      */
-    bool is_observable(landmark* lm, const float ray_cos_thr) const;
+    bool can_observe(landmark* lm, const float ray_cos_thr,
+                     Vec2_t& reproj, float& x_right, unsigned int& pred_scale_level) const;
 
     /**
      * Get keypoint indices in the cell which reference point is located

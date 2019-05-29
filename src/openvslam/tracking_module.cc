@@ -282,25 +282,18 @@ bool tracking_module::initialize() {
 }
 
 bool tracking_module::track_current_frame() {
-    bool succeeded;
+    bool succeeded = false;
     if (tracking_state_ == tracker_state_t::Tracking) {
         // Tracking mode
         if (velocity_is_valid_ && last_reloc_frm_id_ + 2 < curr_frm_.id_) {
             // if the motion model is valid
             succeeded = frame_tracker_.motion_based_track(curr_frm_, last_frm_, velocity_);
-            if (!succeeded) {
-                succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-                if (!succeeded) {
-                    succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-                }
-            }
         }
-        else {
-            // if the motion model is invalid
+        if (!succeeded) {
             succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-            if (!succeeded) {
-                succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-            }
+        }
+        if (!succeeded) {
+            succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
         }
     }
     else {
@@ -315,7 +308,7 @@ bool tracking_module::track_current_frame() {
 }
 
 bool tracking_module::localize_current_frame() {
-    bool succeeded;
+    bool succeeded = false;
     if (tracking_state_ == tracker_state_t::Lost) {
         // Lost mode
         // try to relocalize
@@ -329,19 +322,12 @@ bool tracking_module::localize_current_frame() {
         if (velocity_is_valid_) {
             // if the motion model is valid
             succeeded = frame_tracker_.motion_based_track(curr_frm_, last_frm_, velocity_);
-            if (!succeeded) {
-                succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-                if (!succeeded) {
-                    succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-                }
-            }
         }
-        else {
-            // if the motion model is invalid
+        if (!succeeded) {
             succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-            if (!succeeded) {
-                succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-            }
+        }
+        if (!succeeded) {
+            succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
         }
     }
     return succeeded;
@@ -404,7 +390,7 @@ bool tracking_module::optimize_current_frame_with_local_map() {
             // count up
             ++num_tracked_lms_;
             // increment the number of tracked frame
-            lm->increase_num_found();
+            lm->increase_num_observed();
         }
         else {
             // the observation has been considered as outlier in the pose optimization
@@ -469,7 +455,7 @@ void tracking_module::update_local_keyframes() {
     data::keyframe* nearest_covisibility = nullptr;
 
     local_keyfrms_.clear();
-    local_keyfrms_.reserve(3 * keyfrm_weights.size());
+    local_keyfrms_.reserve(4 * keyfrm_weights.size());
 
     for (auto& keyfrm_weight : keyfrm_weights) {
         auto keyfrm = keyfrm_weight.first;
@@ -574,7 +560,6 @@ void tracking_module::search_local_landmarks() {
             continue;
         }
         if (lm->will_be_erased()) {
-            lm = nullptr;
             continue;
         }
 
@@ -584,11 +569,14 @@ void tracking_module::search_local_landmarks() {
         lm->identifier_in_local_lm_search_ = curr_frm_.id_;
 
         // this landmark is observable from the current frame
-        lm->increase_num_visible();
+        lm->increase_num_observable();
     }
 
-    unsigned int num_lms_to_reproj = 0;
-
+    bool found_proj_candidate = false;
+    // temporary variables
+    Vec2_t reproj;
+    float x_right;
+    unsigned int pred_scale_level;
     for (auto lm : local_landmarks_) {
         // avoid the landmarks which cannot be reprojected (== observed in the current frame)
         if (lm->identifier_in_local_lm_search_ == curr_frm_.id_) {
@@ -599,14 +587,27 @@ void tracking_module::search_local_landmarks() {
         }
 
         // check the observability
-        if (curr_frm_.is_observable(lm, 0.5)) {
+        if (curr_frm_.can_observe(lm, 0.5, reproj, x_right, pred_scale_level)) {
+            // pass the temporary variables
+            lm->reproj_in_tracking_ = reproj;
+            lm->x_right_in_tracking_ = x_right;
+            lm->scale_level_in_tracking_ = pred_scale_level;
+
+            // this landmark can be reprojected
+            lm->is_observable_in_tracking_ = true;
+
             // this landmark is observable from the current frame
-            lm->increase_num_visible();
-            ++num_lms_to_reproj;
+            lm->increase_num_observable();
+
+            found_proj_candidate = true;
+        }
+        else {
+            // this landmark cannot be reprojected
+            lm->is_observable_in_tracking_ = false;
         }
     }
 
-    if (num_lms_to_reproj == 0) {
+    if (!found_proj_candidate) {
         return;
     }
 
@@ -623,7 +624,6 @@ bool tracking_module::new_keyframe_is_needed() const {
         return false;
     }
 
-    // relocalizeしてから1秒以上経過していなければキーフレームを追加しない
     // cannnot insert the new keyframe in a second after relocalization
     const auto num_keyfrms = map_db_->get_num_keyframes();
     if (cfg_->camera_->fps_ < num_keyfrms && curr_frm_.id_ < last_reloc_frm_id_ + cfg_->camera_->fps_) {

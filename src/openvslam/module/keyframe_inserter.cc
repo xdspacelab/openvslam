@@ -36,43 +36,22 @@ bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, cons
     const unsigned int min_obs_thr = (3 <= num_keyfrms) ? 3 : 2;
     const auto num_reliable_lms = ref_keyfrm.get_n_tracked_landmarks(min_obs_thr);
 
-    // valid depthの範囲内にある点のうち，3次元点と対応しているものを数える
-    unsigned int num_valid_depths = 0;
-    unsigned int num_tracked = 0;
-    if (setup_type_ != camera::setup_type_t::Monocular) {
-        for (unsigned int idx = 0; idx < curr_frm.num_keypts_; ++idx) {
-            if (curr_frm.depths_.at(idx) <= 0) {
-                continue;
-            }
-            if (true_depth_thr_ < curr_frm.depths_.at(idx)) {
-                continue;
-            }
-
-            ++num_valid_depths;
-            if (curr_frm.landmarks_.at(idx) && !curr_frm.outlier_flags_.at(idx)) {
-                ++num_tracked;
-            }
-        }
-    }
-    // 3次元点と対応しているものが100点以下 && 3次元点と対応していないものが70点以上
-    const bool nearer_view = (num_tracked <= 100) && (70 <= num_valid_depths - num_tracked);
-
     // mappingが処理中かどうか
     const bool mapper_is_idle = mapper_->get_keyframe_acceptability();
 
-    // 最新のキーフレームで観測している3次元点数に対するる，現在のフレームで観測している3次元点数の割合の閾値
+    // 最新のキーフレームで観測している3次元点数に対する，現在のフレームで観測している3次元点数の割合の閾値
     constexpr unsigned int num_tracked_lms_thr = 15;
-    const float lms_ratio_thr = (setup_type_ == camera::setup_type_t::Monocular) ? 0.9 : ((num_keyfrms < 2) ? 0.4 : 0.8);
+    const float lms_ratio_thr = 0.9;
 
     // 条件A1: 前回のキーフレーム挿入からmax_num_frames_以上経過していたらキーフレームを追加する
     const bool cond_a1 = frm_id_of_last_keyfrm_ + max_num_frms_ <= curr_frm.id_;
     // 条件A2: min_num_frames_以上経過していて,mapping moduleが待機状態であればキーフレームを追加する
     const bool cond_a2 = (frm_id_of_last_keyfrm_ + min_num_frms_ <= curr_frm.id_) && mapper_is_idle;
     // 条件A3: 前回のキーフレームから視点が移動してたらキーフレームを追加する
-    const bool cond_a3 = (setup_type_ != camera::setup_type_t::Monocular) && (num_tracked_lms < num_reliable_lms * 0.25 || nearer_view);
+    const bool cond_a3 = num_tracked_lms < num_reliable_lms * 0.25;
 
     // 条件B: (キーフレーム追加の必要条件)3次元点が閾値以上観測されていて，3次元点との割合が一定割合以下であればキーフレームを追加する
-    const bool cond_b = (num_tracked_lms_thr <= num_tracked_lms) && (num_tracked_lms < num_reliable_lms * lms_ratio_thr || nearer_view);
+    const bool cond_b = (num_tracked_lms_thr <= num_tracked_lms) && (num_tracked_lms < num_reliable_lms * lms_ratio_thr);
 
     // Bが満たされていなければ追加しない
     if (!cond_b) {
@@ -90,11 +69,10 @@ bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, cons
     }
 
     // mapping moduleが処理中だったら，local BAを止めてキーフレームを追加する
-    if (setup_type_ != camera::setup_type_t::Monocular) {
-        if (mapper_->get_num_queued_keyframes() < 3) {
-            mapper_->abort_local_BA();
-            return true;
-        }
+    if (setup_type_ != camera::setup_type_t::Monocular
+        && mapper_->get_num_queued_keyframes() <= 2) {
+        mapper_->abort_local_BA();
+        return true;
     }
 
     return false;
