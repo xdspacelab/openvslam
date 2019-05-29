@@ -28,6 +28,16 @@ Execute the following commands:
     docker build -t openvslam-desktop .
 
 
+.. NOTE ::
+
+    You can accelerate the build of the docker image with ``--build-arg NUM_THREADS=<number of parallel builds>`` option. For example:
+
+    .. code-block:: bash
+
+        # building the docker image with four threads
+        docker build -t --build-arg NUM_THREADS=4 openvslam-desktop .
+
+
 .. _section-start-docker-container:
 
 Starting Docker Container
