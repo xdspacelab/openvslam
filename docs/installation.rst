@@ -64,10 +64,10 @@ Please install the following dependencies if you plan on using the viewer.
 
 * `GLEW <http://glew.sourceforge.net/>`_ : Required by Pangolin.
 
-Required for Socket Publisher
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Requirements for Socket Publisher
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To be written soon.
+Please see `here <https://github.com/xdspacelab/openvslam-viewer>`__.
 
 Recommended
 ^^^^^^^^^^^
