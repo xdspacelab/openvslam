@@ -28,8 +28,6 @@ Please see the `*.cc` files in `./example` directory or check [Simple Tutorial](
 We provided [documentation](https://openvslam.readthedocs.io/) for installation and tutorial.
 Please contact us via [GitHub issues](https://github.com/xdspacelab/openvslam/issues) if you have any questions or notice any bugs about the software.
 
-References are presented [here](https://openvslam.readthedocs.io/en/master/overview.html#reference).
-
 ## Installation
 
 Please see [**Installation**](https://openvslam.readthedocs.io/en/master/installation.html) chapter in the [documentation](https://openvslam.readthedocs.io/).
