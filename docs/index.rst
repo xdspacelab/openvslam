@@ -32,9 +32,9 @@ If you use OpenVSLAM for a publication, please cite it as:
 
 .. code-block:: bibtex
 
-    @misc{sumikura2019openvslam,
+    @misc{openvslam2019,
       author={Shinya Sumikura and Mikiya Shibuya and Ken Sakurada},
-      title={OpenVSLAM},
+      title={OpenVSLAM: a Versatile Visual SLAM Framework},
       year={2019},
       howpublished={\url{https://github.com/xdspacelab/openvslam}},
     }
