@@ -81,6 +81,20 @@ Please use `g2o` as the dynamic link library because `csparse_extension` module 
 - Mikiya Shibuya ([@MikiyaShibuya](https://github.com/MikiyaShibuya))
 - Ken Sakurada ([@kensakurada](https://github.com/kensakurada))
 
+## Citation
+If OpenVSLAM helps your research, please cite the preprint paper for OpenVSLAM. Here is a BibTeX entry:
+
+```
+@misc{openvslam2019,
+  author={Shinya Sumikura and Mikiya Shibuya and Ken Sakurada},
+  title={OpenVSLAM: a Versatile Visual SLAM Framework},
+  year={2019},
+  howpublished={\url{https://github.com/xdspacelab/openvslam}},
+}
+```
+
+The preprint can be found [here](https://drive.google.com/open?id=1IJJbaiyYcmPPJ33C4HQS-k9KS3c6cqgo).
+
 ## Reference
 
 - Raúl Mur-Artal, J. M. M. Montiel, and Juan D. Tardós. 2015. ORB-SLAM: a Versatile and Accurate Monocular SLAM System. IEEE Transactions on Robotics 31, 5 (2015), 1147–1163.
