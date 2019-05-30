@@ -175,11 +175,6 @@ protected:
     bool track_current_frame();
 
     /**
-     * Localize the current frame
-     */
-    bool localize_current_frame();
-
-    /**
      * Update the motion model using the current and last frames
      */
     void update_motion_model();

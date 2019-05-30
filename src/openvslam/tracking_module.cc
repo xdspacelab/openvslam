@@ -200,15 +200,7 @@ void tracking_module::track() {
         // set the reference keyframe of the current frame
         curr_frm_.ref_keyfrm_ = ref_keyfrm_;
 
-        bool succeeded;
-        if (mapping_is_enabled_) {
-            // mapping mode
-            succeeded = track_current_frame();
-        }
-        else {
-            // localization mode
-            succeeded = localize_current_frame();
-        }
+        auto succeeded = track_current_frame();
 
         // update the local map and optimize the camera pose of the current frame
         if (succeeded) {
@@ -221,11 +213,11 @@ void tracking_module::track() {
             update_motion_model();
         }
 
-        // update the frame statistics
-        map_db_->update_frame_statistics(curr_frm_, !succeeded);
-
         // state transition
         tracking_state_ = succeeded ? tracker_state_t::Tracking : tracker_state_t::Lost;
+
+        // update the frame statistics
+        map_db_->update_frame_statistics(curr_frm_, tracking_state_ == tracker_state_t::Lost);
 
         // if tracking is failed soon after initialization, reset the databases
         if (tracking_state_ == tracker_state_t::Lost && curr_frm_.id_ < camera_->fps_) {
@@ -252,13 +244,14 @@ void tracking_module::track() {
         }
     }
 
-    // update last frame
-    last_frm_ = curr_frm_;
     // store the relative pose from the reference keyframe to the current frame
     // to update the camera pose at the beginning of the next tracking process
     if (curr_frm_.cam_pose_cw_is_valid_) {
         last_cam_pose_from_ref_keyfrm_ = curr_frm_.cam_pose_cw_ * curr_frm_.ref_keyfrm_->get_cam_pose_inv();
     }
+
+    // update last frame
+    last_frm_ = curr_frm_;
 }
 
 bool tracking_module::initialize() {
@@ -307,32 +300,6 @@ bool tracking_module::track_current_frame() {
     return succeeded;
 }
 
-bool tracking_module::localize_current_frame() {
-    bool succeeded = false;
-    if (tracking_state_ == tracker_state_t::Lost) {
-        // Lost mode
-        // try to relocalize
-        succeeded = relocalizer_.relocalize(curr_frm_);
-        if (succeeded) {
-            last_reloc_frm_id_ = curr_frm_.id_;
-        }
-    }
-    else {
-        // Tracking mode
-        if (velocity_is_valid_) {
-            // if the motion model is valid
-            succeeded = frame_tracker_.motion_based_track(curr_frm_, last_frm_, velocity_);
-        }
-        if (!succeeded) {
-            succeeded = frame_tracker_.bow_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-        }
-        if (!succeeded) {
-            succeeded = frame_tracker_.robust_match_based_track(curr_frm_, last_frm_, ref_keyfrm_);
-        }
-    }
-    return succeeded;
-}
-
 void tracking_module::update_motion_model() {
     if (last_frm_.cam_pose_cw_is_valid_) {
         Mat44_t last_frm_cam_pose_wc = Mat44_t::Identity();
@@ -370,11 +337,11 @@ void tracking_module::update_last_frame() {
 }
 
 bool tracking_module::optimize_current_frame_with_local_map() {
-    // acquire more 2D-3D matches by reprojection the local landmarks to the current frame
+    // acquire more 2D-3D matches by reprojecting the local landmarks to the current frame
     search_local_landmarks();
 
     // optimize the pose
-    pose_optimizer_.optimize(&curr_frm_);
+    pose_optimizer_.optimize(curr_frm_);
 
     // count up the number of tracked landmarks
     num_tracked_lms_ = 0;

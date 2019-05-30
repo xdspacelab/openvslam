@@ -40,7 +40,7 @@ bool frame_tracker::motion_based_track(data::frame& curr_frm, const data::frame&
     }
 
     // pose optimization
-    pose_optimizer_.optimize(&curr_frm);
+    pose_optimizer_.optimize(curr_frm);
 
     // outlierを除く
     const auto num_valid_matches = discard_outliers(curr_frm);
@@ -75,7 +75,7 @@ bool frame_tracker::bow_match_based_track(data::frame& curr_frm, const data::fra
     // pose optimization
     // 初期値は前のフレームの姿勢
     curr_frm.set_cam_pose(last_frm.cam_pose_cw_);
-    pose_optimizer_.optimize(&curr_frm);
+    pose_optimizer_.optimize(curr_frm);
 
     // outlierを除く
     const auto num_valid_matches = discard_outliers(curr_frm);
@@ -107,7 +107,7 @@ bool frame_tracker::robust_match_based_track(data::frame& curr_frm, const data::
     // pose optimization
     // 初期値は前のフレームの姿勢
     curr_frm.set_cam_pose(last_frm.cam_pose_cw_);
-    pose_optimizer_.optimize(&curr_frm);
+    pose_optimizer_.optimize(curr_frm);
 
     // outlierを除く
     const auto num_valid_matches = discard_outliers(curr_frm);

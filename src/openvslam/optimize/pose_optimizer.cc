@@ -22,7 +22,7 @@ namespace optimize {
 pose_optimizer::pose_optimizer(const unsigned int num_trials, const unsigned int num_each_iter)
         : num_trials_(num_trials), num_each_iter_(num_each_iter) {}
 
-unsigned int pose_optimizer::optimize(openvslam::data::frame* frm) const {
+unsigned int pose_optimizer::optimize(data::frame& frm) const {
     // 1. optimizerを構築
 
     auto linear_solver = ::g2o::make_unique<::g2o::LinearSolverEigen<::g2o::BlockSolver_6_3::PoseMatrixType>>();
@@ -37,12 +37,12 @@ unsigned int pose_optimizer::optimize(openvslam::data::frame* frm) const {
     // 2. frameをg2oのvertexに変換してoptimizerにセットする
 
     auto frm_vtx = new g2o::se3::shot_vertex();
-    frm_vtx->setId(frm->id_);
-    frm_vtx->setEstimate(util::converter::to_g2o_SE3(frm->cam_pose_cw_));
+    frm_vtx->setId(frm.id_);
+    frm_vtx->setEstimate(util::converter::to_g2o_SE3(frm.cam_pose_cw_));
     frm_vtx->setFixed(false);
     optimizer.addVertex(frm_vtx);
 
-    const unsigned int num_keypts = frm->num_keypts_;
+    const unsigned int num_keypts = frm.num_keypts_;
 
     // 3. landmarkのvertexをreprojection edgeで接続する
 
@@ -60,7 +60,7 @@ unsigned int pose_optimizer::optimize(openvslam::data::frame* frm) const {
     const float sqrt_chi_sq_3D = std::sqrt(chi_sq_3D);
 
     for (unsigned int idx = 0; idx < num_keypts; ++idx) {
-        auto lm = frm->landmarks_.at(idx);
+        auto lm = frm.landmarks_.at(idx);
         if (!lm) {
             continue;
         }
@@ -69,15 +69,15 @@ unsigned int pose_optimizer::optimize(openvslam::data::frame* frm) const {
         }
 
         ++num_init_obs;
-        frm->outlier_flags_.at(idx) = false;
+        frm.outlier_flags_.at(idx) = false;
 
         // frameのvertexをreprojection edgeで接続する
-        const auto& undist_keypt = frm->undist_keypts_.at(idx);
-        const float x_right = frm->stereo_x_right_.at(idx);
-        const float inv_sigma_sq = frm->inv_level_sigma_sq_.at(undist_keypt.octave);
-        const auto sqrt_chi_sq = (frm->camera_->setup_type_ == camera::setup_type_t::Monocular)
+        const auto& undist_keypt = frm.undist_keypts_.at(idx);
+        const float x_right = frm.stereo_x_right_.at(idx);
+        const float inv_sigma_sq = frm.inv_level_sigma_sq_.at(undist_keypt.octave);
+        const auto sqrt_chi_sq = (frm.camera_->setup_type_ == camera::setup_type_t::Monocular)
                                  ? sqrt_chi_sq_2D : sqrt_chi_sq_3D;
-        auto pose_opt_edge_wrap = pose_opt_edge_wrapper(frm, frm_vtx, lm->get_pos_in_world(),
+        auto pose_opt_edge_wrap = pose_opt_edge_wrapper(&frm, frm_vtx, lm->get_pos_in_world(),
                                                         idx, undist_keypt.pt.x, undist_keypt.pt.y, x_right,
                                                         inv_sigma_sq, sqrt_chi_sq);
         pose_opt_edge_wraps.push_back(pose_opt_edge_wrap);
@@ -92,8 +92,6 @@ unsigned int pose_optimizer::optimize(openvslam::data::frame* frm) const {
 
     unsigned int num_bad_obs = 0;
     for (unsigned int trial = 0; trial < num_trials_; ++trial) {
-        // frm_vtx->setEstimate(util::converter::to_g2o_SE3(frm->cam_pose_cw_));
-
         optimizer.initializeOptimization();
         optimizer.optimize(num_each_iter_);
 
@@ -102,29 +100,29 @@ unsigned int pose_optimizer::optimize(openvslam::data::frame* frm) const {
         for (auto& pose_opt_edge_wrap : pose_opt_edge_wraps) {
             auto edge = pose_opt_edge_wrap.edge_;
 
-            if (frm->outlier_flags_.at(pose_opt_edge_wrap.idx_)) {
+            if (frm.outlier_flags_.at(pose_opt_edge_wrap.idx_)) {
                 edge->computeError();
             }
 
             if (pose_opt_edge_wrap.is_monocular_) {
                 if (chi_sq_2D < edge->chi2()) {
-                    frm->outlier_flags_.at(pose_opt_edge_wrap.idx_) = true;
+                    frm.outlier_flags_.at(pose_opt_edge_wrap.idx_) = true;
                     pose_opt_edge_wrap.set_as_outlier();
                     ++num_bad_obs;
                 }
                 else {
-                    frm->outlier_flags_.at(pose_opt_edge_wrap.idx_) = false;
+                    frm.outlier_flags_.at(pose_opt_edge_wrap.idx_) = false;
                     pose_opt_edge_wrap.set_as_inlier();
                 }
             }
             else {
                 if (chi_sq_3D < edge->chi2()) {
-                    frm->outlier_flags_.at(pose_opt_edge_wrap.idx_) = true;
+                    frm.outlier_flags_.at(pose_opt_edge_wrap.idx_) = true;
                     pose_opt_edge_wrap.set_as_outlier();
                     ++num_bad_obs;
                 }
                 else {
-                    frm->outlier_flags_.at(pose_opt_edge_wrap.idx_) = false;
+                    frm.outlier_flags_.at(pose_opt_edge_wrap.idx_) = false;
                     pose_opt_edge_wrap.set_as_inlier();
                 }
             }
@@ -141,7 +139,7 @@ unsigned int pose_optimizer::optimize(openvslam::data::frame* frm) const {
 
     // 5. 情報を更新
 
-    frm->set_cam_pose(frm_vtx->estimate());
+    frm.set_cam_pose(frm_vtx->estimate());
 
     return num_init_obs - num_bad_obs;
 }

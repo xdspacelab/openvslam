@@ -98,7 +98,7 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
         }
 
         // pose optimization
-        auto num_valid_obs = pose_optimizer_.optimize(&curr_frm);
+        auto num_valid_obs = pose_optimizer_.optimize(curr_frm);
         // インライアが閾値未満だったら破棄
         if (num_valid_obs < min_num_bow_matches_ / 2) {
             continue;
@@ -124,7 +124,7 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
         // 4. もう一度pose optimizerを通す
 
         // projection matchをもとに，もう一度最適化する
-        num_valid_obs = pose_optimizer_.optimize(&curr_frm);
+        num_valid_obs = pose_optimizer_.optimize(curr_frm);
 
         // 閾値未満になったら，もう一度projection matchを行う
         if (num_valid_obs < min_num_valid_obs_) {
@@ -145,7 +145,7 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
             }
 
             // もう一度最適化
-            num_valid_obs = pose_optimizer_.optimize(&curr_frm);
+            num_valid_obs = pose_optimizer_.optimize(curr_frm);
 
             // 閾値未満だったら破棄
             if (num_valid_obs < min_num_valid_obs_) {

@@ -28,7 +28,7 @@ public:
      * @param frm
      * @return
      */
-    unsigned int optimize(data::frame* frm) const;
+    unsigned int optimize(data::frame& frm) const;
 
 private:
     //! robust optimizationの試行回数
