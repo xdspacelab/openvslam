@@ -40,6 +40,15 @@ void assign_keypoints_to_grid(camera::base* camera, const std::vector<cv::KeyPoi
                               std::vector<std::vector<std::vector<unsigned int>>>& keypt_indices_in_cells);
 
 /**
+ * Assign all keypoints to cells to accelerate projection matching
+ * @param camera
+ * @param undist_keypts
+ * @return
+ */
+auto assign_keypoints_to_grid(camera::base* camera, const std::vector<cv::KeyPoint>& undist_keypts)
+-> std::vector<std::vector<std::vector<unsigned int>>>;
+
+/**
  * Get x-y index of the cell in which the specified keypoint is assigned
  * @param camera
  * @param keypt

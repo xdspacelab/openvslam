@@ -13,7 +13,7 @@ class keyframe;
 
 class graph_node {
 public:
-    explicit graph_node(data::keyframe* keyfrm);
+    explicit graph_node(data::keyframe* keyfrm, const bool is_first_connection = true);
 
     ~graph_node() = default;
 
@@ -22,6 +22,9 @@ public:
 
     //! erase connection between this and specified keyframes
     void erase_connection(keyframe* keyfrm);
+
+    //! erase all connections
+    void erase_all_connections();
 
     //! 3次元点を参照しなおして，connectionとcovisibility graphの情報を作りなおす (新たにkeyframeが追加されるかも)
     void update_connections();
@@ -50,6 +53,9 @@ public:
     //! erase child node of spanning tree
     void erase_spanning_child(keyframe* keyfrm);
 
+    // recover spanning connections
+    void recover_spanning_connections();
+
     //! set parent node of spanning tree (only used for map loading)
     void set_spanning_parent(keyframe* keyfrm);
 
@@ -71,6 +77,9 @@ public:
     //! get loop edges
     std::set<keyframe*> get_loop_edges() const;
 
+    //! has loop edge
+    bool has_loop_edge() const;
+
 private:
     //! keyframe of this node
     data::keyframe* const owner_keyfrm_;
@@ -90,7 +99,7 @@ private:
 
     std::set<keyframe*> loop_edges_;
 
-    bool is_first_connection_ = true;
+    bool spanning_parent_is_not_set_;
 
     //! need mutex for access to connections
     mutable std::mutex mtx_;

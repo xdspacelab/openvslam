@@ -435,7 +435,7 @@ void tracking_module::update_local_keyframes() {
         local_keyfrms_.push_back(keyfrm);
 
         // avoid duplication
-        keyfrm->identifier_in_local_map_update_ = curr_frm_.id_;
+        keyfrm->local_map_update_identifier = curr_frm_.id_;
 
         // update the nearest keyframe
         if (max_weight < weight) {
@@ -453,10 +453,10 @@ void tracking_module::update_local_keyframes() {
             return false;
         }
         // avoid duplication
-        if (keyfrm->identifier_in_local_map_update_ == curr_frm_.id_) {
+        if (keyfrm->local_map_update_identifier == curr_frm_.id_) {
             return false;
         }
-        keyfrm->identifier_in_local_map_update_ = curr_frm_.id_;
+        keyfrm->local_map_update_identifier = curr_frm_.id_;
         local_keyfrms_.push_back(keyfrm);
         return true;
     };

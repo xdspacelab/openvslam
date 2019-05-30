@@ -5,6 +5,7 @@
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
+#include "openvslam/data/graph_node.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/data/bow_database.h"
 #include "openvslam/feature/orb_params.h"
@@ -16,21 +17,26 @@ namespace data {
 std::atomic<unsigned int> keyframe::next_id_{0};
 
 keyframe::keyframe(const frame& frm, map_database* map_db, bow_database* bow_db) :
+        // meta information
         id_(next_id_++), src_frm_id_(frm.id_), timestamp_(frm.timestamp_),
-        // camera
+        // camera parameters
         camera_(frm.camera_), depth_thr_(frm.depth_thr_),
-        // features
+        // constant observations
         num_keypts_(frm.num_keypts_), keypts_(frm.keypts_), undist_keypts_(frm.undist_keypts_), bearings_(frm.bearings_),
+        keypt_indices_in_cells_(frm.keypt_indices_in_cells_),
         stereo_x_right_(frm.stereo_x_right_), depths_(frm.depths_), descriptors_(frm.descriptors_.clone()),
         // BoW
         bow_vec_(frm.bow_vec_), bow_feat_vec_(frm.bow_feat_vec_),
+        // covisibility graph node (connections is not assigned yet)
+        graph_node_(std::unique_ptr<graph_node>(new graph_node(this, true))),
         // ORB scale pyramid
         num_scale_levels_(frm.num_scale_levels_), scale_factor_(frm.scale_factor_),
         log_scale_factor_(frm.log_scale_factor_), scale_factors_(frm.scale_factors_),
         level_sigma_sq_(frm.level_sigma_sq_), inv_level_sigma_sq_(frm.inv_level_sigma_sq_),
-        // others
-        landmarks_(frm.landmarks_), bow_vocab_(frm.bow_vocab_), bow_db_(bow_db),
-        keypt_indices_in_cells_(frm.keypt_indices_in_cells_), map_db_(map_db) {
+        // observations
+        landmarks_(frm.landmarks_),
+        // databases
+        map_db_(map_db), bow_db_(bow_db), bow_vocab_(frm.bow_vocab_) {
     set_cam_pose(frm.cam_pose_cw_);
 }
 
@@ -41,26 +47,29 @@ keyframe::keyframe(const unsigned int id, const unsigned int src_frm_id, const d
                    const std::vector<float>& stereo_x_right, const std::vector<float>& depths, const cv::Mat& descriptors,
                    const unsigned int num_scale_levels, const float scale_factor,
                    bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db) :
+        // meta information
         id_(id), src_frm_id_(src_frm_id), timestamp_(timestamp),
-        // camera
+        // camera parameters
         camera_(camera), depth_thr_(depth_thr),
-        // features
+        // constant observations
         num_keypts_(num_keypts), keypts_(keypts), undist_keypts_(undist_keypts), bearings_(bearings),
+        keypt_indices_in_cells_(assign_keypoints_to_grid(camera, undist_keypts)),
         stereo_x_right_(stereo_x_right), depths_(depths), descriptors_(descriptors.clone()),
+        // graph node (connections is not assigned yet)
+        graph_node_(std::unique_ptr<graph_node>(new graph_node(this, false))),
         // ORB scale pyramid
         num_scale_levels_(num_scale_levels), scale_factor_(scale_factor), log_scale_factor_(std::log(scale_factor)),
         scale_factors_(feature::orb_params::calc_scale_factors(num_scale_levels, scale_factor)),
         level_sigma_sq_(feature::orb_params::calc_level_sigma_sq(num_scale_levels, scale_factor)),
         inv_level_sigma_sq_(feature::orb_params::calc_inv_level_sigma_sq(num_scale_levels, scale_factor)),
         // others
-        landmarks_(std::vector<landmark*>(num_keypts, nullptr)), bow_vocab_(bow_vocab), bow_db_(bow_db),
-        is_first_connection_(false), map_db_(map_db) {
+        landmarks_(std::vector<landmark*>(num_keypts, nullptr)),
+        // databases
+        map_db_(map_db), bow_db_(bow_db), bow_vocab_(bow_vocab) {
     // compute BoW (bow_vec_, bow_feat_vec_) using descriptors_
     compute_bow();
     // set pose parameters (cam_pose_wc_, cam_center_) using cam_pose_cw_
     set_cam_pose(cam_pose_cw);
-    // compute cell indices of keypoints
-    assign_keypoints_to_grid(camera_, undist_keypts_, keypt_indices_in_cells_);
 
     // TODO: should set the pointers of landmarks_ using add_landmark()
 
@@ -127,215 +136,39 @@ void keyframe::compute_bow() {
 }
 
 void keyframe::add_connection(keyframe* keyfrm, const unsigned int weight) {
-    bool need_update = false;
-    {
-        std::lock_guard<std::mutex> lock(mtx_connections_);
-        if (!connected_keyfrms_and_weights_.count(keyfrm)) {
-            // なければ追加
-            connected_keyfrms_and_weights_[keyfrm] = weight;
-            need_update = true;
-        }
-        else if (connected_keyfrms_and_weights_.at(keyfrm) != weight) {
-            // weightが変わっていれば更新
-            connected_keyfrms_and_weights_.at(keyfrm) = weight;
-            need_update = true;
-        }
-    }
-
-    // 追加・更新が行われた場合のみグラフの更新が必要
-    if (need_update) {
-        update_covisibility_orders();
-    }
+    graph_node_->add_connection(keyfrm, weight);
 }
 
 void keyframe::erase_connection(keyframe* keyfrm) {
-    bool need_update = false;
-    {
-        std::lock_guard<std::mutex> lock(mtx_connections_);
-        if (connected_keyfrms_and_weights_.count(keyfrm)) {
-            connected_keyfrms_and_weights_.erase(keyfrm);
-            need_update = true;
-        }
-    }
-
-    // 削除が行われた場合のみグラフの更新が必要
-    if (need_update) {
-        update_covisibility_orders();
-    }
+    graph_node_->erase_connection(keyfrm);
 }
 
 void keyframe::update_connections() {
-    std::map<keyframe*, unsigned int> keyfrm_weights;
-
-    std::vector<landmark*> landmarks;
-    {
-        std::lock_guard<std::mutex> lock(mtx_observations_);
-        landmarks = landmarks_;
-    }
-
-    for (const auto lm : landmarks) {
-        if (!lm) {
-            continue;
-        }
-        if (lm->will_be_erased()) {
-            continue;
-        }
-
-        const auto observations = lm->get_observations();
-
-        for (const auto& obs : observations) {
-            // obs.first: keyframe
-            // obs.second: keypoint idx in obs.first
-            if (*obs.first == *this) {
-                continue;
-            }
-
-            // count up weight of obs.first
-            keyfrm_weights[obs.first]++;
-        }
-    }
-
-    if (keyfrm_weights.empty()) {
-        return;
-    }
-
-    // covisibility graphの閾値
-    constexpr unsigned int weight_thr = 15;
-
-    unsigned int max_weight = 0;
-    keyframe* nearest_covisibility = nullptr;
-
-    // ソートのためのvectorを作る
-    std::vector<std::pair<unsigned int, keyframe*>> weight_keyfrm_pairs;
-    weight_keyfrm_pairs.reserve(keyfrm_weights.size());
-    for (const auto& keyfrm_weight : keyfrm_weights) {
-        auto keyfrm = keyfrm_weight.first;
-        const auto weight = keyfrm_weight.second;
-
-        // nearest covisibilityの情報を更新
-        if (max_weight <= weight) {
-            max_weight = weight;
-            nearest_covisibility = keyfrm;
-        }
-
-        // covisibilityの情報を更新
-        if (weight_thr < weight) {
-            weight_keyfrm_pairs.emplace_back(std::make_pair(weight, keyfrm));
-            // 相手側からもグラフを張る
-            keyfrm->add_connection(this, weight);
-        }
-    }
-
-    // 最低一つはweight_keyfrm_pairsに入れておく
-    if (weight_keyfrm_pairs.empty()) {
-        weight_keyfrm_pairs.emplace_back(std::make_pair(max_weight, nearest_covisibility));
-        nearest_covisibility->add_connection(this, max_weight);
-    }
-
-    // weightの降順でソート
-    std::sort(weight_keyfrm_pairs.rbegin(), weight_keyfrm_pairs.rend());
-
-    // 結果を整形する
-    std::vector<keyframe*> ordered_connected_keyfrms;
-    ordered_connected_keyfrms.reserve(weight_keyfrm_pairs.size());
-    std::vector<unsigned int> ordered_weights;
-    ordered_weights.reserve(weight_keyfrm_pairs.size());
-    for (const auto& weight_keyfrm_pair : weight_keyfrm_pairs) {
-        ordered_connected_keyfrms.push_back(weight_keyfrm_pair.second);
-        ordered_weights.push_back(weight_keyfrm_pair.first);
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(mtx_connections_);
-
-        connected_keyfrms_and_weights_ = keyfrm_weights;
-        ordered_connected_keyfrms_ = ordered_connected_keyfrms;
-        ordered_weights_ = ordered_weights;
-
-        if (is_first_connection_ && id_ != 0) {
-            // nearest covisibilityをspanning treeのparentとする
-            assert(*nearest_covisibility == *ordered_connected_keyfrms.front());
-            spanning_parent_ = nearest_covisibility;
-            spanning_parent_->add_spanning_child(this);
-            is_first_connection_ = false;
-        }
-    }
+    graph_node_->update_connections();
 }
 
 void keyframe::update_covisibility_orders() {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
-
-    std::vector<std::pair<unsigned int, keyframe*>> weight_keyfrm_pairs;
-    weight_keyfrm_pairs.reserve(connected_keyfrms_and_weights_.size());
-
-    for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
-        weight_keyfrm_pairs.emplace_back(std::make_pair(keyfrm_and_weight.second, keyfrm_and_weight.first));
-    }
-
-    // weightで降順ソート
-    std::sort(weight_keyfrm_pairs.rbegin(), weight_keyfrm_pairs.rend());
-
-    ordered_connected_keyfrms_.clear();
-    ordered_connected_keyfrms_.reserve(weight_keyfrm_pairs.size());
-    ordered_weights_.clear();
-    ordered_weights_.reserve(weight_keyfrm_pairs.size());
-    for (const auto& weight_keyfrm_pair : weight_keyfrm_pairs) {
-        ordered_connected_keyfrms_.push_back(weight_keyfrm_pair.second);
-        ordered_weights_.push_back(weight_keyfrm_pair.first);
-    }
+    graph_node_->update_covisibility_orders();
 }
 
 std::set<keyframe*> keyframe::get_connected_keyframes() const {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
-    std::set<keyframe*> keyfrms;
-
-    for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
-        keyfrms.insert(keyfrm_and_weight.first);
-    }
-
-    return keyfrms;
+    return graph_node_->get_connected_keyframes();
 }
 
 std::vector<keyframe*> keyframe::get_covisibilities() const {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
-    return ordered_connected_keyfrms_;
+    return graph_node_->get_covisibilities();
 }
 
 std::vector<keyframe*> keyframe::get_top_n_covisibilities(const unsigned int num_covisibilities) const {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
-    if (ordered_connected_keyfrms_.size() < num_covisibilities) {
-        return ordered_connected_keyfrms_;
-    }
-    else {
-        return std::vector<keyframe*>(ordered_connected_keyfrms_.begin(), ordered_connected_keyfrms_.begin() + num_covisibilities);
-    }
+    return graph_node_->get_top_n_covisibilities(num_covisibilities);
 }
 
 std::vector<keyframe*> keyframe::get_covisibilities_over_weight(const unsigned int weight) const {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
-
-    if (ordered_connected_keyfrms_.empty()) {
-        return std::vector<keyframe*>();
-    }
-
-    auto itr = std::upper_bound(ordered_weights_.begin(), ordered_weights_.end(), weight, std::greater<unsigned int>());
-    if (itr == ordered_weights_.end()) {
-        return std::vector<keyframe*>();
-    }
-    else {
-        const auto num = static_cast<unsigned int>(itr - ordered_weights_.begin());
-        return std::vector<keyframe*>(ordered_connected_keyfrms_.begin(), ordered_connected_keyfrms_.begin() + num);
-    }
+    return graph_node_->get_covisibilities_over_weight(weight);
 }
 
 unsigned int keyframe::get_weight(keyframe* keyfrm) const {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
-    if (connected_keyfrms_and_weights_.count(keyfrm)) {
-        return connected_keyfrms_and_weights_.at(keyfrm);
-    }
-    else {
-        return 0;
-    }
+    return graph_node_->get_weight(keyfrm);
 }
 
 void keyframe::add_landmark(landmark* lm, const unsigned int idx) {
@@ -422,93 +255,63 @@ landmark* keyframe::get_landmark(const unsigned int idx) const {
 }
 
 void keyframe::add_spanning_child(keyframe* keyfrm) {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    spanning_children_.insert(keyfrm);
+    graph_node_->add_spanning_child(keyfrm);
 }
 
 void keyframe::erase_spanning_child(keyframe* keyfrm) {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    spanning_children_.erase(keyfrm);
+    graph_node_->erase_spanning_child(keyfrm);
 }
 
 void keyframe::set_spanning_parent(keyframe* keyfrm) {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    assert(!spanning_parent_);
-    spanning_parent_ = keyfrm;
+    graph_node_->set_spanning_parent(keyfrm);
 }
 
 void keyframe::change_spanning_parent(keyframe* keyfrm) {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    spanning_parent_ = keyfrm;
-    keyfrm->add_spanning_child(this);
+    graph_node_->change_spanning_parent(keyfrm);
 }
 
 std::set<keyframe*> keyframe::get_spanning_children() const {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    return spanning_children_;
+    return graph_node_->get_spanning_children();
 }
 
 keyframe* keyframe::get_spanning_parent() const {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    return spanning_parent_;
+    return graph_node_->get_spanning_parent();
 }
 
 bool keyframe::has_spanning_child(keyframe* keyfrm) const {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    return static_cast<bool>(spanning_children_.count(keyfrm));
+    return graph_node_->has_spanning_child(keyfrm);
 }
 
 void keyframe::add_loop_edge(keyframe* keyfrm) {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    // loop edgeになった場合は削除できないようにしておく
-    cannot_be_erased_ = true;
-    loop_edges_.insert(keyfrm);
+    graph_node_->add_loop_edge(keyfrm);
 }
 
 std::set<keyframe*> keyframe::get_loop_edges() const {
-    std::lock_guard<std::mutex> lockCon(mtx_connections_);
-    return loop_edges_;
+    return graph_node_->get_loop_edges();
 }
 
 void keyframe::set_not_to_be_erased() {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
-    // 削除できないようにする
     cannot_be_erased_ = true;
 }
 
 void keyframe::set_to_be_erased() {
-    {
-        std::lock_guard<std::mutex> lock(mtx_connections_);
-        if (loop_edges_.empty()) {
-            cannot_be_erased_ = false;
-        }
-    }
-
-    if (prepare_for_erasing_) {
-        prepare_for_erasing();
+    if (!graph_node_->has_loop_edge()) {
+        cannot_be_erased_ = false;
     }
 }
 
 void keyframe::prepare_for_erasing() {
-    {
-        std::lock_guard<std::mutex> lock(mtx_connections_);
-        if (id_ == 0) {
-            // 原点は削除できない
-            return;
-        }
-        else if (cannot_be_erased_) {
-            // 削除できないフラグが立っているときは削除しない
-            prepare_for_erasing_ = true;
-            return;
-        }
+    // 原点は削除できない
+    if (*this == *(map_db_->origin_keyfrm_)) {
+        return;
     }
 
-    // graphのconnectionを削除する
-    for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
-        keyfrm_and_weight.first->erase_connection(this);
-    }
+    // 1. 削除フラグを立てる
 
-    // landmarkとのassociationを削除する
+    will_be_erased_ = true;
+
+    // 2. landmarkとのassociationを削除する
+
     for (const auto lm : landmarks_) {
         if (!lm) {
             continue;
@@ -516,99 +319,24 @@ void keyframe::prepare_for_erasing() {
         lm->erase_observation(this);
     }
 
-    {
-        std::lock_guard<std::mutex> lock1(mtx_connections_);
-        std::lock_guard<std::mutex> lock2(mtx_observations_);
+    // 3. graphを修正
 
-        // connection情報をクリア
-        connected_keyfrms_and_weights_.clear();
-        ordered_connected_keyfrms_.clear();
-        ordered_weights_.clear();
+    // covisibility情報を削除
+    graph_node_->erase_all_connections();
+    // spanning treeを修正
+    graph_node_->recover_spanning_connections();
 
-        // 1. 自身のchildrenについて整合性を合わせる処理
+    // 3. frame statisticsを更新
 
-        // このkeyframeを削除する場合，
-        // このkeyframeをparentとしている他のkeyframeに新たなparentを割り当てる必要がある
-        // その候補を探す
-        std::set<keyframe*> parent_candidates;
-        parent_candidates.insert(spanning_parent_);
+    map_db_->replace_reference_keyframe(this, graph_node_->get_spanning_parent());
 
-        while (!spanning_children_.empty()) {
-            bool max_is_found = false;
-
-            unsigned int max_weight = 0;
-            keyframe* max_weight_child = nullptr;
-            keyframe* max_weight_parent = nullptr;
-
-            for (const auto spanning_child : spanning_children_) {
-                // 自分の各childについて調べる
-                if (spanning_child->will_be_erased()) {
-                    continue;
-                }
-
-                // childのconnectionを持ってくる
-                auto connections_from_child = spanning_child->get_covisibilities();
-
-                // childとconnectionがあるkeyframes(connection_from_child)と，
-                // parentの候補になるkeyframes(parent_candidates)の中で
-                //　一致しているものについて， 一番weightが大きいペアを探す
-                for (const auto connection_from_child : connections_from_child) {
-                    for (const auto& parent_candidate : parent_candidates) {
-                        // 一致しているかチェック
-                        if (connection_from_child->id_ == parent_candidate->id_) {
-                            const auto weight = spanning_child->get_weight(connection_from_child);
-                            // maxを比較
-                            if (max_weight < weight) {
-                                // 更新
-                                max_weight = weight;
-                                max_weight_child = spanning_child;
-                                max_weight_parent = connection_from_child;
-                                max_is_found = true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (max_is_found) {
-                // ペアが見つかったらspanning treeを更新
-                max_weight_child->change_spanning_parent(max_weight_parent);
-                parent_candidates.insert(max_weight_child);
-                spanning_children_.erase(max_weight_child);
-            }
-            else {
-                // 見つからなかった場合はこれ以上更新できないのでbreak
-                break;
-            }
-        }
-
-        // まだspanning_children_が残っていたら，自身のparentを新たなparentとして割り当てる
-        if (!spanning_children_.empty()) {
-            for (const auto spanning_child : spanning_children_) {
-                spanning_child->change_spanning_parent(spanning_parent_);
-            }
-        }
-
-        // 2. 自身のparentについて整合性を合わせる処理
-
-        // 削除するだけでOK
-        spanning_parent_->erase_spanning_child(this);
-
-        // 3. frame statisticsを更新
-
-        map_db_->replace_reference_keyframe(this, spanning_parent_);
-
-        // 4. 削除フラグを立てる
-
-        will_be_erased_ = true;
-    }
+    // 4. データベースから削除
 
     map_db_->erase_keyframe(this);
     bow_db_->erase_keyframe(this);
 }
 
 bool keyframe::will_be_erased() {
-    std::lock_guard<std::mutex> lock(mtx_connections_);
     return will_be_erased_;
 }
 
@@ -704,16 +432,21 @@ nlohmann::json keyframe::to_json() const {
         }
     }
 
+    //spanning tree parentを取り出す
+    auto spanning_parent = graph_node_->get_spanning_parent();
+
     // spanning tree childrenを取り出す
+    const auto spanning_children = graph_node_->get_spanning_children();
     std::vector<int> spanning_child_ids;
-    spanning_child_ids.reserve(spanning_children_.size());
-    for (const auto spanning_child : spanning_children_) {
+    spanning_child_ids.reserve(spanning_children.size());
+    for (const auto spanning_child : spanning_children) {
         spanning_child_ids.push_back(spanning_child->id_);
     }
 
     // loop edgesを取り出す
+    const auto loop_edges = graph_node_->get_loop_edges();
     std::vector<int> loop_edge_ids;
-    for (const auto loop_edge : loop_edges_) {
+    for (const auto loop_edge : loop_edges) {
         loop_edge_ids.push_back(loop_edge->id_);
     }
 
@@ -736,7 +469,7 @@ nlohmann::json keyframe::to_json() const {
             {"n_scale_levels", num_scale_levels_},
             {"scale_factor", scale_factor_},
             // グラフ情報
-            {"span_parent", spanning_parent_ ? spanning_parent_->id_ : -1},
+            {"span_parent", spanning_parent ? spanning_parent->id_ : -1},
             {"span_children", spanning_child_ids},
             {"loop_edges", loop_edge_ids}};
 }

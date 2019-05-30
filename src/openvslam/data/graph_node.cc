@@ -5,7 +5,8 @@
 namespace openvslam {
 namespace data {
 
-graph_node::graph_node(data::keyframe* keyfrm) : owner_keyfrm_(keyfrm) {}
+graph_node::graph_node(data::keyframe* keyfrm, const bool is_first_connection)
+        : owner_keyfrm_(keyfrm), spanning_parent_is_not_set_(is_first_connection) {}
 
 void graph_node::add_connection(keyframe* keyfrm, const unsigned int weight) {
     bool need_update = false;
@@ -42,6 +43,13 @@ void graph_node::erase_connection(keyframe* keyfrm) {
     // 削除が行われた場合のみグラフの更新が必要
     if (need_update) {
         update_covisibility_orders();
+    }
+}
+
+void graph_node::erase_all_connections() {
+    // graphのconnectionを削除する
+    for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
+        keyfrm_and_weight.first->erase_connection(owner_keyfrm_);
     }
 }
 
@@ -125,12 +133,12 @@ void graph_node::update_connections() {
         ordered_covisibilities_ = ordered_connected_keyfrms;
         ordered_weights_ = ordered_weights;
 
-        if (is_first_connection_ && owner_keyfrm_->id_ != 0) {
+        if (spanning_parent_is_not_set_ && owner_keyfrm_->id_ != 0) {
             // nearest covisibilityをspanning treeのparentとする
             assert(*nearest_covisibility == *ordered_connected_keyfrms.front());
             spanning_parent_ = nearest_covisibility;
             spanning_parent_->add_spanning_child(owner_keyfrm_);
-            is_first_connection_ = false;
+            spanning_parent_is_not_set_ = false;
         }
     }
 }
@@ -221,6 +229,84 @@ void graph_node::erase_spanning_child(keyframe* keyfrm) {
     spanning_children_.erase(keyfrm);
 }
 
+void graph_node::recover_spanning_connections() {
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    // connection情報をクリア
+    connected_keyfrms_and_weights_.clear();
+    ordered_covisibilities_.clear();
+    ordered_weights_.clear();
+
+    // 1. 自身のchildrenについて整合性を合わせる処理
+
+    // このnodeを削除する場合，
+    // このnodeをparentとしている他のnodeに新たなparentを割り当てる必要がある
+    // その候補を探す
+    std::set<keyframe*> parent_candidates;
+    parent_candidates.insert(spanning_parent_);
+
+    while (!spanning_children_.empty()) {
+        bool max_is_found = false;
+
+        unsigned int max_weight = 0;
+        keyframe* max_weight_child = nullptr;
+        keyframe* max_weight_parent = nullptr;
+
+        for (const auto spanning_child : spanning_children_) {
+            // 自分の各childについて調べる
+            if (spanning_child->will_be_erased()) {
+                continue;
+            }
+
+            // childのconnectionを持ってくる
+            auto connections_from_child = spanning_child->get_covisibilities();
+
+            // childとconnectionがあるkeyframes(connection_from_child)と，
+            // parentの候補になるkeyframes(parent_candidates)の中で
+            //　一致しているものについて， 一番weightが大きいペアを探す
+            for (const auto connection_from_child : connections_from_child) {
+                for (const auto& parent_candidate : parent_candidates) {
+                    // 一致しているかチェック
+                    if (connection_from_child->id_ == parent_candidate->id_) {
+                        const auto weight = spanning_child->get_weight(connection_from_child);
+                        // maxを比較
+                        if (max_weight < weight) {
+                            // 更新
+                            max_weight = weight;
+                            max_weight_child = spanning_child;
+                            max_weight_parent = connection_from_child;
+                            max_is_found = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (max_is_found) {
+            // ペアが見つかったらspanning treeを更新
+            max_weight_child->change_spanning_parent(max_weight_parent);
+            parent_candidates.insert(max_weight_child);
+            spanning_children_.erase(max_weight_child);
+        }
+        else {
+            // 見つからなかった場合はこれ以上更新できないのでbreak
+            break;
+        }
+    }
+
+    // まだspanning_children_が残っていたら，自身のparentを新たなparentとして割り当てる
+    if (!spanning_children_.empty()) {
+        for (const auto spanning_child : spanning_children_) {
+            spanning_child->change_spanning_parent(spanning_parent_);
+        }
+    }
+
+    // 2. 自身のparentについて整合性を合わせる処理
+
+    // 削除するだけでOK
+    spanning_parent_->erase_spanning_child(owner_keyfrm_);
+}
+
 void graph_node::set_spanning_parent(keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_);
     assert(!spanning_parent_);
@@ -250,7 +336,6 @@ bool graph_node::has_spanning_child(keyframe* keyfrm) const {
 
 void graph_node::add_loop_edge(keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_);
-    // loop edgeになった場合は削除できないようにしておく
     owner_keyfrm_->set_not_to_be_erased();
     loop_edges_.insert(keyfrm);
 }
@@ -258,6 +343,11 @@ void graph_node::add_loop_edge(keyframe* keyfrm) {
 std::set<keyframe*> graph_node::get_loop_edges() const {
     std::lock_guard<std::mutex> lock(mtx_);
     return loop_edges_;
+}
+
+bool graph_node::has_loop_edge() const {
+    std::lock_guard<std::mutex> lock(mtx_);
+    return !loop_edges_.empty();
 }
 
 } // namespace data

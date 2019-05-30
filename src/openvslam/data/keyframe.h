@@ -3,6 +3,7 @@
 
 #include "openvslam/type.h"
 #include "openvslam/camera/base.h"
+#include "openvslam/data/graph_node.h"
 #include "openvslam/data/bow_vocabulary.h"
 
 #include <set>
@@ -21,10 +22,9 @@
 
 namespace openvslam {
 
-// camera
 namespace camera {
 class base;
-}
+} // namespace camera
 
 namespace data {
 
@@ -37,10 +37,15 @@ class keyframe {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    //! constructor with frame
+    /**
+     * Constructor for building from a frame
+     */
     keyframe(const frame& frm, map_database* map_db, bow_database* bow_db);
 
-    //! constructor for map loading with computing parameters which can be recomputed
+    /**
+     * Constructor for map loading
+     * (NOTE: some variables must be recomputed after the construction. See the definition.)
+     */
     keyframe(const unsigned int id, const unsigned int src_frm_id, const double timestamp,
              const Mat44_t& cam_pose_cw, camera::base* camera, const float depth_thr,
              const unsigned int num_keypts, const std::vector<cv::KeyPoint>& keypts,
@@ -49,7 +54,6 @@ public:
              const unsigned int num_scale_levels, const float scale_factor,
              bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db);
 
-    //! operator overrides
     inline bool operator==(const keyframe& keyfrm) const { return id_ == keyfrm.id_; }
     inline bool operator!=(const keyframe& keyfrm) const { return !(*this == keyfrm); }
     inline bool operator<(const keyframe& keyfrm) const { return id_ < keyfrm.id_; }
@@ -57,7 +61,6 @@ public:
     inline bool operator>(const keyframe& keyfrm) const { return id_ > keyfrm.id_; }
     inline bool operator>=(const keyframe& keyfrm) const { return id_ >= keyfrm.id_; }
 
-    // pose functions with mutual exclusion
     void set_cam_pose(const Mat44_t& cam_pose_cw);
     void set_cam_pose(const g2o::SE3Quat& cam_pose_cw);
     Mat44_t get_cam_pose() const;
@@ -66,7 +69,9 @@ public:
     Mat33_t get_rotation() const;
     Vec3_t get_translation() const;
 
-    //! compute BoW representation
+    /**
+     * Compute BoW representation
+     */
     void compute_bow();
 
     // covisibility graphを扱う関数
@@ -152,26 +157,46 @@ public:
     //! encode keyframe information as JSON
     nlohmann::json to_json() const;
 
-public:
+    //-----------------------------------------
+    // for local map update
+
+    //! identifier for local map update
+    unsigned int local_map_update_identifier = 0;
+
+    //-----------------------------------------
+    // for loop BA
+
+    //! identifier for loop BA
+    unsigned int loop_BA_identifier_ = 0;
+    //! camera pose AFTER loop BA
+    Mat44_t cam_pose_cw_after_loop_BA_;
+    //! camera pose BEFORE loop BA
+    Mat44_t cam_pose_cw_before_BA_;
+
+    //-----------------------------------------
+    // meta information
+
+    //! keyframe ID
     unsigned int id_;
+    //! next keyframe ID
     static std::atomic<unsigned int> next_id_;
 
+    //! source frame ID
     const unsigned int src_frm_id_;
 
+    //! timestamp in seconds
     const double timestamp_;
 
-    // local mapの更新の際に重複を避けるために用いられる変数
-    unsigned int identifier_in_local_map_update_ = 0;
-
-    // loop BAの際に姿勢伝播を行うために用いられる関数
-    Mat44_t cam_pose_cw_after_loop_BA_;
-    Mat44_t cam_pose_cw_before_BA_;
-    unsigned int loop_BA_identifier_ = 0;
+    //-----------------------------------------
+    // camera parameters
 
     //! camera model
     camera::base* camera_;
     //! depth threshold
     const float depth_thr_;
+
+    //-----------------------------------------
+    // constant observations
 
     //! number of keypoints
     const unsigned int num_keypts_;
@@ -182,6 +207,9 @@ public:
     const std::vector<cv::KeyPoint> undist_keypts_;
     //! bearing vectors
     const eigen_alloc_vector<Vec3_t> bearings_;
+
+    //! keypoint indices in each of the cells
+    std::vector<std::vector<std::vector<unsigned int>>> keypt_indices_in_cells_;
 
     //! disparities
     const std::vector<float> stereo_x_right_;
@@ -200,7 +228,15 @@ public:
     fbow::BoWFeatVector bow_feat_vec_;
 #endif
 
+    //-----------------------------------------
+    // covisibility graph
+
+    //! graph node
+    std::unique_ptr<graph_node> graph_node_ = nullptr;
+
+    //-----------------------------------------
     // ORB scale pyramid information
+
     //! number of scale levels
     const unsigned int num_scale_levels_;
     //! scale factor
@@ -216,48 +252,44 @@ public:
 
 private:
     //-----------------------------------------
+    // camera pose
+
     //! need mutex for access to poses
     mutable std::mutex mtx_pose_;
-
+    //! camera pose from the world to the current
     Mat44_t cam_pose_cw_;
+    //! camera pose from the current to the world
     Mat44_t cam_pose_wc_;
+    //! camera center
     Vec3_t cam_center_;
 
     //-----------------------------------------
+    // observations
+
     //! need mutex for access to observations
     mutable std::mutex mtx_observations_;
 
+    //! observed landmarks
     std::vector<landmark*> landmarks_;
 
-    bow_vocabulary* bow_vocab_;
-    bow_database* bow_db_;
-
-    std::vector<std::vector<std::vector<unsigned int>>> keypt_indices_in_cells_;
-
     //-----------------------------------------
-    //! need mutex for access to connections
-    mutable std::mutex mtx_connections_;
+    // databases
 
-    //! すべての隣接するkeyframeとその間のweightを保存したもの (最小閾値無し)
-    std::map<keyframe*, unsigned int> connected_keyfrms_and_weights_;
-    //! 最小閾値を超えたcovisibilityをweight順に並び替えたもの
-    std::vector<keyframe*> ordered_connected_keyfrms_;
-    //!　ordered_connected_keyfrms_に対応するweights
-    std::vector<unsigned int> ordered_weights_;
-
-    bool is_first_connection_ = true;
-    keyframe* spanning_parent_ = nullptr;
-    std::set<keyframe*> spanning_children_;
-    std::set<keyframe*> loop_edges_;
-
-    bool cannot_be_erased_ = false;
-    bool prepare_for_erasing_ = false;
-
-    bool will_be_erased_ = false;
-
-    //-----------------------------------------
     //! map database
     map_database* map_db_;
+    //! BoW database
+    bow_database* bow_db_;
+    //! BoW vocabulary
+    bow_vocabulary* bow_vocab_;
+
+    //-----------------------------------------
+    // flags
+
+    //! flag which indicates this keyframe is erasable or not
+    std::atomic<bool> cannot_be_erased_{false};
+
+    //! flag which indicates this keyframe will be erased
+    std::atomic<bool> will_be_erased_{false};
 };
 
 } // namespace data
