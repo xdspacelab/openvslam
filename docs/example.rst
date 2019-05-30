@@ -224,12 +224,12 @@ If you have built examples with Pangolin Viewer support, a map viewer and frame 
     run_euroc_slam
     ...
     # monocular SLAM with any EuRoC sequence
-    $ ./run_kitti_slam \
+    $ ./run_euroc_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -d /path/to/EuRoC/MAV/mav0/ \
         -s ../example/euroc/EuRoC_mono.yaml
     # stereo SLAM with any EuRoC sequence
-    $ ./run_kitti_slam \
+    $ ./run_euroc_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -d /path/to/EuRoC/MAV/mav0/ \
         -s ../example/euroc/EuRoC_stereo.yaml
