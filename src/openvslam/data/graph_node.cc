@@ -259,30 +259,26 @@ void graph_node::recover_spanning_connections() {
         bool max_is_found = false;
 
         unsigned int max_weight = 0;
-        keyframe* max_weight_child = nullptr;
         keyframe* max_weight_parent = nullptr;
+        keyframe* max_weight_child = nullptr;
 
         for (const auto spanning_child : spanning_children_) {
             if (spanning_child->will_be_erased()) {
                 continue;
             }
 
-            auto child_covisibilities = spanning_child->get_covisibilities();
+            // get intersection between the parent candidates and the spanning-child's covisibilities
+            const auto child_covisibilities = spanning_child->get_covisibilities();
+            const auto intersection = extract_intersection(new_parent_candidates, child_covisibilities);
 
-            for (const auto child_covisibility : child_covisibilities) {
-                for (const auto& parent_candidate : new_parent_candidates) {
-                    if (child_covisibility->id_ != parent_candidate->id_) {
-                        continue;
-                    }
-                    const auto weight = spanning_child->get_weight(child_covisibility);
-
-                    // find the parent-child pair with maximum weight
-                    if (max_weight < weight) {
-                        max_weight = weight;
-                        max_weight_child = spanning_child;
-                        max_weight_parent = parent_candidate;
-                        max_is_found = true;
-                    }
+            // find the new parent (which has the maximum weight with the spanning child) from the intersection
+            for (const auto parent_candidate : intersection) {
+                const auto weight = spanning_child->get_weight(parent_candidate);
+                if (max_weight < weight) {
+                    max_weight = weight;
+                    max_weight_parent = parent_candidate;
+                    max_weight_child = spanning_child;
+                    max_is_found = true;
                 }
             }
         }
@@ -290,8 +286,8 @@ void graph_node::recover_spanning_connections() {
         if (max_is_found) {
             // update spanning tree
             max_weight_child->change_spanning_parent(max_weight_parent);
-            new_parent_candidates.insert(max_weight_child);
             spanning_children_.erase(max_weight_child);
+            new_parent_candidates.insert(max_weight_child);
         }
         else {
             // cannot update anymore
@@ -299,6 +295,7 @@ void graph_node::recover_spanning_connections() {
         }
     }
 
+    // if it should be fixed
     if (!spanning_children_.empty()) {
         // set my parent as the new parent
         for (const auto spanning_child : spanning_children_) {
@@ -337,6 +334,20 @@ std::set<keyframe*> graph_node::get_loop_edges() const {
 bool graph_node::has_loop_edge() const {
     std::lock_guard<std::mutex> lock(mtx_);
     return !loop_edges_.empty();
+}
+
+template <typename T, typename U>
+std::vector<keyframe*> graph_node::extract_intersection(const T& keyfrms_1, const U& keyfrms_2) {
+    std::vector<keyframe*> intersection;
+    intersection.reserve(std::min(keyfrms_1.size(), keyfrms_2.size()));
+    for (const auto keyfrm_1 : keyfrms_1) {
+        for (const auto keyfrm_2 : keyfrms_2) {
+            if (*keyfrm_1 == *keyfrm_2) {
+                intersection.push_back(keyfrm_1);
+            }
+        }
+    }
+    return intersection;
 }
 
 } // namespace data
