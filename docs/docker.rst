@@ -37,7 +37,7 @@ Execute the following commands:
     .. code-block:: bash
 
         # building the docker image with four threads
-        docker build -t --build-arg NUM_THREADS=4 openvslam-desktop .
+        docker build -t  openvslam-desktop . --build-arg NUM_THREADS=4
 
 
 .. _section-start-docker-container:
