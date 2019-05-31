@@ -190,7 +190,7 @@ Jump to :ref:`Common Installation Instructions <subsection-common-linux-macos>` 
 Common Installation Instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Download, build and install **custom DBoW2** from source.
+Download, build and install **the custom DBoW2** from source.
 
 .. code-block:: bash
 
