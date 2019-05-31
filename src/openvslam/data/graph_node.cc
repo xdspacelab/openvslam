@@ -88,8 +88,8 @@ void graph_node::update_connections() {
     keyframe* nearest_covisibility = nullptr;
 
     // vector for sorting
-    std::vector<std::pair<unsigned int, keyframe*>> weight_keyfrm_pairs;
-    weight_keyfrm_pairs.reserve(keyfrm_weights.size());
+    std::vector<std::pair<unsigned int, keyframe*>> weight_covisibility_pairs;
+    weight_covisibility_pairs.reserve(keyfrm_weights.size());
     for (const auto& keyfrm_weight : keyfrm_weights) {
         auto keyfrm = keyfrm_weight.first;
         const auto weight = keyfrm_weight.second;
@@ -100,30 +100,30 @@ void graph_node::update_connections() {
         }
 
         if (weight_thr_ < weight) {
-            weight_keyfrm_pairs.emplace_back(std::make_pair(weight, keyfrm));
+            weight_covisibility_pairs.emplace_back(std::make_pair(weight, keyfrm));
         }
     }
     // add ONE node at least
-    if (weight_keyfrm_pairs.empty()) {
-        weight_keyfrm_pairs.emplace_back(std::make_pair(max_weight, nearest_covisibility));
+    if (weight_covisibility_pairs.empty()) {
+        weight_covisibility_pairs.emplace_back(std::make_pair(max_weight, nearest_covisibility));
     }
 
     // add connection from the covisibility to myself
-    for (const auto& weight_keyfrm : weight_keyfrm_pairs) {
-        auto keyfrm = weight_keyfrm.second;
-        const auto weight = weight_keyfrm.first;
-        keyfrm->add_connection(owner_keyfrm_, weight);
+    for (const auto& weight_covisibility : weight_covisibility_pairs) {
+        auto covisibility = weight_covisibility.second;
+        const auto weight = weight_covisibility.first;
+        covisibility->add_connection(owner_keyfrm_, weight);
     }
 
     // sort with weights
-    std::sort(weight_keyfrm_pairs.rbegin(), weight_keyfrm_pairs.rend());
+    std::sort(weight_covisibility_pairs.rbegin(), weight_covisibility_pairs.rend());
 
-    decltype(ordered_covisibilities_) ordered_connected_keyfrms;
-    ordered_connected_keyfrms.reserve(weight_keyfrm_pairs.size());
+    decltype(ordered_covisibilities_) ordered_covisibilities;
+    ordered_covisibilities.reserve(weight_covisibility_pairs.size());
     decltype(ordered_weights_) ordered_weights;
-    ordered_weights.reserve(weight_keyfrm_pairs.size());
-    for (const auto& weight_keyfrm_pair : weight_keyfrm_pairs) {
-        ordered_connected_keyfrms.push_back(weight_keyfrm_pair.second);
+    ordered_weights.reserve(weight_covisibility_pairs.size());
+    for (const auto& weight_keyfrm_pair : weight_covisibility_pairs) {
+        ordered_covisibilities.push_back(weight_keyfrm_pair.second);
         ordered_weights.push_back(weight_keyfrm_pair.first);
     }
 
@@ -131,12 +131,12 @@ void graph_node::update_connections() {
         std::lock_guard<std::mutex> lock(mtx_);
 
         connected_keyfrms_and_weights_ = keyfrm_weights;
-        ordered_covisibilities_ = ordered_connected_keyfrms;
+        ordered_covisibilities_ = ordered_covisibilities;
         ordered_weights_ = ordered_weights;
 
         if (spanning_parent_is_not_set_ && owner_keyfrm_->id_ != 0) {
             // set the parent of spanning tree
-            assert(*nearest_covisibility == *ordered_connected_keyfrms.front());
+            assert(*nearest_covisibility == *ordered_covisibilities.front());
             spanning_parent_ = nearest_covisibility;
             spanning_parent_->add_spanning_child(owner_keyfrm_);
             spanning_parent_is_not_set_ = false;
