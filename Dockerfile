@@ -2,10 +2,10 @@ FROM ubuntu:18.04
 
 # install dependencies via apt
 RUN set -x && \
-  apt update -y -qq && \
-  apt upgrade -y -qq --no-install-recommends && \
+  apt-get update -y -qq && \
+  apt-get upgrade -y -qq --no-install-recommends && \
   : "basic dependencies" && \
-  apt install -y -qq \
+  apt-get install -y -qq \
     build-essential \
     pkg-config \
     cmake \
@@ -15,12 +15,12 @@ RUN set -x && \
     tar \
     unzip && \
   : "g2o dependencies" && \
-  apt install -y -qq \
+  apt-get install -y -qq \
     libgoogle-glog-dev \
     libatlas-base-dev \
     libsuitesparse-dev && \
   : "OpenCV dependencies" && \
-  apt install -y -qq \
+  apt-get install -y -qq \
     libgtk-3-dev \
     libjpeg-dev \
     libpng++-dev \
@@ -34,13 +34,13 @@ RUN set -x && \
     libswscale-dev \
     libavresample-dev && \
   : "Pangolin dependencies" && \
-  apt install -y -qq \
+  apt-get install -y -qq \
     libglew-dev && \
   : "other dependencies" && \
-  apt install -y -qq \
+  apt-get install -y -qq \
     libyaml-cpp-dev && \
   : "remove cache" && \
-  apt autoremove -y -qq && \
+  apt-get autoremove -y -qq && \
   rm -rf /var/lib/apt/lists/*
 
 ARG CMAKE_INSTALL_PREFIX=/usr/local
