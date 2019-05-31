@@ -7,9 +7,11 @@ Running on Docker
 ``Dockerfile`` can be used for easy installation.
 This chapter provides instructions on building and running examples using Docker.
 
+Docker host machines with NVIDIA graphics cards are NOT officially supported yet.
+
 .. NOTE ::
 
-    Use `nvidia-docker2 <https://github.com/NVIDIA/nvidia-docker>`_ if you plan on using a machine with NVIDIA graphics card(s).
+    If you plan on using a machine with NVIDIA graphics card(s), please use `nvidia-docker2 <https://github.com/NVIDIA/nvidia-docker>`_ and the version 390 or later of NVIDIA driver.
     These examples depend on X11 forwarding with OpenGL for visualization.
     Note that our ``Dockerfile`` is **NOT** compatible with nvidia-docker1.
 
@@ -67,6 +69,10 @@ After launching the container, the shell interface will be launched in the docke
     run_image_localization  run_video_localization
 
 See :ref:`Tutorial <chapter-simple-tutorial>` to run SLAM examples.
+
+.. NOTE ::
+
+    If the viewer does not work, please :ref:`install the dependencies manually <section-dependencies>` on your host machine and try :ref:`Tutorial <chapter-simple-tutorial>`.
 
 If you need to access to any files and directories on a host machine from the container, bind directories between the host and the container using ``--volume`` or ``--mount`` option.
 (See `the docker documentataion <https://docs.docker.com/engine/reference/commandline/run/>`_.)
