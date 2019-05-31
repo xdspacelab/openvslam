@@ -29,6 +29,12 @@ Please see the `*.cc` files in `./example` directory or check [Simple Tutorial](
 We provided [documentation](https://openvslam.readthedocs.io/) for installation and tutorial.
 Please contact us via [GitHub issues](https://github.com/xdspacelab/openvslam/issues) if you have any questions or notice any bugs about the software.
 
+## Motivation
+
+Visual SLAM is regarded as a next-generation technology for supporting industries such as automotives, robotics, and xR. 
+We released OpenVSLAM as an opensource project with the aim of collaborating with people around the world to accelerate the development of this field.
+In return, we hope this project will bring safe and reliable technologies for a better society.
+
 ## Installation
 
 Please see [**Installation**](https://openvslam.readthedocs.io/en/master/installation.html) chapter in the [documentation](https://openvslam.readthedocs.io/).
