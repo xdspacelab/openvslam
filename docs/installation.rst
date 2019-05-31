@@ -57,8 +57,9 @@ Requirements for OpenVSLAM
 Requirements for Pangolin Viewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We provided a simple viewer implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_.
-Please install the following dependencies if you plan on using the viewer.
+| (**Recommended**)
+| We provided a simple viewer implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_.
+| Please install the following dependencies if you plan on using the viewer.
 
 * `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_ : Please use the latest release. Tested on commit ID `ad8b5f8 <https://github.com/stevenlovegrove/Pangolin/tree/ad8b5f83222291c51b4800d5a5873b0e90a0cf81>`_.
 
@@ -67,7 +68,8 @@ Please install the following dependencies if you plan on using the viewer.
 Requirements for Socket Publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Please see `here <https://github.com/xdspacelab/openvslam-viewer>`__.
+| (**Optional**)
+| If you plan to use the browser-based viewer, please see `here <https://github.com/xdspacelab/openvslam-viewer>`__.
 
 Recommended
 ^^^^^^^^^^^
