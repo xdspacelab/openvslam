@@ -60,7 +60,7 @@ std::vector<keyframe*> bow_database::acquire_loop_candidates(keyframe* qry_keyfr
     // 1. データベースの全てのキーフレームについて，query_keyframeと共有しているwordの数(=ノードの数)を集計する
 
     // query_keyframeの近傍は探索の対象から外す
-    auto keyfrms_to_reject = qry_keyfrm->get_connected_keyframes();
+    auto keyfrms_to_reject = qry_keyfrm->graph_node_->get_connected_keyframes();
     keyfrms_to_reject.insert(qry_keyfrm);
 
     // 候補がなければ終了
@@ -260,7 +260,7 @@ float bow_database::align_total_scores_and_keyframes(const unsigned int min_num_
         const auto keyfrm = score_keyframe.second;
 
         // keyframeの近傍を取得
-        const auto top_n_covisibilities = keyfrm->get_top_n_covisibilities(10);
+        const auto top_n_covisibilities = keyfrm->graph_node_->get_top_n_covisibilities(10);
         // 近傍とのスコアの総和を取る
         // (covisibility_keyframesにkeyframeは含まれないので，scoreで初期化しておく)
         float total_score = score;

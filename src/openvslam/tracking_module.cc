@@ -435,7 +435,7 @@ void tracking_module::update_local_keyframes() {
         local_keyfrms_.push_back(keyfrm);
 
         // avoid duplication
-        keyfrm->identifier_in_local_map_update_ = curr_frm_.id_;
+        keyfrm->local_map_update_identifier = curr_frm_.id_;
 
         // update the nearest keyframe
         if (max_weight < weight) {
@@ -453,10 +453,10 @@ void tracking_module::update_local_keyframes() {
             return false;
         }
         // avoid duplication
-        if (keyfrm->identifier_in_local_map_update_ == curr_frm_.id_) {
+        if (keyfrm->local_map_update_identifier == curr_frm_.id_) {
             return false;
         }
-        keyfrm->identifier_in_local_map_update_ = curr_frm_.id_;
+        keyfrm->local_map_update_identifier = curr_frm_.id_;
         local_keyfrms_.push_back(keyfrm);
         return true;
     };
@@ -468,7 +468,7 @@ void tracking_module::update_local_keyframes() {
         auto keyfrm = *iter;
 
         // covisibilities of the neighbor keyframe
-        const auto neighbors = keyfrm->get_top_n_covisibilities(10);
+        const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
         for (auto neighbor : neighbors) {
             if (add_local_keyframe(neighbor)) {
                 break;
@@ -476,7 +476,7 @@ void tracking_module::update_local_keyframes() {
         }
 
         // children of the spanning tree
-        const auto spanning_children = keyfrm->get_spanning_children();
+        const auto spanning_children = keyfrm->graph_node_->get_spanning_children();
         for (auto child : spanning_children) {
             if (add_local_keyframe(child)) {
                 break;
@@ -484,7 +484,7 @@ void tracking_module::update_local_keyframes() {
         }
 
         // parent of the spanning tree
-        auto parent = keyfrm->get_spanning_parent();
+        auto parent = keyfrm->graph_node_->get_spanning_parent();
         add_local_keyframe(parent);
     }
 

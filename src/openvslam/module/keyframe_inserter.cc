@@ -34,7 +34,7 @@ bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, cons
 
     // reference keyframeで観測している3次元点のうち，3視点以上から観測されている3次元点の数を数える
     const unsigned int min_obs_thr = (3 <= num_keyfrms) ? 3 : 2;
-    const auto num_reliable_lms = ref_keyfrm.get_n_tracked_landmarks(min_obs_thr);
+    const auto num_reliable_lms = ref_keyfrm.get_num_tracked_landmarks(min_obs_thr);
 
     // mappingが処理中かどうか
     const bool mapper_is_idle = mapper_->get_keyframe_acceptability();

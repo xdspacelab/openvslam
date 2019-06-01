@@ -195,8 +195,8 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
         assert(keyframes_.count(id));
         auto keyfrm = keyframes_.at(id);
 
-        keyfrm->update_connections();
-        keyfrm->update_covisibility_orders();
+        keyfrm->graph_node_->update_connections();
+        keyfrm->graph_node_->update_covisibility_orders();
     }
 
     // 7. ジオメトリを更新
@@ -295,14 +295,14 @@ void map_database::register_graph(const unsigned int id, const nlohmann::json& j
 
     assert(keyframes_.count(id));
     assert(spanning_parent_id == -1 || keyframes_.count(spanning_parent_id));
-    keyframes_.at(id)->set_spanning_parent((spanning_parent_id == -1) ? nullptr : keyframes_.at(spanning_parent_id));
+    keyframes_.at(id)->graph_node_->set_spanning_parent((spanning_parent_id == -1) ? nullptr : keyframes_.at(spanning_parent_id));
     for (const auto spanning_child_id : spanning_children_ids) {
         assert(keyframes_.count(spanning_child_id));
-        keyframes_.at(id)->add_spanning_child(keyframes_.at(spanning_child_id));
+        keyframes_.at(id)->graph_node_->add_spanning_child(keyframes_.at(spanning_child_id));
     }
     for (const auto loop_edge_id : loop_edge_ids) {
         assert(keyframes_.count(loop_edge_id));
-        keyframes_.at(id)->add_loop_edge(keyframes_.at(loop_edge_id));
+        keyframes_.at(id)->graph_node_->add_loop_edge(keyframes_.at(loop_edge_id));
     }
 }
 
@@ -342,7 +342,7 @@ void map_database::to_json(nlohmann::json& json_keyfrms, nlohmann::json& json_la
         assert(keyfrm);
         assert(id == keyfrm->id_);
         assert(!keyfrm->will_be_erased());
-        keyfrm->update_connections();
+        keyfrm->graph_node_->update_connections();
         assert(!keyfrms.count(std::to_string(id)));
         keyfrms[std::to_string(id)] = keyfrm->to_json();
     }

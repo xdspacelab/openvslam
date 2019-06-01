@@ -3,6 +3,7 @@
 
 #include "openvslam/type.h"
 #include "openvslam/camera/base.h"
+#include "openvslam/data/graph_node.h"
 #include "openvslam/data/bow_vocabulary.h"
 
 #include <set>
@@ -21,10 +22,9 @@
 
 namespace openvslam {
 
-// camera
 namespace camera {
 class base;
-}
+} // namespace camera
 
 namespace data {
 
@@ -37,10 +37,23 @@ class keyframe {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    //! constructor with frame
+    // operator overrides
+    bool operator==(const keyframe& keyfrm) const { return id_ == keyfrm.id_; }
+    bool operator!=(const keyframe& keyfrm) const { return !(*this == keyfrm); }
+    bool operator<(const keyframe& keyfrm) const { return id_ < keyfrm.id_; }
+    bool operator<=(const keyframe& keyfrm) const { return id_ <= keyfrm.id_; }
+    bool operator>(const keyframe& keyfrm) const { return id_ > keyfrm.id_; }
+    bool operator>=(const keyframe& keyfrm) const { return id_ >= keyfrm.id_; }
+
+    /**
+     * Constructor for building from a frame
+     */
     keyframe(const frame& frm, map_database* map_db, bow_database* bow_db);
 
-    //! constructor for map loading with computing parameters which can be recomputed
+    /**
+     * Constructor for map loading
+     * (NOTE: some variables must be recomputed after the construction. See the definition.)
+     */
     keyframe(const unsigned int id, const unsigned int src_frm_id, const double timestamp,
              const Mat44_t& cam_pose_cw, camera::base* camera, const float depth_thr,
              const unsigned int num_keypts, const std::vector<cv::KeyPoint>& keypts,
@@ -49,129 +62,176 @@ public:
              const unsigned int num_scale_levels, const float scale_factor,
              bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db);
 
-    //! operator overrides
-    inline bool operator==(const keyframe& keyfrm) const { return id_ == keyfrm.id_; }
-    inline bool operator!=(const keyframe& keyfrm) const { return !(*this == keyfrm); }
-    inline bool operator<(const keyframe& keyfrm) const { return id_ < keyfrm.id_; }
-    inline bool operator<=(const keyframe& keyfrm) const { return id_ <= keyfrm.id_; }
-    inline bool operator>(const keyframe& keyfrm) const { return id_ > keyfrm.id_; }
-    inline bool operator>=(const keyframe& keyfrm) const { return id_ >= keyfrm.id_; }
-
-    // pose functions with mutual exclusion
-    void set_cam_pose(const Mat44_t& cam_pose_cw);
-    void set_cam_pose(const g2o::SE3Quat& cam_pose_cw);
-    Mat44_t get_cam_pose() const;
-    Mat44_t get_cam_pose_inv() const;
-    Vec3_t get_cam_center() const;
-    Mat33_t get_rotation() const;
-    Vec3_t get_translation() const;
-
-    //! compute BoW representation
-    void compute_bow();
-
-    // covisibility graphを扱う関数
-    //! add connection with weight between this and specified keyframes
-    void add_connection(keyframe* keyfrm, const unsigned int weight);
-    //! erase connection between this and specified keyframes
-    void erase_connection(keyframe* keyfrm);
-    //! 3次元点を参照しなおして，connectionとcovisibility graphの情報を作りなおす (新たにkeyframeが追加されるかも)
-    void update_connections();
-    //! 現在のcovisibility graphは保ったまま，orderの更新のみを行う (新たなkeyframeは追加されない)
-    void update_covisibility_orders();
-    //! 隣接しているkeyframeを取得する (最小閾値無し)
-    std::set<keyframe*> get_connected_keyframes() const;
-    //! covisibility keyframesを取得する (最小閾値有り)
-    std::vector<keyframe*> get_covisibilities() const;
-    //! weightの上位n個のcovisibility keyframesを取得する
-    std::vector<keyframe*> get_top_n_covisibilities(const unsigned int num_covisibilities) const;
-    //! weight以上のcovisibility keyframesを取得する
-    std::vector<keyframe*> get_covisibilities_over_weight(const unsigned int weight) const;
-    //! get weight between this and specified keyframe
-    unsigned int get_weight(keyframe* keyfrm) const;
-
-    // landmarkを扱う関数
-    //! add landmark observed as keyframe at idx
-    void add_landmark(landmark* lm, const unsigned int idx);
-    //! erase landmark observed as keyframe at idx
-    void erase_landmark_with_index(const unsigned int idx);
-    //! erase landmark
-    void erase_landmark(landmark* lm);
-    //! replace landmark
-    void replace_landmark(const unsigned int idx, landmark* lm);
-    //! get landmarks including nullptr
-    std::vector<landmark*> get_landmarks() const;
-    //! get landmarks which are not nullptr
-    std::set<landmark*> get_valid_landmarks() const;
-    //! 最小n個のキーフレームから観測されているlandmarksの数を取得する
-    unsigned int get_n_tracked_landmarks(const unsigned int min_num_obs) const;
-    //! landmark associated keyframe idx
-    landmark* get_landmark(const unsigned int idx) const;
-
-    // spanning treeを扱う関数
-    //! add child node of spanning tree
-    void add_spanning_child(keyframe* keyfrm);
-    //! erase child node of spanning tree
-    void erase_spanning_child(keyframe* keyfrm);
-    //! set parent node of spanning tree (only used for map loading)
-    void set_spanning_parent(keyframe* keyfrm);
-    //! change parent node of spanning tree
-    void change_spanning_parent(keyframe* keyfrm);
-    //! get children of spanning tree
-    std::set<keyframe*> get_spanning_children() const;
-    //! get parent of spanning tree
-    keyframe* get_spanning_parent() const;
-    //! whether this keyframe has child or not
-    bool has_spanning_child(keyframe* keyfrm) const;
-
-    // loopを扱う関数
-    //! add loop edge
-    void add_loop_edge(keyframe* keyfrm);
-    //! get loop edges
-    std::set<keyframe*> get_loop_edges() const;
-
-    // 削除可能かどうかを設定する関数
-    //! set this keyframe as non-erasable
-    void set_not_to_be_erased();
-    //! set this keyframe as erasable
-    void set_to_be_erased();
-
-    //! erase this keyframe from database
-    void prepare_for_erasing();
-    //! whether this keyframe will be erased shortly or not
-    bool will_be_erased();
-
-    //! get keypoint indices in the cell which reference point is located
-    std::vector<unsigned int> get_keypoints_in_cell(const float ref_x, const float ref_y, const float margin) const;
-
-    //! perform stereo triangulation of the keypoint
-    Vec3_t triangulate_stereo(const unsigned int idx) const;
-
-    //! compute median of depth
-    float compute_median_depth(const bool abs = false) const;
-
-    //! encode keyframe information as JSON
+    /**
+     * Encode this keyframe information as JSON
+     */
     nlohmann::json to_json() const;
 
-public:
+    //-----------------------------------------
+    // camera pose
+
+    /**
+     * Set camera pose
+     */
+    void set_cam_pose(const Mat44_t& cam_pose_cw);
+
+    /**
+     * Set camera pose
+     */
+    void set_cam_pose(const g2o::SE3Quat& cam_pose_cw);
+
+    /**
+     * Get the camera pose
+     */
+    Mat44_t get_cam_pose() const;
+
+    /**
+     * Get the inverse of the camera pose
+     */
+    Mat44_t get_cam_pose_inv() const;
+
+    /**
+     * Get the camera center
+     */
+    Vec3_t get_cam_center() const;
+
+    /**
+     * Get the rotation of the camera pose
+     */
+    Mat33_t get_rotation() const;
+
+    /**
+     * Get the translation of the camera pose
+     */
+    Vec3_t get_translation() const;
+
+    //-----------------------------------------
+    // features and observations
+
+    /**
+     * Compute BoW representation
+     */
+    void compute_bow();
+
+    /**
+     * Add a landmark observed by myself at keypoint idx
+     */
+    void add_landmark(landmark* lm, const unsigned int idx);
+
+    /**
+     * Erase a landmark observed by myself at keypoint idx
+     */
+    void erase_landmark_with_index(const unsigned int idx);
+
+    /**
+     * Erase a landmark
+     */
+    void erase_landmark(landmark* lm);
+
+    /**
+     * Replace the landmark
+     */
+    void replace_landmark(landmark* lm, const unsigned int idx);
+
+    /**
+     * Get all of the landmarks
+     * (NOTE: including nullptr)
+     */
+    std::vector<landmark*> get_landmarks() const;
+
+    /**
+     * Get the valid landmarks
+     */
+    std::set<landmark*> get_valid_landmarks() const;
+
+    /**
+     * Get the number of tracked landmarks which have observers equal to or greater than the threshold
+     */
+    unsigned int get_num_tracked_landmarks(const unsigned int min_num_obs_thr) const;
+
+    /**
+     * Get the landmark associated keypoint idx
+     */
+    landmark* get_landmark(const unsigned int idx) const;
+
+    /**
+     * Get the keypoint indices in the cell which reference point is located
+     */
+    std::vector<unsigned int> get_keypoints_in_cell(const float ref_x, const float ref_y, const float margin) const;
+
+    /**
+     * Triangulate the keypoint using the disparity
+     */
+    Vec3_t triangulate_stereo(const unsigned int idx) const;
+
+    /**
+     * Compute median of depths
+     */
+    float compute_median_depth(const bool abs = false) const;
+
+    //-----------------------------------------
+    // flags
+
+    /**
+     * Set this keyframe as non-erasable
+     */
+    void set_not_to_be_erased();
+
+    /**
+     * Set this keyframe as erasable
+     */
+    void set_to_be_erased();
+
+    /**
+     * Erase this keyframe
+     */
+    void prepare_for_erasing();
+
+    /**
+     * Whether this keyframe will be erased shortly or not
+     */
+    bool will_be_erased();
+
+    //-----------------------------------------
+    // for local map update
+
+    //! identifier for local map update
+    unsigned int local_map_update_identifier = 0;
+
+    //-----------------------------------------
+    // for loop BA
+
+    //! identifier for loop BA
+    unsigned int loop_BA_identifier_ = 0;
+    //! camera pose AFTER loop BA
+    Mat44_t cam_pose_cw_after_loop_BA_;
+    //! camera pose BEFORE loop BA
+    Mat44_t cam_pose_cw_before_BA_;
+
+    //-----------------------------------------
+    // meta information
+
+    //! keyframe ID
     unsigned int id_;
+    //! next keyframe ID
     static std::atomic<unsigned int> next_id_;
 
+    //! source frame ID
     const unsigned int src_frm_id_;
 
+    //! timestamp in seconds
     const double timestamp_;
 
-    // local mapの更新の際に重複を避けるために用いられる変数
-    unsigned int identifier_in_local_map_update_ = 0;
-
-    // loop BAの際に姿勢伝播を行うために用いられる関数
-    Mat44_t cam_pose_cw_after_loop_BA_;
-    Mat44_t cam_pose_cw_before_BA_;
-    unsigned int loop_BA_identifier_ = 0;
+    //-----------------------------------------
+    // camera parameters
 
     //! camera model
     camera::base* camera_;
     //! depth threshold
     const float depth_thr_;
+
+    //-----------------------------------------
+    // constant observations
 
     //! number of keypoints
     const unsigned int num_keypts_;
@@ -182,6 +242,9 @@ public:
     const std::vector<cv::KeyPoint> undist_keypts_;
     //! bearing vectors
     const eigen_alloc_vector<Vec3_t> bearings_;
+
+    //! keypoint indices in each of the cells
+    const std::vector<std::vector<std::vector<unsigned int>>> keypt_indices_in_cells_;
 
     //! disparities
     const std::vector<float> stereo_x_right_;
@@ -200,7 +263,15 @@ public:
     fbow::BoWFeatVector bow_feat_vec_;
 #endif
 
+    //-----------------------------------------
+    // covisibility graph
+
+    //! graph node
+    const std::unique_ptr<graph_node> graph_node_ = nullptr;
+
+    //-----------------------------------------
     // ORB scale pyramid information
+
     //! number of scale levels
     const unsigned int num_scale_levels_;
     //! scale factor
@@ -216,48 +287,43 @@ public:
 
 private:
     //-----------------------------------------
+    // camera pose
+
     //! need mutex for access to poses
     mutable std::mutex mtx_pose_;
-
+    //! camera pose from the world to the current
     Mat44_t cam_pose_cw_;
+    //! camera pose from the current to the world
     Mat44_t cam_pose_wc_;
+    //! camera center
     Vec3_t cam_center_;
 
     //-----------------------------------------
+    // observations
+
     //! need mutex for access to observations
     mutable std::mutex mtx_observations_;
-
+    //! observed landmarks
     std::vector<landmark*> landmarks_;
 
-    bow_vocabulary* bow_vocab_;
-    bow_database* bow_db_;
-
-    std::vector<std::vector<std::vector<unsigned int>>> keypt_indices_in_cells_;
-
     //-----------------------------------------
-    //! need mutex for access to connections
-    mutable std::mutex mtx_connections_;
+    // databases
 
-    //! すべての隣接するkeyframeとその間のweightを保存したもの (最小閾値無し)
-    std::map<keyframe*, unsigned int> connected_keyfrms_and_weights_;
-    //! 最小閾値を超えたcovisibilityをweight順に並び替えたもの
-    std::vector<keyframe*> ordered_connected_keyfrms_;
-    //!　ordered_connected_keyfrms_に対応するweights
-    std::vector<unsigned int> ordered_weights_;
-
-    bool is_first_connection_ = true;
-    keyframe* spanning_parent_ = nullptr;
-    std::set<keyframe*> spanning_children_;
-    std::set<keyframe*> loop_edges_;
-
-    bool cannot_be_erased_ = false;
-    bool prepare_for_erasing_ = false;
-
-    bool will_be_erased_ = false;
-
-    //-----------------------------------------
     //! map database
     map_database* map_db_;
+    //! BoW database
+    bow_database* bow_db_;
+    //! BoW vocabulary
+    bow_vocabulary* bow_vocab_;
+
+    //-----------------------------------------
+    // flags
+
+    //! flag which indicates this keyframe is erasable or not
+    std::atomic<bool> cannot_be_erased_{false};
+
+    //! flag which indicates this keyframe will be erased
+    std::atomic<bool> will_be_erased_{false};
 };
 
 } // namespace data

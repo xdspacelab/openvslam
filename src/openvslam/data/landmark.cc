@@ -318,7 +318,7 @@ void landmark::replace(landmark* lm) {
         keyframe* keyfrm = keyfrm_and_idx.first;
 
         if (!lm->is_observed_in_keyframe(keyfrm)) {
-            keyfrm->replace_landmark(keyfrm_and_idx.second, lm);
+            keyfrm->replace_landmark(lm, keyfrm_and_idx.second);
             lm->add_observation(keyfrm, keyfrm_and_idx.second);
         }
         else {

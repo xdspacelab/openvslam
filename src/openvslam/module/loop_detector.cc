@@ -122,7 +122,7 @@ bool loop_detector::validate_candidates() {
     // matches between the keypoints in the current and the landmarks observed in the covisibilities of the selected candidate
     curr_match_lms_observed_in_cand_covis_.clear();
 
-    auto cand_covisibilities = selected_candidate_->get_covisibilities();
+    auto cand_covisibilities = selected_candidate_->graph_node_->get_covisibilities();
     cand_covisibilities.push_back(selected_candidate_);
 
     // acquire all of the landmarks observed in the covisibilities of the candidate
@@ -191,7 +191,7 @@ float loop_detector::compute_min_score_in_covisibilities(data::keyframe* keyfrm)
     float min_score = 1.0;
 
     // search the mininum score among covisibilities
-    const auto covisibilities = keyfrm->get_covisibilities();
+    const auto covisibilities = keyfrm->graph_node_->get_covisibilities();
     const auto& bow_vec_1 = keyfrm->bow_vec_;
     for (const auto covisibility : covisibilities) {
         if (covisibility->will_be_erased()) {
@@ -227,7 +227,7 @@ keyframe_sets loop_detector::find_continuously_detected_keyframe_sets(const keyf
 
     for (const auto& keyfrm_to_search : keyfrms_to_search) {
         // enlarge the candidate to the "keyframe set"
-        const auto keyfrm_set = keyfrm_to_search->get_connected_keyframes();
+        const auto keyfrm_set = keyfrm_to_search->graph_node_->get_connected_keyframes();
 
         // check if the initialization of the buffer is needed or not
         bool initialization_is_needed = true;

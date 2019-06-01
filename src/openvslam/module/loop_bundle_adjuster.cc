@@ -78,7 +78,7 @@ void loop_bundle_adjuster::optimize(const unsigned int identifier) {
             auto parent = keyfrms_to_check.front();
             const Mat44_t cam_pose_wp = parent->get_cam_pose_inv();
 
-            const auto children = parent->get_spanning_children();
+            const auto children = parent->graph_node_->get_spanning_children();
             for (auto child : children) {
                 if (child->loop_BA_identifier_ != identifier) {
                     // if `child` is NOT optimized by the loop BA

@@ -194,7 +194,7 @@ void mapping_module::store_new_keyframe() {
         lm->update_normal_and_depth();
         lm->compute_descriptor();
     }
-    cur_keyfrm_->update_connections();
+    cur_keyfrm_->graph_node_->update_connections();
 
     // store the new keyframe to the map database
     map_db_->add_keyframe(cur_keyfrm_);
@@ -204,7 +204,7 @@ void mapping_module::create_new_landmarks() {
     // get the covisibilities of `cur_keyfrm_`
     // in order to triangulate landmarks between `cur_keyfrm_` and each of the covisibilities
     constexpr unsigned int num_covisibilities = 10;
-    const auto cur_covisibilities = cur_keyfrm_->get_top_n_covisibilities(num_covisibilities * (is_monocular_ ? 2 : 1));
+    const auto cur_covisibilities = cur_keyfrm_->graph_node_->get_top_n_covisibilities(num_covisibilities * (is_monocular_ ? 2 : 1));
 
     // lowe's_ratio will not be used
     match::robust robust_matcher(0.0, false);
@@ -319,12 +319,12 @@ void mapping_module::update_new_keyframe() {
     }
 
     // update the graph
-    cur_keyfrm_->update_connections();
+    cur_keyfrm_->graph_node_->update_connections();
 }
 
 std::unordered_set<data::keyframe*> mapping_module::get_second_order_covisibilities(const unsigned int first_order_thr,
                                                                                     const unsigned int second_order_thr) {
-    const auto cur_covisibilities = cur_keyfrm_->get_top_n_covisibilities(first_order_thr);
+    const auto cur_covisibilities = cur_keyfrm_->graph_node_->get_top_n_covisibilities(first_order_thr);
 
     std::unordered_set<data::keyframe*> fuse_tgt_keyfrms;
     fuse_tgt_keyfrms.reserve(cur_covisibilities.size() * 2);
@@ -342,7 +342,7 @@ std::unordered_set<data::keyframe*> mapping_module::get_second_order_covisibilit
         fuse_tgt_keyfrms.insert(first_order_covis);
 
         // get the covisibilities of the covisibility of the current keyframe
-        const auto ngh_covisibilities = first_order_covis->get_top_n_covisibilities(second_order_thr);
+        const auto ngh_covisibilities = first_order_covis->graph_node_->get_top_n_covisibilities(second_order_thr);
         for (const auto second_order_covis : ngh_covisibilities) {
             if (second_order_covis->will_be_erased()) {
                 continue;
