@@ -136,7 +136,6 @@ public:
 
     /**
      * Whether this node has any loop edges or not
-     * @return
      */
     bool has_loop_edge() const;
 
