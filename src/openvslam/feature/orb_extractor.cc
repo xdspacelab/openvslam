@@ -652,43 +652,54 @@ void orb_extractor::compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::
     const uchar* const center = &image.at<uchar>(cvRound(keypt.pt.y), cvRound(keypt.pt.x));
     const auto step = static_cast<int>(image.step);
 
+#ifdef USE_SSE_ORB
+#if !((defined _MSC_VER && defined _M_X64) \
+      || (defined __GNUC__ && defined __x86_64__ && defined __SSE2__ && !defined __APPLE__) \
+      || CV_SSE2)
+#error "The processor is not compatible with SSE. Please configure the CMake with -DUSE_SSE_ORB=OFF."
+#endif
+
+    __m128 vs;
+    __m128i vi;
+    int32_t i[4] __attribute__ ((aligned(16)));
+
+#define COMPARE_ORB_POINTS(idx1, idx2) \
+        (vs = _mm_setr_ps(pattern[idx1].x * sin_angle + pattern[idx1].y * cos_angle, \
+                          pattern[idx1].x * cos_angle - pattern[idx1].y * sin_angle, \
+                          pattern[idx2].x * sin_angle + pattern[idx2].y * cos_angle, \
+                          pattern[idx2].x * cos_angle - pattern[idx2].y * sin_angle), \
+         vi = _mm_cvtps_epi32(vs), \
+         _mm_store_si128(reinterpret_cast<__m128i*>(i), vi), \
+         center[i[0] * step + i[1]] < center[i[2] * step + i[3]])
+
+#else
+
 #define GET_VALUE(idx) \
-        center[cvRound(pattern[idx].x * sin_angle + pattern[idx].y * cos_angle) * step \
-               + cvRound(pattern[idx].x * cos_angle - pattern[idx].y * sin_angle)]
+        (center[cvRound(pattern[idx].x * sin_angle + pattern[idx].y * cos_angle) * step \
+                + cvRound(pattern[idx].x * cos_angle - pattern[idx].y * sin_angle)])
 
-    for (unsigned int i = 0; i < 32; ++i, pattern += 16) {
-        int t0, t1, val;
+#define COMPARE_ORB_POINTS(idx1, idx2) \
+        (GET_VALUE(idx1) < GET_VALUE(idx2))
 
-        t0 = GET_VALUE(0);
-        t1 = GET_VALUE(1);
-        val = t0 < t1;
-        t0 = GET_VALUE(2);
-        t1 = GET_VALUE(3);
-        val |= (t0 < t1) << 1;
-        t0 = GET_VALUE(4);
-        t1 = GET_VALUE(5);
-        val |= (t0 < t1) << 2;
-        t0 = GET_VALUE(6);
-        t1 = GET_VALUE(7);
-        val |= (t0 < t1) << 3;
-        t0 = GET_VALUE(8);
-        t1 = GET_VALUE(9);
-        val |= (t0 < t1) << 4;
-        t0 = GET_VALUE(10);
-        t1 = GET_VALUE(11);
-        val |= (t0 < t1) << 5;
-        t0 = GET_VALUE(12);
-        t1 = GET_VALUE(13);
-        val |= (t0 < t1) << 6;
-        t0 = GET_VALUE(14);
-        t1 = GET_VALUE(15);
-        val |= (t0 < t1) << 7;
+#endif
 
-        desc[i] = static_cast<uchar>(val);
+    for (unsigned int shift = 0; shift < 32; ++shift, pattern += 16) {
+        int32_t val;
+
+        val = COMPARE_ORB_POINTS(0, 1);
+        val |= COMPARE_ORB_POINTS(2, 3) << 1;
+        val |= COMPARE_ORB_POINTS(4, 5) << 2;
+        val |= COMPARE_ORB_POINTS(6, 7) << 3;
+        val |= COMPARE_ORB_POINTS(8, 9) << 4;
+        val |= COMPARE_ORB_POINTS(10, 11) << 5;
+        val |= COMPARE_ORB_POINTS(12, 13) << 6;
+        val |= COMPARE_ORB_POINTS(14, 15) << 7;
+
+        desc[shift] = static_cast<uchar>(val);
     }
 
 #undef GET_VALUE
-
+#undef COMPARE_ORB_POINTS
 }
 
 } // namespace feature
