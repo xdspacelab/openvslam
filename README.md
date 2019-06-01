@@ -12,13 +12,13 @@
 OpenVSLAM is a monocular, stereo, and RGBD visual SLAM system.
 The notable features are:
 
-- It is compatible with **multiple camera models** and can be easily customized for other camera models.
+- It is compatible with **various type of camera models** and can be easily customized for other camera models.
 - Created maps can be **stored and loaded**, then OpenVSLAM can **localize new images** based on the prebuilt maps.
 - The system is fully modular. It is designed by encapsulating several functions in separated components with easy-to-understand APIs.
 - We provided **some code snippets** to understand the core functionalities of this system.
 
 OpenVSLAM is based on an indirect SLAM algorithm with sparse features, such as ORB-SLAM, ProSLAM, and UcoSLAM.
-One of the noteworthy features of OpenVSLAM is that the system can deal with multiple camera models, such as perspective, fisheye, and equirectangular.
+One of the noteworthy features of OpenVSLAM is that the system can deal with various type of camera models, such as perspective, fisheye, and equirectangular.
 If needed, users can implement extra camera models (e.g. dual fisheye, catadioptric) with ease.
 For example, visual SLAM algorithm using **equirectangular camera models** (e.g. RICOH THETA series, insta360 series, etc) is shown above.
 
