@@ -37,6 +37,14 @@ class keyframe {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    // operator overrides
+    bool operator==(const keyframe& keyfrm) const { return id_ == keyfrm.id_; }
+    bool operator!=(const keyframe& keyfrm) const { return !(*this == keyfrm); }
+    bool operator<(const keyframe& keyfrm) const { return id_ < keyfrm.id_; }
+    bool operator<=(const keyframe& keyfrm) const { return id_ <= keyfrm.id_; }
+    bool operator>(const keyframe& keyfrm) const { return id_ > keyfrm.id_; }
+    bool operator>=(const keyframe& keyfrm) const { return id_ >= keyfrm.id_; }
+
     /**
      * Constructor for building from a frame
      */
@@ -54,108 +62,135 @@ public:
              const unsigned int num_scale_levels, const float scale_factor,
              bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db);
 
-    inline bool operator==(const keyframe& keyfrm) const { return id_ == keyfrm.id_; }
-    inline bool operator!=(const keyframe& keyfrm) const { return !(*this == keyfrm); }
-    inline bool operator<(const keyframe& keyfrm) const { return id_ < keyfrm.id_; }
-    inline bool operator<=(const keyframe& keyfrm) const { return id_ <= keyfrm.id_; }
-    inline bool operator>(const keyframe& keyfrm) const { return id_ > keyfrm.id_; }
-    inline bool operator>=(const keyframe& keyfrm) const { return id_ >= keyfrm.id_; }
+    /**
+     * Encode this keyframe information as JSON
+     */
+    nlohmann::json to_json() const;
 
+    //-----------------------------------------
+    // camera pose
+
+    /**
+     * Set camera pose
+     */
     void set_cam_pose(const Mat44_t& cam_pose_cw);
+
+    /**
+     * Set camera pose
+     */
     void set_cam_pose(const g2o::SE3Quat& cam_pose_cw);
+
+    /**
+     * Get the camera pose
+     */
     Mat44_t get_cam_pose() const;
+
+    /**
+     * Get the inverse of the camera pose
+     */
     Mat44_t get_cam_pose_inv() const;
+
+    /**
+     * Get the camera center
+     */
     Vec3_t get_cam_center() const;
+
+    /**
+     * Get the rotation of the camera pose
+     */
     Mat33_t get_rotation() const;
+
+    /**
+     * Get the translation of the camera pose
+     */
     Vec3_t get_translation() const;
+
+    //-----------------------------------------
+    // features and observations
 
     /**
      * Compute BoW representation
      */
     void compute_bow();
 
-    // covisibility graphを扱う関数
-    //! add connection with weight between this and specified keyframes
-    void add_connection(keyframe* keyfrm, const unsigned int weight);
-    //! erase connection between this and specified keyframes
-    void erase_connection(keyframe* keyfrm);
-    //! 3次元点を参照しなおして，connectionとcovisibility graphの情報を作りなおす (新たにkeyframeが追加されるかも)
-    void update_connections();
-    //! 現在のcovisibility graphは保ったまま，orderの更新のみを行う (新たなkeyframeは追加されない)
-    void update_covisibility_orders();
-    //! 隣接しているkeyframeを取得する (最小閾値無し)
-    std::set<keyframe*> get_connected_keyframes() const;
-    //! covisibility keyframesを取得する (最小閾値有り)
-    std::vector<keyframe*> get_covisibilities() const;
-    //! weightの上位n個のcovisibility keyframesを取得する
-    std::vector<keyframe*> get_top_n_covisibilities(const unsigned int num_covisibilities) const;
-    //! weight以上のcovisibility keyframesを取得する
-    std::vector<keyframe*> get_covisibilities_over_weight(const unsigned int weight) const;
-    //! get weight between this and specified keyframe
-    unsigned int get_weight(keyframe* keyfrm) const;
-
-    // landmarkを扱う関数
-    //! add landmark observed as keyframe at idx
+    /**
+     * Add a landmark observed by myself at keypoint idx
+     */
     void add_landmark(landmark* lm, const unsigned int idx);
-    //! erase landmark observed as keyframe at idx
+
+    /**
+     * Erase a landmark observed by myself at keypoint idx
+     */
     void erase_landmark_with_index(const unsigned int idx);
-    //! erase landmark
+
+    /**
+     * Erase a landmark
+     */
     void erase_landmark(landmark* lm);
-    //! replace landmark
-    void replace_landmark(const unsigned int idx, landmark* lm);
-    //! get landmarks including nullptr
+
+    /**
+     * Replace the landmark
+     */
+    void replace_landmark(landmark* lm, const unsigned int idx);
+
+    /**
+     * Get all of the landmarks
+     * (NOTE: including nullptr)
+     */
     std::vector<landmark*> get_landmarks() const;
-    //! get landmarks which are not nullptr
+
+    /**
+     * Get the valid landmarks
+     */
     std::set<landmark*> get_valid_landmarks() const;
-    //! 最小n個のキーフレームから観測されているlandmarksの数を取得する
-    unsigned int get_n_tracked_landmarks(const unsigned int min_num_obs) const;
-    //! landmark associated keyframe idx
+
+    /**
+     * Get the number of tracked landmarks which have observers equal to or greater than the threshold
+     */
+    unsigned int get_num_tracked_landmarks(const unsigned int min_num_obs_thr) const;
+
+    /**
+     * Get the landmark associated keypoint idx
+     */
     landmark* get_landmark(const unsigned int idx) const;
 
-    // spanning treeを扱う関数
-    //! add child node of spanning tree
-    void add_spanning_child(keyframe* keyfrm);
-    //! erase child node of spanning tree
-    void erase_spanning_child(keyframe* keyfrm);
-    //! set parent node of spanning tree (only used for map loading)
-    void set_spanning_parent(keyframe* keyfrm);
-    //! change parent node of spanning tree
-    void change_spanning_parent(keyframe* keyfrm);
-    //! get children of spanning tree
-    std::set<keyframe*> get_spanning_children() const;
-    //! get parent of spanning tree
-    keyframe* get_spanning_parent() const;
-    //! whether this keyframe has child or not
-    bool has_spanning_child(keyframe* keyfrm) const;
-
-    // loopを扱う関数
-    //! add loop edge
-    void add_loop_edge(keyframe* keyfrm);
-    //! get loop edges
-    std::set<keyframe*> get_loop_edges() const;
-
-    // 削除可能かどうかを設定する関数
-    //! set this keyframe as non-erasable
-    void set_not_to_be_erased();
-    //! set this keyframe as erasable
-    void set_to_be_erased();
-
-    //! erase this keyframe from database
-    void prepare_for_erasing();
-    //! whether this keyframe will be erased shortly or not
-    bool will_be_erased();
-
-    //! get keypoint indices in the cell which reference point is located
+    /**
+     * Get the keypoint indices in the cell which reference point is located
+     */
     std::vector<unsigned int> get_keypoints_in_cell(const float ref_x, const float ref_y, const float margin) const;
 
-    //! perform stereo triangulation of the keypoint
+    /**
+     * Triangulate the keypoint using the disparity
+     */
     Vec3_t triangulate_stereo(const unsigned int idx) const;
 
-    //! compute median of depth
+    /**
+     * Compute median of depths
+     */
     float compute_median_depth(const bool abs = false) const;
 
-    //! encode keyframe information as JSON
-    nlohmann::json to_json() const;
+    //-----------------------------------------
+    // flags
+
+    /**
+     * Set this keyframe as non-erasable
+     */
+    void set_not_to_be_erased();
+
+    /**
+     * Set this keyframe as erasable
+     */
+    void set_to_be_erased();
+
+    /**
+     * Erase this keyframe
+     */
+    void prepare_for_erasing();
+
+    /**
+     * Whether this keyframe will be erased shortly or not
+     */
+    bool will_be_erased();
 
     //-----------------------------------------
     // for local map update
@@ -209,7 +244,7 @@ public:
     const eigen_alloc_vector<Vec3_t> bearings_;
 
     //! keypoint indices in each of the cells
-    std::vector<std::vector<std::vector<unsigned int>>> keypt_indices_in_cells_;
+    const std::vector<std::vector<std::vector<unsigned int>>> keypt_indices_in_cells_;
 
     //! disparities
     const std::vector<float> stereo_x_right_;
@@ -232,7 +267,7 @@ public:
     // covisibility graph
 
     //! graph node
-    std::unique_ptr<graph_node> graph_node_ = nullptr;
+    const std::unique_ptr<graph_node> graph_node_ = nullptr;
 
     //-----------------------------------------
     // ORB scale pyramid information
@@ -268,7 +303,6 @@ private:
 
     //! need mutex for access to observations
     mutable std::mutex mtx_observations_;
-
     //! observed landmarks
     std::vector<landmark*> landmarks_;
 

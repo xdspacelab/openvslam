@@ -47,7 +47,7 @@ void graph_node::erase_connection(keyframe* keyfrm) {
 void graph_node::erase_all_connections() {
     // remote myself from the connected keyframes
     for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
-        keyfrm_and_weight.first->erase_connection(owner_keyfrm_);
+        keyfrm_and_weight.first->graph_node_->erase_connection(owner_keyfrm_);
     }
     // remove the buffers
     connected_keyfrms_and_weights_.clear();
@@ -112,7 +112,7 @@ void graph_node::update_connections() {
     for (const auto& weight_covisibility : weight_covisibility_pairs) {
         auto covisibility = weight_covisibility.second;
         const auto weight = weight_covisibility.first;
-        covisibility->add_connection(owner_keyfrm_, weight);
+        covisibility->graph_node_->add_connection(owner_keyfrm_, weight);
     }
 
     // sort with weights
@@ -138,7 +138,7 @@ void graph_node::update_connections() {
             // set the parent of spanning tree
             assert(*nearest_covisibility == *ordered_covisibilities.front());
             spanning_parent_ = nearest_covisibility;
-            spanning_parent_->add_spanning_child(owner_keyfrm_);
+            spanning_parent_->graph_node_->add_spanning_child(owner_keyfrm_);
             spanning_parent_is_not_set_ = false;
         }
     }
@@ -234,7 +234,7 @@ keyframe* graph_node::get_spanning_parent() const {
 void graph_node::change_spanning_parent(keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_);
     spanning_parent_ = keyfrm;
-    keyfrm->add_spanning_child(owner_keyfrm_);
+    keyfrm->graph_node_->add_spanning_child(owner_keyfrm_);
 }
 
 void graph_node::add_spanning_child(keyframe* keyfrm) {
@@ -268,12 +268,12 @@ void graph_node::recover_spanning_connections() {
             }
 
             // get intersection between the parent candidates and the spanning-child's covisibilities
-            const auto child_covisibilities = spanning_child->get_covisibilities();
+            const auto child_covisibilities = spanning_child->graph_node_->get_covisibilities();
             const auto intersection = extract_intersection(new_parent_candidates, child_covisibilities);
 
             // find the new parent (which has the maximum weight with the spanning child) from the intersection
             for (const auto parent_candidate : intersection) {
-                const auto weight = spanning_child->get_weight(parent_candidate);
+                const auto weight = spanning_child->graph_node_->get_weight(parent_candidate);
                 if (max_weight < weight) {
                     max_weight = weight;
                     max_weight_parent = parent_candidate;
@@ -285,7 +285,7 @@ void graph_node::recover_spanning_connections() {
 
         if (max_is_found) {
             // update spanning tree
-            max_weight_child->change_spanning_parent(max_weight_parent);
+            max_weight_child->graph_node_->change_spanning_parent(max_weight_parent);
             spanning_children_.erase(max_weight_child);
             new_parent_candidates.insert(max_weight_child);
         }
@@ -299,7 +299,7 @@ void graph_node::recover_spanning_connections() {
     if (!spanning_children_.empty()) {
         // set my parent as the new parent
         for (const auto spanning_child : spanning_children_) {
-            spanning_child->change_spanning_parent(spanning_parent_);
+            spanning_child->graph_node_->change_spanning_parent(spanning_parent_);
         }
     }
 
@@ -307,7 +307,7 @@ void graph_node::recover_spanning_connections() {
 
     // 2. remove myself from my parent's children list
 
-    spanning_parent_->erase_spanning_child(owner_keyfrm_);
+    spanning_parent_->graph_node_->erase_spanning_child(owner_keyfrm_);
 }
 
 std::set<keyframe*> graph_node::get_spanning_children() const {

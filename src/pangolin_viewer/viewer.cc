@@ -227,7 +227,7 @@ void viewer::draw_keyframes() {
             const openvslam::Vec3_t cam_center_1 = keyfrm->get_cam_center();
 
             // covisibility graph
-            const auto covisibilities = keyfrm->get_covisibilities_over_weight(100);
+            const auto covisibilities = keyfrm->graph_node_->get_covisibilities_over_weight(100);
             if (!covisibilities.empty()) {
                 for (const auto covisibility : covisibilities) {
                     if (covisibility->id_ < keyfrm->id_) {
@@ -239,14 +239,14 @@ void viewer::draw_keyframes() {
             }
 
             // spanning tree
-            auto spanning_parent = keyfrm->get_spanning_parent();
+            auto spanning_parent = keyfrm->graph_node_->get_spanning_parent();
             if (spanning_parent) {
                 const openvslam::Vec3_t cam_center_2 = spanning_parent->get_cam_center();
                 draw_edge(cam_center_1, cam_center_2);
             }
 
             // loop edges
-            const auto loop_edges = keyfrm->get_loop_edges();
+            const auto loop_edges = keyfrm->graph_node_->get_loop_edges();
             for (const auto loop_edge : loop_edges) {
                 if (loop_edge->id_ < keyfrm->id_) {
                     continue;

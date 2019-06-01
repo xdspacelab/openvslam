@@ -76,7 +76,7 @@ unsigned int local_map_cleaner::remove_redundant_keyframes(data::keyframe* cur_k
 
     unsigned int num_removed = 0;
     // check redundancy for each of the covisibilities
-    const auto cur_covisibilities = cur_keyfrm->get_covisibilities();
+    const auto cur_covisibilities = cur_keyfrm->graph_node_->get_covisibilities();
     for (const auto covisibility : cur_covisibilities) {
         // cannot remove the origin
         if (covisibility->id_ == origin_keyfrm_id_) {

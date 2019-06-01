@@ -154,14 +154,14 @@ void global_optimization_module::correct_loop() {
 
     // 0-2. update the graph
 
-    cur_keyfrm_->update_connections();
+    cur_keyfrm_->graph_node_->update_connections();
 
     // 1. compute the Sim3 of the covisibilities of the current keyframe whose Sim3 is already estimated by the loop detector
     //    then, the covisibilities are moved to the corrected positions
     //    finally, landmarks observed in them are also moved to the correct position using the camera poses before and after camera pose correction
 
     // acquire the covisibilities of the current keyframe
-    std::vector<data::keyframe*> curr_neighbors = cur_keyfrm_->get_covisibilities();
+    std::vector<data::keyframe*> curr_neighbors = cur_keyfrm_->graph_node_->get_covisibilities();
     curr_neighbors.push_back(cur_keyfrm_);
 
     // Sim3 camera poses BEFORE loop correction
@@ -201,8 +201,8 @@ void global_optimization_module::correct_loop() {
     graph_optimizer_.optimize(final_candidate_keyfrm, cur_keyfrm_, Sim3s_nw_before_correction, Sim3s_nw_after_correction, new_connections);
 
     // add a loop edge
-    final_candidate_keyfrm->add_loop_edge(cur_keyfrm_);
-    cur_keyfrm_->add_loop_edge(final_candidate_keyfrm);
+    final_candidate_keyfrm->graph_node_->add_loop_edge(cur_keyfrm_);
+    cur_keyfrm_->graph_node_->add_loop_edge(final_candidate_keyfrm);
 
     // 5. launch loop BA
 
@@ -310,7 +310,7 @@ void global_optimization_module::correct_covisibility_keyframes(const module::ke
         neighbor->set_cam_pose(cam_pose_nw);
 
         // update graph
-        neighbor->update_connections();
+        neighbor->graph_node_->update_connections();
     }
 }
 
@@ -371,12 +371,12 @@ auto global_optimization_module::extract_new_connections(const std::vector<data:
 
     for (auto covisibility : covisibilities) {
         // acquire neighbors BEFORE loop fusion (because update_connections() is not called yet)
-        const auto neighbors_before_update = covisibility->get_covisibilities();
+        const auto neighbors_before_update = covisibility->graph_node_->get_covisibilities();
 
         // call update_connections()
-        covisibility->update_connections();
+        covisibility->graph_node_->update_connections();
         // acquire neighbors AFTER loop fusion
-        new_connections[covisibility] = covisibility->get_connected_keyframes();
+        new_connections[covisibility] = covisibility->graph_node_->get_connected_keyframes();
 
         // remove covisibilities
         for (const auto keyfrm_to_erase : covisibilities) {
