@@ -7,7 +7,7 @@ Running on Docker
 ``Dockerfile`` can be used for easy installation.
 This chapter provides instructions on building and running examples using Docker.
 
-Docker host machines with NVIDIA graphics cards are NOT officially supported yet.
+Note that **docker host machines with NVIDIA graphics cards are NOT officially supported yet.**
 
 .. NOTE ::
 
@@ -15,6 +15,8 @@ Docker host machines with NVIDIA graphics cards are NOT officially supported yet
     These examples depend on X11 forwarding with OpenGL for visualization.
     Note that our ``Dockerfile`` is **NOT** compatible with nvidia-docker1.
 
+| The instructions are tested on Ubuntu 16.04 and 18.04.
+| Docker for Mac are not supported due to OpenGL forwarding. Please :ref:`install the dependencies manually <section-macos>` if you are using macOS.
 
 .. _section-build-docker-image:
 

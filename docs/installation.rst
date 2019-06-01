@@ -20,7 +20,8 @@ Cloning the repository:
 
 .. NOTE ::
 
-    Docker users can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
+    Users of **Docker for Ubuntu** can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
+    (Docker for Mac are not supported.)
 
 
 .. _section-dependencies:
