@@ -21,7 +21,7 @@ The notable features are:
 * We provided **some code snippets** to understand the core functionalities of this system.
 
 OpenVSLAM is based on an indirect SLAM algorithm with sparse features, such as ORB-SLAM, ProSLAM, and UcoSLAM.
-One of the noteworthy features of OpenVSLAM is that the system can deal with images captured with multiple camera models, such as perspective, fisheye, and equirectangular.
+One of the noteworthy features of OpenVSLAM is that the system can deal with multiple camera models, such as perspective, fisheye, and equirectangular.
 If needed, users can implement extra camera models (e.g. dual fisheye, catadioptric) with ease.
 For example, visual SLAM algorithm using **equirectangular camera models** (e.g. RICOH THETA series, insta360 series, etc) is shown above.
 
