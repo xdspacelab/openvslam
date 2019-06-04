@@ -49,7 +49,7 @@ Requirements for OpenVSLAM
 
 .. NOTE ::
 
-    OpenCV with GUI support is necessary for using the build-in viewer.
+    OpenCV with GUI support is necessary for using the built-in viewer (Pangolin Viewer).
 
 .. NOTE ::
 
@@ -70,7 +70,7 @@ Requirements for Socket Publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | (**Optional**)
-| If you plan to use the browser-based viewer, please see `here <https://github.com/xdspacelab/openvslam-viewer>`__.
+| Will be provided soon.
 
 Recommended
 ^^^^^^^^^^^
