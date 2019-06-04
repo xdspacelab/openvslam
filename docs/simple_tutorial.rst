@@ -41,6 +41,8 @@ The later parts of this chapter explains what each of the commands do in more de
 
     # run tracking and mapping
     ./run_video_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_1/movie.mp4 -s ./aist_living_lab_1/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
+    # click the [Terminate] button to close the viewer
+    # you can find map.msg in the current directory
 
     # run localization
     ./run_video_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_2/movie.mp4 -s ./aist_living_lab_2/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
@@ -266,6 +268,8 @@ If the two viewers are not launching correctly, check if you launched the comman
     [2019-05-20 17:55:40.087] [I] clear BoW database
     [2019-05-20 17:55:40.284] [I] clear map database
 
+
+Please click the **Terminate** button to close the viewer.
 
 After terminating, you will find a map database file ``aist_living_lab_1_map.msg``.
 
