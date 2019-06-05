@@ -44,11 +44,9 @@ namespace feature {
 
 orb_extractor::orb_extractor(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                              const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
-                             const unsigned int edge_thr, const unsigned int patch_size,
                              const std::vector<std::vector<float>>& mask_rects)
         : orb_extractor(orb_params{max_num_keypts, scale_factor, num_levels,
                                    ini_fast_thr, min_fast_thr,
-                                   edge_thr, patch_size,
                                    mask_rects}) {}
 
 orb_extractor::orb_extractor(const orb_params& orb_params)
@@ -180,23 +178,6 @@ void orb_extractor::set_minimum_fast_threshold(const unsigned int minimum_fast_t
     orb_params_.min_fast_thr = minimum_fast_threshold;
 }
 
-unsigned int orb_extractor::get_edge_threshold() const {
-    return orb_params_.edge_thr_;
-}
-
-void orb_extractor::set_edge_threshold(const unsigned int edge_threshold) {
-    orb_params_.edge_thr_ = edge_threshold;
-}
-
-unsigned int orb_extractor::get_patch_size() const {
-    return orb_params_.patch_size_;
-}
-
-void orb_extractor::set_patch_size(const unsigned int patch_size) {
-    orb_params_.patch_size_ = patch_size;
-    initialize();
-}
-
 std::vector<float> orb_extractor::get_scale_factors() const {
     return scale_factors_;
 }
@@ -240,13 +221,13 @@ void orb_extractor::initialize() {
     num_keypts_per_level_.at(orb_params_.num_levels_ - 1) = std::max(static_cast<int>(orb_params_.max_num_keypts_) - static_cast<int>(total_num_keypts), 0);
 
     // orientation
-    u_max_.resize(orb_params_.half_patch_size_ + 1);
-    const unsigned int vmax = std::floor(orb_params_.half_patch_size_ * std::sqrt(2.0) / 2 + 1);
-    const unsigned int vmin = std::ceil(orb_params_.half_patch_size_ * std::sqrt(2.0) / 2);
+    u_max_.resize(fast_half_patch_size_ + 1);
+    const unsigned int vmax = std::floor(fast_half_patch_size_ * std::sqrt(2.0) / 2 + 1);
+    const unsigned int vmin = std::ceil(fast_half_patch_size_ * std::sqrt(2.0) / 2);
     for (unsigned int v = 0; v <= vmax; ++v) {
-        u_max_.at(v) = std::round(std::sqrt(orb_params_.half_patch_size_ * orb_params_.half_patch_size_ - v * v));
+        u_max_.at(v) = std::round(std::sqrt(fast_half_patch_size_ * fast_half_patch_size_ - v * v));
     }
-    for (unsigned int v = orb_params_.half_patch_size_, v0 = 0; vmin <= v; --v) {
+    for (unsigned int v = fast_half_patch_size_, v0 = 0; vmin <= v; --v) {
         while (u_max_.at(v0) == u_max_.at(v0 + 1)) {
             ++v0;
         }
@@ -278,26 +259,13 @@ void orb_extractor::create_rectangle_mask(const unsigned int cols, const unsigne
 }
 
 void orb_extractor::compute_image_pyramid(const cv::Mat& image) {
-    for (unsigned int level = 0; level < orb_params_.num_levels_; ++level) {
+    image_pyramid_.at(0) = image;
+    for (unsigned int level = 1; level < orb_params_.num_levels_; ++level) {
+        // determine the size of an image
         const double scale = scale_factors_.at(level);
-
         const cv::Size size(std::round(image.cols * 1.0 / scale), std::round(image.rows * 1.0 / scale));
-        const cv::Size whole_size(size.width + orb_params_.edge_thr_ * 2, size.height + orb_params_.edge_thr_ * 2);
-
-        const cv::Mat temp(whole_size, image.type());
-        image_pyramid_.at(level) = temp(cv::Rect(orb_params_.edge_thr_, orb_params_.edge_thr_, size.width, size.height));
-
-        if (level != 0) {
-            cv::resize(image_pyramid_.at(level - 1), image_pyramid_.at(level), size, 0, 0, cv::INTER_LINEAR);
-            cv::copyMakeBorder(image_pyramid_.at(level), temp,
-                               orb_params_.edge_thr_, orb_params_.edge_thr_, orb_params_.edge_thr_, orb_params_.edge_thr_,
-                               cv::BORDER_REFLECT_101 + cv::BORDER_ISOLATED);
-        }
-        else {
-            cv::copyMakeBorder(image, temp,
-                               orb_params_.edge_thr_, orb_params_.edge_thr_, orb_params_.edge_thr_, orb_params_.edge_thr_,
-                               cv::BORDER_REFLECT_101);
-        }
+        // resize
+        cv::resize(image_pyramid_.at(level - 1), image_pyramid_.at(level), size, 0, 0, cv::INTER_LINEAR);
     }
 }
 
@@ -309,6 +277,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
         return mask.at<unsigned char>(y * scale_factor, x * scale_factor) == 0;
     };
 
+    constexpr unsigned int overlap = 6;
     constexpr unsigned int cell_size = 64;
 
 #ifdef USE_OPENMP
@@ -317,10 +286,10 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
     for (unsigned int level = 0; level < orb_params_.num_levels_; ++level) {
         const float scale_factor = scale_factors_.at(level);
 
-        const int min_border_x = orb_params_.edge_thr_ - 3;
-        const int min_border_y = min_border_x;
-        const unsigned int max_border_x = image_pyramid_.at(level).cols - orb_params_.edge_thr_ + 3;
-        const unsigned int max_border_y = image_pyramid_.at(level).rows - orb_params_.edge_thr_ + 3;
+        constexpr unsigned int min_border_x = orb_patch_radius_;
+        constexpr unsigned int min_border_y = orb_patch_radius_;
+        const unsigned int max_border_x = image_pyramid_.at(level).cols - orb_patch_radius_;
+        const unsigned int max_border_y = image_pyramid_.at(level).rows - orb_patch_radius_;
 
         const unsigned int width = max_border_x - min_border_x;
         const unsigned int height = max_border_y - min_border_y;
@@ -330,7 +299,6 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
         const unsigned int cell_width = std::ceil(width / num_cols);
         const unsigned int cell_height = std::ceil(height / num_rows);
 
-        // 縦横cell_size[px]のグリッド（オーバーラップ6px）のそれぞれで仮の特徴点を計算して保存
         std::vector<cv::KeyPoint> keypts_to_distribute;
         keypts_to_distribute.reserve(orb_params_.max_num_keypts_ * 10);
 
@@ -338,11 +306,11 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
 #pragma omp parallel for
 #endif
         for (unsigned int i = 0; i < num_rows; ++i) {
-            const unsigned int ini_y = min_border_y + i * cell_height;
-            if (max_border_y - 3 <= ini_y) {
+            const unsigned int min_y = min_border_y + i * cell_height;
+            if (max_border_y - overlap <= min_y) {
                 continue;
             }
-            unsigned int max_y = ini_y + cell_height + 6;
+            unsigned int max_y = min_y + cell_height + overlap;
             if (max_border_y < max_y) {
                 max_y = max_border_y;
             }
@@ -351,30 +319,30 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
 #pragma omp parallel for
 #endif
             for (unsigned int j = 0; j < num_cols; ++j) {
-                const unsigned int ini_x = min_border_x + j * cell_width;
-                if (max_border_x - 3 <= ini_x) {
+                const unsigned int min_x = min_border_x + j * cell_width;
+                if (max_border_x - overlap <= min_x) {
                     continue;
                 }
-                unsigned int max_x = ini_x + cell_width + 6;
+                unsigned int max_x = min_x + cell_width + overlap;
                 if (max_border_x < max_x) {
                     max_x = max_border_x;
                 }
 
                 // patchの四隅いずれかがmask内である場合はFAST点を計算しない
                 if (!mask.empty()) {
-                    if (is_in_mask(ini_y, ini_x, scale_factor) || is_in_mask(max_y, ini_x, scale_factor)
-                        || is_in_mask(ini_y, max_x, scale_factor) || is_in_mask(max_y, max_x, scale_factor)) {
+                    if (is_in_mask(min_y, min_x, scale_factor) || is_in_mask(max_y, min_x, scale_factor)
+                        || is_in_mask(min_y, max_x, scale_factor) || is_in_mask(max_y, max_x, scale_factor)) {
                         continue;
                     }
                 }
 
                 std::vector<cv::KeyPoint> keypts_in_cell;
-                cv::FAST(image_pyramid_.at(level).rowRange(ini_y, max_y).colRange(ini_x, max_x),
+                cv::FAST(image_pyramid_.at(level).rowRange(min_y, max_y).colRange(min_x, max_x),
                          keypts_in_cell, orb_params_.ini_fast_thr_, true);
 
                 // 特徴点がなければ閾値を下げて再計算
                 if (keypts_in_cell.empty()) {
-                    cv::FAST(image_pyramid_.at(level).rowRange(ini_y, max_y).colRange(ini_x, max_x),
+                    cv::FAST(image_pyramid_.at(level).rowRange(min_y, max_y).colRange(min_x, max_x),
                              keypts_in_cell, orb_params_.min_fast_thr, true);
                 }
 
@@ -391,7 +359,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                         keypt.pt.x += j * cell_width;
                         keypt.pt.y += i * cell_height;
                         // mask内かどうかを確認
-                        if (!mask.empty() && is_in_mask(keypt.pt.y + min_border_y, keypt.pt.x + min_border_x, scale_factor)) {
+                        if (!mask.empty() && is_in_mask(min_border_y + keypt.pt.y, min_border_x + keypt.pt.x, scale_factor)) {
                             continue;
                         }
                         keypts_to_distribute.push_back(keypt);
@@ -409,7 +377,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                                                         num_keypts_per_level_.at(level));
 
         // patch sizeをscaleで補正したものがkeypoint sizeになる
-        const unsigned int scaled_patch_size = orb_params_.patch_size_ * scale_factors_.at(level);
+        const unsigned int scaled_patch_size = fast_patch_size_ * scale_factors_.at(level);
 
         for (auto& keypt : keypts_at_level) {
             // 座標は平行移動のみ補正(スケールについてはORB記述の後まで補正しない)
@@ -616,12 +584,12 @@ float orb_extractor::ic_angle(const cv::Mat& image, const cv::Point2f& point) co
 
     const uchar* const center = &image.at<uchar>(cvRound(point.y), cvRound(point.x));
 
-    for (int u = -orb_params_.half_patch_size_; u <= orb_params_.half_patch_size_; ++u) {
+    for (int u = -fast_half_patch_size_; u <= fast_half_patch_size_; ++u) {
         m_10 += u * center[u];
     }
 
     const auto step = static_cast<int>(image.step1());
-    for (int v = 1; v <= orb_params_.half_patch_size_; ++v) {
+    for (int v = 1; v <= fast_half_patch_size_; ++v) {
         unsigned int v_sum = 0;
         const int d = u_max_.at(v);
         for (int u = -d; u <= d; ++u) {

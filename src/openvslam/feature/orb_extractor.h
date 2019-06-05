@@ -12,9 +12,10 @@ namespace feature {
 
 class orb_extractor {
 public:
+    orb_extractor() = delete;
+
     orb_extractor(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                   const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
-                  const unsigned int edge_thr = 19, const unsigned int patch_size = 31,
                   const std::vector<std::vector<float>>& mask_rects = {});
 
     explicit orb_extractor(const orb_params& orb_params);
@@ -122,6 +123,14 @@ private:
 
     //! parameters for ORB extraction
     orb_params orb_params_;
+
+    //! BRIEF orientation
+    static constexpr unsigned int fast_patch_size_ = 31;
+    //! half size of FAST patch
+    static constexpr int fast_half_patch_size_ = fast_patch_size_ / 2;
+
+    //! size of maximum ORB patch radius
+    static constexpr unsigned int orb_patch_radius_ = 19;
 
     //! rectangle mask has been already initialized or not
     bool mask_is_initialized_ = false;

@@ -5,15 +5,11 @@
 namespace openvslam {
 namespace feature {
 
-orb_params::orb_params() : half_patch_size_(patch_size_ / 2) {}
-
 orb_params::orb_params(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                        const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
-                       const unsigned int edge_thr, const unsigned int patch_size,
                        const std::vector<std::vector<float>>& mask_rects)
         : max_num_keypts_(max_num_keypts), scale_factor_(scale_factor), num_levels_(num_levels),
           ini_fast_thr_(ini_fast_thr), min_fast_thr(min_fast_thr),
-          edge_thr_(edge_thr), patch_size_(patch_size), half_patch_size_(patch_size_ / 2),
           mask_rects_(mask_rects) {
     for (const auto& v : mask_rects_) {
         if (v.size() != 4) {
@@ -34,8 +30,6 @@ orb_params::orb_params(const YAML::Node& yaml_node)
                      yaml_node["Feature.num_levels"].as<unsigned int>(8),
                      yaml_node["Feature.ini_fast_threshold"].as<unsigned int>(20),
                      yaml_node["Feature.min_fast_threshold"].as<unsigned int>(7),
-                     yaml_node["Feature.edge_threshold"].as<unsigned int>(19),
-                     yaml_node["Feature.patch_size"].as<unsigned int>(31),
                      yaml_node["Feature.mask_rectangles"].as<std::vector<std::vector<float>>>(std::vector<std::vector<float>>())) {}
 
 void orb_params::show_parameters() const {
@@ -44,9 +38,6 @@ void orb_params::show_parameters() const {
     std::cout << "- number of levels: " << num_levels_ << std::endl;
     std::cout << "- initial fast threshold: " << ini_fast_thr_ << std::endl;
     std::cout << "- minimum fast threshold: " << min_fast_thr << std::endl;
-    std::cout << "- edge threshold: " << edge_thr_ << std::endl;
-    std::cout << "- patch size: " << patch_size_ << std::endl;
-    std::cout << "- half patch size: " << half_patch_size_ << std::endl;
     if (!mask_rects_.empty()) {
         std::cout << "- mask rectangles:" << std::endl;
         for (const auto& mask_rect : mask_rects_) {
