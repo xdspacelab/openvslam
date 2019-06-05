@@ -294,10 +294,8 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
         const unsigned int width = max_border_x - min_border_x;
         const unsigned int height = max_border_y - min_border_y;
 
-        const unsigned int num_cols = width / cell_size;
-        const unsigned int num_rows = height / cell_size;
-        const unsigned int cell_width = std::ceil(width / num_cols);
-        const unsigned int cell_height = std::ceil(height / num_rows);
+        const unsigned int num_cols = std::ceil(width / cell_size) + 1;
+        const unsigned int num_rows = std::ceil(height / cell_size) + 1;
 
         std::vector<cv::KeyPoint> keypts_to_distribute;
         keypts_to_distribute.reserve(orb_params_.max_num_keypts_ * 10);
@@ -306,11 +304,11 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
 #pragma omp parallel for
 #endif
         for (unsigned int i = 0; i < num_rows; ++i) {
-            const unsigned int min_y = min_border_y + i * cell_height;
+            const unsigned int min_y = min_border_y + i * cell_size;
             if (max_border_y - overlap <= min_y) {
                 continue;
             }
-            unsigned int max_y = min_y + cell_height + overlap;
+            unsigned int max_y = min_y + cell_size + overlap;
             if (max_border_y < max_y) {
                 max_y = max_border_y;
             }
@@ -319,11 +317,11 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
 #pragma omp parallel for
 #endif
             for (unsigned int j = 0; j < num_cols; ++j) {
-                const unsigned int min_x = min_border_x + j * cell_width;
+                const unsigned int min_x = min_border_x + j * cell_size;
                 if (max_border_x - overlap <= min_x) {
                     continue;
                 }
-                unsigned int max_x = min_x + cell_width + overlap;
+                unsigned int max_x = min_x + cell_size + overlap;
                 if (max_border_x < max_x) {
                     max_x = max_border_x;
                 }
@@ -356,8 +354,8 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
 #endif
                 {
                     for (auto& keypt : keypts_in_cell) {
-                        keypt.pt.x += j * cell_width;
-                        keypt.pt.y += i * cell_height;
+                        keypt.pt.x += j * cell_size;
+                        keypt.pt.y += i * cell_size;
                         // mask内かどうかを確認
                         if (!mask.empty() && is_in_mask(min_border_y + keypt.pt.y, min_border_x + keypt.pt.x, scale_factor)) {
                             continue;
