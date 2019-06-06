@@ -1,0 +1,14 @@
+{
+  "name": "openvslam-viewer",
+  "version": "0.0.1",
+  "description": "A cross-platform viewer for OpenVSLAM",
+  "repository": "https://github.com/xdspacelab/openvslam",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "express": "^4.16.2",
+    "socket.io": "^2.0.4"
+  },
+  "devDependencies": {
+    "ejs": "^2.5.7"
+  }
+}

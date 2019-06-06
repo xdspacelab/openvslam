@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package map_segment;
+
+message map {
+
+    message keyframe {
+        uint32 id = 1;
+        Mat44 pose = 2;
+    }
+
+    message edge {
+        uint32 id0 = 1;
+        uint32 id1 = 2;
+    }
+
+    message landmark {
+        uint32 id = 1;
+        repeated double coords = 2;
+        repeated double color = 3;
+    }
+
+    message Mat44 {
+        repeated double pose = 1;
+    }
+
+    message msg {
+        string tag = 1;
+        string txt = 2;
+    }
+
+    Mat44 current_frame = 1;
+    repeated keyframe keyframes = 2;
+    repeated edge edges = 3;
+    repeated landmark landmarks = 4;
+    repeated uint32 local_landmarks = 5;
+    repeated msg messages = 6;
+}
