@@ -2,6 +2,7 @@
 .gitignore
 .git/
 .idea/
+.vscode/
 
 # not needed for building OpenVSLAM
 Dockerfile
