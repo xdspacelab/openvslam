@@ -1,6 +1,8 @@
 FROM ubuntu:18.04
+ENV DEBIAN_FRONTEND noninteractive
 
 # install dependencies via apt
+ENV DEBCONF_NOWARNINGS yes
 RUN set -x && \
   apt-get update -y -qq && \
   apt-get upgrade -y -qq --no-install-recommends && \
@@ -211,6 +213,7 @@ RUN set -x && \
   cmake \
     -DBUILD_WITH_MARCH_NATIVE=ON \
     -DUSE_PANGOLIN_VIEWER=ON \
+    -DUSE_SOCKET_PUBLISHER=OFF \
     -DUSE_STACK_TRACE_LOGGER=ON \
     -DBOW_FRAMEWORK=DBoW2 \
     -DBUILD_TESTS=OFF \

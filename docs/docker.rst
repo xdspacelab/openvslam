@@ -4,7 +4,7 @@
 Running on Docker
 =================
 
-``Dockerfile`` can be used for easy installation.
+``Dockerfile.desktop`` can be used for easy installation.
 This chapter provides instructions on building and running examples using Docker.
 
 Note that **docker host machines with NVIDIA graphics cards are NOT officially supported yet.**
@@ -13,7 +13,7 @@ Note that **docker host machines with NVIDIA graphics cards are NOT officially s
 
     If you plan on using a machine with NVIDIA graphics card(s), please use `nvidia-docker2 <https://github.com/NVIDIA/nvidia-docker>`_ and the version 390 or later of NVIDIA driver.
     These examples depend on X11 forwarding with OpenGL for visualization.
-    Note that our ``Dockerfile`` is **NOT** compatible with nvidia-docker1.
+    Note that our ``Dockerfile.desktop`` is **NOT** compatible with nvidia-docker1.
 
 | The instructions are tested on Ubuntu 16.04 and 18.04.
 | Docker for Mac are not supported due to OpenGL forwarding. Please :ref:`install the dependencies manually <section-macos>` if you are using macOS.
@@ -29,7 +29,7 @@ Execute the following commands:
 
     git clone https://github.com/xdspacelab/openvslam
     cd openvslam
-    docker build -t openvslam-desktop .
+    docker build -t -f Dockerfile.desktop openvslam-desktop .
 
 
 You can accelerate the build of the docker image with ``--build-arg NUM_THREADS=<number of parallel builds>`` option. For example:
@@ -37,7 +37,7 @@ You can accelerate the build of the docker image with ``--build-arg NUM_THREADS=
 .. code-block:: bash
 
     # building the docker image with four threads
-    docker build -t  openvslam-desktop . --build-arg NUM_THREADS=4
+    docker build -t  openvslam-desktop -f Dockerfile.desktop . --build-arg NUM_THREADS=4
 
 
 .. _section-start-docker-container:
