@@ -66,12 +66,12 @@ Requirements for PangolinViewer
 
 * `GLEW <http://glew.sourceforge.net/>`_ : Required by Pangolin.
 
-Requirements for SocketPublisher
+Requirements for SocketViewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | We provided an WebGL-based simple viewer running on web browsers.
-| The SLAM systems publish the map and the frame to the server implemented with `Node.js <https://nodejs.org/>`_ via WebSocket. Thus, we call it **SocketPublisher**.
-| Please install the following dependencies if you plan on using SocketPublisher.
+| The SLAM systems publish the map and the frame to the server implemented with `Node.js <https://nodejs.org/>`_ via WebSocket. Thus, we call it **SocketViewer**.
+| Please install the following dependencies if you plan on using SocketViewer.
 
 * `socket.io-client-cpp <https://github.com/shinsumicco/socket.io-client-cpp>`_ : **Please use the custom version of socket.io-client-cpp** released in `https://github.com/shinsumicco/socket.io-client-cpp <https://github.com/shinsumicco/socket.io-client-cpp>`_.
 
@@ -126,7 +126,7 @@ Install the dependencies via ``apt``.
     # Pangolin dependencies
     apt install -y libglew-dev
 
-    # (if you plan on using SocketPublisher)
+    # (if you plan on using SocketViewer)
     # Protobuf dependencies
     apt install -y autogen autoconf libtool
 
@@ -203,7 +203,7 @@ Install the dependencies via ``brew``.
     # Pangolin dependencies
     brew install glew
 
-    # (if you plan on using SocketPublisher)
+    # (if you plan on using SocketViewer)
     # Protobuf dependencies
     brew install automake autoconf libtool
 
@@ -268,7 +268,7 @@ Download, build and install g2o.
     make -j
     make install
 
-| (**if you plan on using SocketPublisher**)
+| (**if you plan on using SocketViewer**)
 | Download, build and install socket.io-client-cpp from source.
 
 .. code-block:: bash
@@ -287,7 +287,7 @@ Download, build and install g2o.
     make -j
     make install
 
-| (**if you plan on using SocketPublisher**)
+| (**if you plan on using SocketViewer**)
 | Install Protobuf.
 
 If you use Ubuntu 18.04 or macOS, Protobuf 3.x can be installed via ``apt`` or ``brew``.
@@ -336,7 +336,7 @@ When building with support for PangolinViewer, please specify the following cmak
         ..
     make -j
 
-When building with support for SocketPublisher, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=OFF`` and ``-DUSE_SOCKET_PUBLISHER=ON``.
+When building with support for SocketViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=OFF`` and ``-DUSE_SOCKET_PUBLISHER=ON``.
 
 .. code-block:: bash
 
