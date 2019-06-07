@@ -365,8 +365,8 @@ When building with support for SocketViewer, please specify the following cmake 
     - ``OpenCV_DIR=/usr/local/share/OpenCV``
     - ``DBoW2_DIR=/usr/local/lib/cmake/DBoW2``
     - ``G2O_ROOT=/usr/local``
-    - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin``
-    - ``sioclient_DIR=/usr/local/lib/cmake/sioclient``
+    - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin`` (if installed)
+    - ``sioclient_DIR=/usr/local/lib/cmake/sioclient`` (if installed)
 
 After building, check to see if it was successfully built by executing ``./run_kitti_slam -h``.
 
