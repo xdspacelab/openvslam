@@ -55,22 +55,33 @@ Requirements for OpenVSLAM
 
     OpenCV with video support is necessary if you plan on using video files (e.g. ``.mp4``) as inputs.
 
-Requirements for Pangolin Viewer
+Requirements for PangolinViewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| (**Recommended**)
-| We provided a simple viewer implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_.
-| Please install the following dependencies if you plan on using the viewer.
+| We provided an OpenGL-based simple viewer.
+| This viewer is implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_. Thus, we call it **PangolinViewer**.
+| Please install the following dependencies if you plan on using PangolinViewer.
 
 * `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_ : Please use the latest release. Tested on commit ID `ad8b5f8 <https://github.com/stevenlovegrove/Pangolin/tree/ad8b5f83222291c51b4800d5a5873b0e90a0cf81>`_.
 
 * `GLEW <http://glew.sourceforge.net/>`_ : Required by Pangolin.
 
-Requirements for Socket Publisher
+Requirements for SocketPublisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| (**Optional**)
-| Will be provided soon.
+| We provided an WebGL-based simple viewer running on web browsers.
+| The SLAM systems publish the map and the frame to the server implemented with `Node.js <https://nodejs.org/>`_ via WebSocket. Thus, we call it **SocketPublisher**.
+| Please install the following dependencies if you plan on using SocketPublisher.
+
+* `socket.io-client-cpp <https://github.com/shinsumicco/socket.io-client-cpp>`_ : **Please use the custom version of socket.io-client-cpp** released in `https://github.com/shinsumicco/socket.io-client-cpp <https://github.com/shinsumicco/socket.io-client-cpp>`_.
+
+* `Protobuf <https://github.com/protocolbuffers/protobuf>`_ : version 3 or later.
+
+The following libraries are the dependencies for the server.
+
+* `Node.js <https://nodejs.org/>`_ : version 6 or later.
+
+* `npm <https://www.npmjs.com/>`_ : Testet on version 3.5.2.
 
 Recommended
 ^^^^^^^^^^^
