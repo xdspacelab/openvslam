@@ -18,11 +18,10 @@ Cloning the repository:
 
        git clone https://github.com/xdspacelab/openvslam
 
-.. NOTE ::
+If you are Windows 10 user, please install the dependencies and OpenVSLAM with :ref:`SocketViewer support <subsection-dependencies-socketviewer>` on `Windows Subsystem for Linux (WSL) <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`__.
+We have checked the correct operation of OpenVSLAM and SocketViewer on Ubuntu 16.04 running on WSL.
 
-    Users of **Docker for Ubuntu** can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
-    (Docker for Mac are not supported.)
-
+:ref:`Docker <chapter-docker>` systems can be used instead of preparing the dependencies manually.
 
 .. _section-dependencies:
 
@@ -55,22 +54,35 @@ Requirements for OpenVSLAM
 
     OpenCV with video support is necessary if you plan on using video files (e.g. ``.mp4``) as inputs.
 
-Requirements for Pangolin Viewer
+Requirements for PangolinViewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| (**Recommended**)
-| We provided a simple viewer implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_.
-| Please install the following dependencies if you plan on using the viewer.
+| We provided an OpenGL-based simple viewer.
+| This viewer is implemented with `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_. Thus, we call it **PangolinViewer**.
+| Please install the following dependencies if you plan on using PangolinViewer.
 
 * `Pangolin <https://github.com/stevenlovegrove/Pangolin>`_ : Please use the latest release. Tested on commit ID `ad8b5f8 <https://github.com/stevenlovegrove/Pangolin/tree/ad8b5f83222291c51b4800d5a5873b0e90a0cf81>`_.
 
 * `GLEW <http://glew.sourceforge.net/>`_ : Required by Pangolin.
 
-Requirements for Socket Publisher
+.. _subsection-dependencies-socketviewer:
+
+Requirements for SocketViewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| (**Optional**)
-| Will be provided soon.
+| We provided an WebGL-based simple viewer running on web browsers.
+| The SLAM systems publish the map and the frame to the server implemented with `Node.js <https://nodejs.org/>`_ via WebSocket. Thus, we call it **SocketViewer**.
+| Please install the following dependencies if you plan on using SocketViewer.
+
+* `socket.io-client-cpp <https://github.com/shinsumicco/socket.io-client-cpp>`_ : **Please use the custom version of socket.io-client-cpp** released in `https://github.com/shinsumicco/socket.io-client-cpp <https://github.com/shinsumicco/socket.io-client-cpp>`_.
+
+* `Protobuf <https://github.com/protocolbuffers/protobuf>`_ : version 3 or later.
+
+The following libraries are the dependencies for the server.
+
+* `Node.js <https://nodejs.org/>`_ : version 6 or later.
+
+* `npm <https://www.npmjs.com/>`_ : Tested on version 3.5.2.
 
 Recommended
 ^^^^^^^^^^^
@@ -110,8 +122,17 @@ Install the dependencies via ``apt``.
     apt install -y libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavresample-dev
     # other dependencies
     apt install -y libyaml-cpp-dev libgoogle-glog-dev libgflags-dev 
+
+    # (if you plan on using PangolinViewer)
     # Pangolin dependencies
     apt install -y libglew-dev
+
+    # (if you plan on using SocketViewer)
+    # Protobuf dependencies
+    apt install -y autogen autoconf libtool
+    # Node.js
+    curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+    apt install -y nodejs
 
 Download and install Eigen from source.
 
@@ -181,8 +202,16 @@ Install the dependencies via ``brew``.
     brew install opencv
     # other dependencies
     brew install yaml-cpp glog gflags
+
+    # (if you plan on using PangolinViewer)
     # Pangolin dependencies
     brew install glew
+
+    # (if you plan on using SocketViewer)
+    # Protobuf dependencies
+    brew install automake autoconf libtool
+    # Node.js
+    brew install node
 
 Jump to :ref:`Common Installation Instructions <subsection-common-linux-macos>` for the next step.
 
@@ -229,7 +258,8 @@ Download, build and install g2o.
     make -j
     make install
 
-Download, build and install Pangolin from source.
+| (**if you plan on using PangolinViewer**)
+| Download, build and install Pangolin from source.
 
 .. code-block:: bash
 
@@ -244,13 +274,57 @@ Download, build and install Pangolin from source.
     make -j
     make install
 
+| (**if you plan on using SocketViewer**)
+| Download, build and install socket.io-client-cpp from source.
+
+.. code-block:: bash
+
+    cd /path/to/working/dir
+    git clone https://github.com/shinsumicco/socket.io-client-cpp
+    cd socket.io-client-cpp
+    git submodule init
+    git submodule update
+    mkdir build && cd build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DBUILD_UNIT_TESTS=OFF \
+        ..
+    make -j
+    make install
+
+| (**if you plan on using SocketViewer**)
+| Install Protobuf.
+
+If you use Ubuntu 18.04 or macOS, Protobuf 3.x can be installed via ``apt`` or ``brew``.
+
+.. code-block:: bash
+
+    # for Ubuntu 18.04 (or later)
+    sudo apt install -y libprotobuf-dev protobuf-compiler
+    # for macOS
+    brew install protobuf
+
+Otherwise, please download, build and install Protobuf from source.
+
+.. code-block:: bash
+
+    wget -q https://github.com/google/protobuf/archive/v3.6.1.tar.gz
+    tar xf v3.6.1.tar.gz
+    cd protobuf-3.6.1
+    ./autogen.sh
+    ./configure \
+        --prefix=/usr/local \
+        --enable-static=no
+    make -j
+    make install
 
 .. _section-build-unix:
 
 Build Instructions
 ==================
 
-When building with support for Pangolin Viewer.
+When building with support for PangolinViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=ON`` and ``-DUSE_SOCKET_PUBLISHER=OFF``.
 
 .. code-block:: bash
 
@@ -261,6 +335,25 @@ When building with support for Pangolin Viewer.
     cmake \
         -DBUILD_WITH_MARCH_NATIVE=ON \
         -DUSE_PANGOLIN_VIEWER=ON \
+        -DUSE_SOCKET_PUBLISHER=OFF \
+        -DUSE_STACK_TRACE_LOGGER=ON \
+        -DBOW_FRAMEWORK=DBoW2 \
+        -DBUILD_TESTS=ON \
+        ..
+    make -j
+
+When building with support for SocketViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=OFF`` and ``-DUSE_SOCKET_PUBLISHER=ON``.
+
+.. code-block:: bash
+
+    cd /path/to/openvslam
+    git submodule init
+    git submodule update
+    mkdir build && cd build
+    cmake \
+        -DBUILD_WITH_MARCH_NATIVE=ON \
+        -DUSE_PANGOLIN_VIEWER=OFF \
+        -DUSE_SOCKET_PUBLISHER=ON \
         -DUSE_STACK_TRACE_LOGGER=ON \
         -DBOW_FRAMEWORK=DBoW2 \
         -DBUILD_TESTS=ON \
@@ -276,9 +369,10 @@ When building with support for Pangolin Viewer.
     - ``OpenCV_DIR=/usr/local/share/OpenCV``
     - ``DBoW2_DIR=/usr/local/lib/cmake/DBoW2``
     - ``G2O_ROOT=/usr/local``
-    - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin``
+    - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin`` (if installed)
+    - ``sioclient_DIR=/usr/local/lib/cmake/sioclient`` (if installed)
 
-After building, check to see if it was successfully built by executing ``./build/run_kitti_slam -h``.
+After building, check to see if it was successfully built by executing ``./run_kitti_slam -h``.
 
 .. code-block:: bash
 
@@ -298,3 +392,43 @@ After building, check to see if it was successfully built by executing ``./build
 .. NOTE ::
 
     If OpenVSLAM terminates abnormaly, rebuild g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option for ``cmake`` configulation.
+
+
+.. _section-server-setup:
+
+Server Setup for SocketViewer
+=============================
+
+If you plan on using SocketViewer, please setup the environment for the server with ``npm``.
+
+.. code-block:: bash
+
+    $ cd /path/to/openvslam/viewer
+    $ ls
+    Dockerfile  app.js  package.json  public  views
+    $ npm install
+    added 88 packages from 60 contributors and audited 204 packages in 2.105s
+    found 0 vulnerabilities
+    $ ls
+    Dockerfile  app.js  node_modules  package-lock.json  package.json  public  views
+
+Then, launch the server with ``node app.js``.
+
+.. code-block:: bash
+
+    $ cd /path/to/openvslam/viewer
+    $ ls
+    Dockerfile  app.js  node_modules  package-lock.json  package.json  public  views
+    $ node app.js
+    WebSocket: listening on *:3000
+    HTTP server: listening on *:3001
+
+After launching, please access to ``http://localhost:3001/`` to check whether the server is correctly launched.
+
+.. image:: ./img/browser_viewer_default.png
+    :width: 800px
+    :align: center
+
+.. NOTE ::
+
+    When you try :ref:`the tutotial <chapter-simple-tutorial>` and :ref:`the examples <chapter-example>` with SocketViewer, please launch the server in the other terminal and access to it with the web browser **in advance**.

@@ -9,9 +9,9 @@ publisher::publisher(const std::shared_ptr<openvslam::config>& cfg, openvslam::s
                      const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
                      const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher)
         : system_(system),
-          emitting_interval_(cfg->yaml_node_["Socket.emitting_interval"].as<unsigned int>(15000)),
-          image_quality_(cfg->yaml_node_["Socket.image_quality"].as<unsigned int>(20)),
-          client_(new socket_client(cfg->yaml_node_["Socket.server_uri"].as<std::string>("http://127.0.0.1:3000"))) {
+          emitting_interval_(cfg->yaml_node_["SocketPublisher.emitting_interval"].as<unsigned int>(15000)),
+          image_quality_(cfg->yaml_node_["SocketPublisher.image_quality"].as<unsigned int>(20)),
+          client_(new socket_client(cfg->yaml_node_["SocketPublisher.server_uri"].as<std::string>("http://127.0.0.1:3000"))) {
 
     const auto camera = cfg->camera_;
     const auto img_cols = (camera->cols_ < 1) ? 640 : camera->cols_;
@@ -39,7 +39,7 @@ void publisher::run() {
 
         const auto serialized_frame_data = data_serializer_->serialize_latest_frame(image_quality_);
         if (!serialized_frame_data.empty()) {
-            client_->emit("image_publish", serialized_frame_data);
+            client_->emit("frame_publish", serialized_frame_data);
         }
 
         // sleep until emitting interval time is past
@@ -66,10 +66,10 @@ void publisher::run() {
 }
 
 void publisher::callback(const std::string& message) {
-    if (message == "localization_mode_true") {
+    if (message == "disable_mapping_mode") {
         system_->disable_mapping_module();
     }
-    else if (message == "localization_mode_false") {
+    else if (message == "enable_mapping_mode") {
         system_->enable_mapping_module();
     }
     else if (message == "reset") {

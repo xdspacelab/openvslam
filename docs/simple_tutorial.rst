@@ -7,6 +7,10 @@ Simple Tutorial
 TL; DR
 ^^^^^^
 
+.. NOTE ::
+
+  If you use :ref:`SocketViewer <subsection-dependencies-socketviewer>`, please launch the server in the other terminal and access to it with the web browser **in advance**.
+
 Running the following commands will give a feel for what OpenVSLAM can do.
 The later parts of this chapter explains what each of the commands do in more detail.
 

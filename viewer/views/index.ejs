@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>OpenVSLAM SocketViewer</title>
+  <script type="text/javascript" src="js/lib/dat.gui.min.js"></script>
+  <script type="text/javascript" src="js/lib/protobuf.min.js"></script>
+  <script type="text/javascript" src="js/lib/stats.min.js"></script>
+  <script type="text/javascript" src="js/lib/three.min.js"></script>
+  <script type="text/javascript" src="js/ViewControls.js"></script>
+  <script type="text/javascript" src="js/Mouse.js"></script>
+  <script type="text/javascript" src="js/PointCloud.js"></script>
+  <script type="text/javascript" src="js/CameraFrames.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #thumb {
+      position: absolute;
+      top: 0px;
+      left: 80px;
+      background-color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="thumb" height="300" width="600"></canvas>
+  <div id="Stats-output">
+  </div>
+  <div id="WebGL-output">
+  </div>
+  <script type="text/javascript" src="js/main.js"></script>
+  <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+  <script>
+    let socket = io();
+
+    socket.on("map_publish", function (msg) {
+      receiveProtobuf(msg)
+    });
+
+    let ctx = document.getElementById('thumb').getContext('2d');
+    socket.on("frame_publish", function (msg) {
+      if (msg.image) {
+        let img = new Image();
+        img.src = 'data:image/jpeg;base64,' + msg.buffer;
+        img.onload = function () {
+          ctx.drawImage(img, 0, 0, this.width, this.height, 0, 0, CANVAS_SIZE[0], CANVAS_SIZE[1]);
+        }
+      }
+    });
+
+    // load main function
+    window.onload = init;
+    // listen to the resize events
+    window.addEventListener('resize', onResize, false);
+  </script>
+</body>
+
+</html>

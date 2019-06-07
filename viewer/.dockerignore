@@ -1,0 +1,8 @@
+# hidden files and dirs
+.gitignore
+.git/
+.idea/
+.vscode/
+
+# not needed
+node_modules/

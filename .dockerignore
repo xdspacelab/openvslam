@@ -2,14 +2,16 @@
 .gitignore
 .git/
 .idea/
+.vscode/
 
 # not needed for building OpenVSLAM
-Dockerfile
+Dockerfile*
 LICENSE
 README.md
 wercker.yml
 docs/
 test/
+viewer/
 
 # build directory
 build/
