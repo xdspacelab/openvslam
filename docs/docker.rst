@@ -122,7 +122,7 @@ Execute the following commands:
 Starting Docker Containers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Instruction for Linux
+On Linux
 `````````````````````
 
 Launch the server container and access to it with the web browser in advance.
@@ -148,11 +148,11 @@ See :ref:`Tutorial <chapter-simple-tutorial>` to run SLAM examples in the contai
 
 If you need to access to any files and directories on a host machine from the container, :ref:`bind directories <section-directory-binding>` between the host and the container.
 
-Instruction for macOS
+On macOS
 `````````````````````
 
 Launch the server container and access to it with the web browser in advance.
-Please specify ``--port 3001:3001`` for port-forwarding.
+Please specify ``-p 3001:3001`` for port-forwarding.
 
 .. code-block:: bash
 
@@ -181,7 +181,7 @@ Then, inspect the container's IP address and append the ``SocketPublisher.server
     #============================#
 
     # append this entry
-    Socket.server_uri: "http://172.17.0.2:3000"
+    SocketPublisher.server_uri: "http://172.17.0.2:3000"
 
 Next, launch the container of OpenVSLAM.
 The shell interface will be launched in the docker container.
@@ -192,7 +192,7 @@ The shell interface will be launched in the docker container.
     root@hostname:/openvslam/build#
 
 | See :ref:`Tutorial <chapter-simple-tutorial>` to run SLAM examples in the container.
-| Please don't forget to append ``SocketPublisher.server_uri`` entry to the `config.yaml` if you use the downloaded datasets in the tutorial.
+| Please don't forget to append ``SocketPublisher.server_uri`` entry to the ``config.yaml`` if you use the downloaded datasets in the tutorial.
 
 If you need to access to any files and directories on a host machine from the container, :ref:`bind directories <section-directory-binding>` between the host and the container.
 
