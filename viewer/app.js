@@ -39,9 +39,9 @@ io_publisher.on("connection", function (socket) {
 });
 
 http_server.listen(3000, function () {
-  console.log("Listening on *:3000");
+  console.log("WebSocket: listening on *:3000");
 });
 
 http_publisher.listen(3001, function () {
-  console.log("Listening on *:3001")
+  console.log("HTTP server: listening on *:3001")
 });

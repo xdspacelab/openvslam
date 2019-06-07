@@ -386,3 +386,39 @@ After building, check to see if it was successfully built by executing ``./run_k
 .. NOTE ::
 
     If OpenVSLAM terminates abnormaly, rebuild g2o and OpenVSLAM with ``-DBUILD_WITH_MARCH_NATIVE=OFF`` option for ``cmake`` configulation.
+
+
+.. _section-server-setup:
+
+Server Setup for SocketViewer
+=============================
+
+If you plan on using SocketViewer, please setup the environment for the server with ``npm``.
+
+.. code-block:: bash
+
+    $ cd /path/to/openvslam/viewer
+    $ ls
+    Dockerfile  app.js  package.json  public  views
+    $ npm install
+    added 88 packages from 60 contributors and audited 204 packages in 2.105s
+    found 0 vulnerabilities
+    $ ls
+    Dockerfile  app.js  node_modules  package-lock.json  package.json  public  views
+
+Then, launch the server with ``node app.js``.
+
+.. code-block:: bash
+
+    $ cd /path/to/openvslam/viewer
+    $ ls
+    Dockerfile  app.js  node_modules  package-lock.json  package.json  public  views
+    $ node app.js
+    WebSocket: listening on *:3000
+    HTTP server: listening on *:3001
+
+After launching, please access to ``http://localhost:3001/`` to check whether the server is correctly launched.
+
+.. image:: ./img/browser_viewer_default.png
+    :width: 800px
+    :align: center
