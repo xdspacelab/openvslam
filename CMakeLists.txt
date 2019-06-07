@@ -59,6 +59,16 @@ else()
     message(STATUS "Google Perftools: DISABLED")
 endif()
 
+set(USE_SSE_ORB OFF CACHE BOOL "Enable SSE in ORB extraction")
+
+if(USE_SSE_ORB)
+    message(STATUS "SSE for ORB extraction: ENABLED")
+    add_definitions(-DUSE_SSE_ORB)
+else()
+    message(STATUS "SSE for ORB extraction: DISABLED")
+    remove_definitions(-DUSE_SSE_ORB)
+endif()
+
 ########################
 # Set compiler options #
 ########################
