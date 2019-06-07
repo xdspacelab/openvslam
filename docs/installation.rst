@@ -18,11 +18,10 @@ Cloning the repository:
 
        git clone https://github.com/xdspacelab/openvslam
 
-.. NOTE ::
+If you are Windows 10 user, please install the dependencies and OpenVSLAM with :ref:`SocketViewer support <subsection-dependencies-socketviewer>` on `Windows Subsystem for Linux (WSL) <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`__.
+We have checked the correct operation of OpenVSLAM and SocketViewer on Ubuntu 16.04 running on WSL.
 
-    Users of **Docker for Ubuntu** can use :ref:`Docker <chapter-docker>` instead of preparing the dependencies manually.
-    (Docker for Mac are not supported.)
-
+:ref:`Docker <chapter-docker>` systems can be used instead of preparing the dependencies manually.
 
 .. _section-dependencies:
 
