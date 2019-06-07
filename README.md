@@ -1,7 +1,7 @@
 # OpenVSLAM: a Versatile Visual SLAM Framework
 [![Wercker Status](https://app.wercker.com/status/8b02a43f48216385658bb3857aae5fd8/s/)](https://app.wercker.com/project/byKey/8b02a43f48216385658bb3857aae5fd8)
 [![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/en/master/?badge=master)
-[![Docker Build Status](https://img.shields.io/docker/cloud/build/shinsumicco/openvslam-desktop.svg)](https://hub.docker.com/r/shinsumicco/openvslam-desktop)
+[![Docker Build Status](https://img.shields.io/docker/cloud/build/shinsumicco/openvslam.svg)](https://hub.docker.com/r/shinsumicco/openvslam)
 
 ## Overview
 
