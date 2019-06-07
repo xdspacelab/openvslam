@@ -130,7 +130,10 @@ Install the dependencies via ``apt``.
 
     # (if you plan on using SocketViewer)
     # Protobuf dependencies
-    apt install -y autogen autoconf libtool nodejs
+    apt install -y autogen autoconf libtool
+    # Node.js dependencies
+    curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+    apt install -y nodejs
 
 Download and install Eigen from source.
 
@@ -207,7 +210,9 @@ Install the dependencies via ``brew``.
 
     # (if you plan on using SocketViewer)
     # Protobuf dependencies
-    brew install automake autoconf libtool node
+    brew install automake autoconf libtool
+    # Node.js
+    brew install node
 
 Jump to :ref:`Common Installation Instructions <subsection-common-linux-macos>` for the next step.
 

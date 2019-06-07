@@ -34,7 +34,7 @@ Execute the following commands:
 .. code-block:: bash
 
     cd /path/to/openvslam
-    docker build -t -f Dockerfile.desktop openvslam-desktop .
+    docker build -t openvslam-desktop -f Dockerfile.desktop .
 
 
 You can accelerate the build of the docker image with ``--build-arg NUM_THREADS=<number of parallel builds>`` option. For example:
@@ -98,7 +98,7 @@ Execute the following commands:
 .. code-block:: bash
 
     cd /path/to/openvslam
-    docker build -t -f Dockerfile.socket openvslam-socket .
+    docker build -t openvslam-socket -f Dockerfile.socket .
 
 
 You can accelerate the build of the docker image with ``--build-arg NUM_THREADS=<number of parallel builds>`` option. For example:
