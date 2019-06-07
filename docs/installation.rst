@@ -301,7 +301,7 @@ If you use Ubuntu 18.04 or macOS, Protobuf 3.x can be installed via ``apt`` or `
 .. code-block:: bash
 
     # for Ubuntu 18.04 (or later)
-    sudo apt install -y libprotobuf-dev protobuf-compiler
+    apt install -y libprotobuf-dev protobuf-compiler
     # for macOS
     brew install protobuf
 
