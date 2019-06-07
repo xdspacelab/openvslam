@@ -318,7 +318,7 @@ Otherwise, please download, build and install Protobuf from source.
 Build Instructions
 ==================
 
-When building with support for Pangolin Viewer.
+When building with support for PangolinViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=ON`` and ``-DUSE_SOCKET_PUBLISHER=OFF``.
 
 .. code-block:: bash
 
@@ -329,6 +329,25 @@ When building with support for Pangolin Viewer.
     cmake \
         -DBUILD_WITH_MARCH_NATIVE=ON \
         -DUSE_PANGOLIN_VIEWER=ON \
+        -DUSE_SOCKET_PUBLISHER=OFF \
+        -DUSE_STACK_TRACE_LOGGER=ON \
+        -DBOW_FRAMEWORK=DBoW2 \
+        -DBUILD_TESTS=ON \
+        ..
+    make -j
+
+When building with support for SocketPublisher, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=OFF`` and ``-DUSE_SOCKET_PUBLISHER=ON``.
+
+.. code-block:: bash
+
+    cd /path/to/openvslam
+    git submodule init
+    git submodule update
+    mkdir build && cd build
+    cmake \
+        -DBUILD_WITH_MARCH_NATIVE=ON \
+        -DUSE_PANGOLIN_VIEWER=OFF \
+        -DUSE_SOCKET_PUBLISHER=ON \
         -DUSE_STACK_TRACE_LOGGER=ON \
         -DBOW_FRAMEWORK=DBoW2 \
         -DBUILD_TESTS=ON \
@@ -345,8 +364,9 @@ When building with support for Pangolin Viewer.
     - ``DBoW2_DIR=/usr/local/lib/cmake/DBoW2``
     - ``G2O_ROOT=/usr/local``
     - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin``
+    - ``sioclient_DIR=/usr/local/lib/cmake/sioclient``
 
-After building, check to see if it was successfully built by executing ``./build/run_kitti_slam -h``.
+After building, check to see if it was successfully built by executing ``./run_kitti_slam -h``.
 
 .. code-block:: bash
 
