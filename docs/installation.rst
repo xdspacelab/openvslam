@@ -66,6 +66,8 @@ Requirements for PangolinViewer
 
 * `GLEW <http://glew.sourceforge.net/>`_ : Required by Pangolin.
 
+.. _subsection-dependencies-socketviewer:
+
 Requirements for SocketViewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -422,3 +424,7 @@ After launching, please access to ``http://localhost:3001/`` to check whether th
 .. image:: ./img/browser_viewer_default.png
     :width: 800px
     :align: center
+
+.. NOTE ::
+
+    When you try :ref:`the tutotial <chapter-simple-tutorial>` and :ref:`the examples <chapter-example>` with SocketViewer, please launch the server in the other terminal and access to it with the web browser **in advance**.
