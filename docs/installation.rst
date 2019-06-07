@@ -121,8 +121,14 @@ Install the dependencies via ``apt``.
     apt install -y libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavresample-dev
     # other dependencies
     apt install -y libyaml-cpp-dev libgoogle-glog-dev libgflags-dev 
+
+    # (if you plan on using PangolinViewer)
     # Pangolin dependencies
     apt install -y libglew-dev
+
+    # (if you plan on using SocketPublisher)
+    # Protobuf dependencies
+    apt install -y autogen autoconf libtool
 
 Download and install Eigen from source.
 
@@ -192,8 +198,14 @@ Install the dependencies via ``brew``.
     brew install opencv
     # other dependencies
     brew install yaml-cpp glog gflags
+
+    # (if you plan on using PangolinViewer)
     # Pangolin dependencies
     brew install glew
+
+    # (if you plan on using SocketPublisher)
+    # Protobuf dependencies
+    brew install automake autoconf libtool
 
 Jump to :ref:`Common Installation Instructions <subsection-common-linux-macos>` for the next step.
 
@@ -240,7 +252,8 @@ Download, build and install g2o.
     make -j
     make install
 
-Download, build and install Pangolin from source.
+| (**if you plan on using PangolinViewer**)
+| Download, build and install Pangolin from source.
 
 .. code-block:: bash
 
@@ -255,6 +268,50 @@ Download, build and install Pangolin from source.
     make -j
     make install
 
+| (**if you plan on using SocketPublisher**)
+| Download, build and install socket.io-client-cpp from source.
+
+.. code-block:: bash
+
+    cd /path/to/working/dir
+    git clone https://github.com/shinsumicco/socket.io-client-cpp
+    cd socket.io-client-cpp
+    git submodule init
+    git submodule update
+    mkdir build && cd build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DBUILD_UNIT_TESTS=OFF \
+        ..
+    make -j
+    make install
+
+| (**if you plan on using SocketPublisher**)
+| Install Protobuf.
+
+If you use Ubuntu 18.04 or macOS, Protobuf 3.x can be installed via ``apt`` or ``brew``.
+
+.. code-block:: bash
+
+    # for Ubuntu 18.04 (or later)
+    sudo apt install -y libprotobuf-dev protobuf-compiler
+    # for macOS
+    brew install protobuf
+
+Otherwise, please download, build and install Protobuf from source.
+
+.. code-block:: bash
+
+    wget -q https://github.com/google/protobuf/archive/v3.6.1.tar.gz
+    tar xf v3.6.1.tar.gz
+    cd protobuf-3.6.1
+    ./autogen.sh
+    ./configure \
+        --prefix=/usr/local \
+        --enable-static=no
+    make -j
+    make install
 
 .. _section-build-unix:
 
