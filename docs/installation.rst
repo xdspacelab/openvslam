@@ -82,7 +82,7 @@ The following libraries are the dependencies for the server.
 
 * `Node.js <https://nodejs.org/>`_ : version 6 or later.
 
-* `npm <https://www.npmjs.com/>`_ : Testet on version 3.5.2.
+* `npm <https://www.npmjs.com/>`_ : Tested on version 3.5.2.
 
 Recommended
 ^^^^^^^^^^^
@@ -130,7 +130,7 @@ Install the dependencies via ``apt``.
     # (if you plan on using SocketViewer)
     # Protobuf dependencies
     apt install -y autogen autoconf libtool
-    # Node.js dependencies
+    # Node.js
     curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
     apt install -y nodejs
 
