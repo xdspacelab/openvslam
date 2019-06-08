@@ -12,9 +12,7 @@ TEST(orb_params, load_yaml_without_rectangle_mask) {
             "Feature.scale_factor: 1.3\n"
             "Feature.num_levels: 12\n"
             "Feature.ini_fast_threshold: 25\n"
-            "Feature.min_fast_threshold: 9\n"
-            "Feature.edge_threshold: 15\n"
-            "Feature.patch_size: 21\n";
+            "Feature.min_fast_threshold: 9\n";
 
     const auto yaml_node = YAML::Load(yaml);
     const auto params = feature::orb_params(yaml_node);
@@ -24,8 +22,6 @@ TEST(orb_params, load_yaml_without_rectangle_mask) {
     EXPECT_EQ(params.num_levels_, 12);
     EXPECT_EQ(params.ini_fast_thr_, 25);
     EXPECT_EQ(params.min_fast_thr, 9);
-    EXPECT_EQ(params.edge_thr_, 15);
-    EXPECT_EQ(params.patch_size_, 21);
     EXPECT_EQ(params.mask_rects_.size(), 0);
 }
 
@@ -38,8 +34,6 @@ TEST(orb_params, load_yaml_with_rectangle_mask) {
             "Feature.num_levels: 12\n"
             "Feature.ini_fast_threshold: 25\n"
             "Feature.min_fast_threshold: 9\n"
-            "Feature.edge_threshold: 15\n"
-            "Feature.patch_size: 21\n"
             "Feature.mask_rectangles:\n"
             "- [0.2, 0.5, 0.3, 0.8]\n"
             "- [0.28, 0.59, 0.1, 0.2]\n";
@@ -52,8 +46,6 @@ TEST(orb_params, load_yaml_with_rectangle_mask) {
     EXPECT_EQ(params.num_levels_, 12);
     EXPECT_EQ(params.ini_fast_thr_, 25);
     EXPECT_EQ(params.min_fast_thr, 9);
-    EXPECT_EQ(params.edge_thr_, 15);
-    EXPECT_EQ(params.patch_size_, 21);
     EXPECT_EQ(params.mask_rects_.size(), 2);
 
     EXPECT_FLOAT_EQ(params.mask_rects_.at(0).at(0), 0.2);
@@ -77,8 +69,6 @@ TEST(orb_params, load_yaml_with_rectangle_mask_exception_1) {
             "Feature.num_levels: 12\n"
             "Feature.ini_fast_threshold: 25\n"
             "Feature.min_fast_threshold: 9\n"
-            "Feature.edge_threshold: 15\n"
-            "Feature.patch_size: 21\n"
             "Feature.mask_rectangles:\n"
             "- [0.2, 0.5, 0.3, 0.8]\n"
             "- [0.28, 0.59, 0.1]\n";
@@ -97,8 +87,6 @@ TEST(orb_params, load_yaml_with_rectangle_mask_exception_2) {
             "Feature.num_levels: 12\n"
             "Feature.ini_fast_threshold: 25\n"
             "Feature.min_fast_threshold: 9\n"
-            "Feature.edge_threshold: 15\n"
-            "Feature.patch_size: 21\n"
             "Feature.mask_rectangles:\n"
             "- [0.2, 0.5, 0.3, 0.8]\n"
             "- [0.28, 0.28, 0.1, 0.2]\n";
@@ -117,8 +105,6 @@ TEST(orb_params, load_yaml_with_rectangle_mask_exception_3) {
             "Feature.num_levels: 12\n"
             "Feature.ini_fast_threshold: 25\n"
             "Feature.min_fast_threshold: 9\n"
-            "Feature.edge_threshold: 15\n"
-            "Feature.patch_size: 21\n"
             "Feature.mask_rectangles:\n"
             "- [0.2, 0.5, 0.3, 0.8]\n"
             "- [0.25, 0.21, 0.1, 0.2]\n";
@@ -137,8 +123,6 @@ TEST(orb_params, load_yaml_with_rectangle_mask_exception_4) {
             "Feature.num_levels: 12\n"
             "Feature.ini_fast_threshold: 25\n"
             "Feature.min_fast_threshold: 9\n"
-            "Feature.edge_threshold: 15\n"
-            "Feature.patch_size: 21\n"
             "Feature.mask_rectangles:\n"
             "- [0.2, 0.5, 0.3, 0.8]\n"
             "- [0.28, 0.59, 0.8, 0.8]\n";
@@ -157,8 +141,6 @@ TEST(orb_params, load_yaml_with_rectangle_mask_exception_5) {
             "Feature.num_levels: 12\n"
             "Feature.ini_fast_threshold: 25\n"
             "Feature.min_fast_threshold: 9\n"
-            "Feature.edge_threshold: 15\n"
-            "Feature.patch_size: 21\n"
             "Feature.mask_rectangles:\n"
             "- [0.2, 0.5, 0.3, 0.8]\n"
             "- [0.28, 0.59, 0.7, 0.2]\n";
