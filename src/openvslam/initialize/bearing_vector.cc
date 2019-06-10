@@ -8,8 +8,8 @@
 namespace openvslam {
 namespace initialize {
 
-bearing_vector::bearing_vector(const data::frame& ref_frm, const float sigma, const unsigned int max_num_iters)
-        : base(max_num_iters), sigma_sq_(sigma * sigma),
+bearing_vector::bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters)
+        : base(max_num_iters),
           ref_camera_(ref_frm.camera_), ref_undist_keypts_(ref_frm.undist_keypts_), ref_bearings_(ref_frm.bearings_) {
     spdlog::debug("CONSTRUCT: initialize::bearing_vector");
 }
@@ -80,7 +80,7 @@ bool bearing_vector::reconstruct(const Mat33_t& E_ref_to_cur, const std::vector<
     std::array<unsigned int, num_hypothesis> nums_valid_pts;
 
     for (unsigned int i = 0; i < num_hypothesis; ++i) {
-        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0 * sigma_sq_,
+        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0,
                                           is_inlier_match, init_triangulated_pts.at(i), init_is_triangulated.at(i),
                                           init_parallax.at(i));
     }

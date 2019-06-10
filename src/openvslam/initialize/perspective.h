@@ -19,7 +19,7 @@ class perspective final : public base {
 public:
     perspective() = delete;
 
-    explicit perspective(const data::frame& ref_frm, const float sigma = 1.0, const unsigned int max_num_iters = 200);
+    explicit perspective(const data::frame& ref_frm, const unsigned int max_num_iters = 200);
 
     ~perspective() override;
 
@@ -40,9 +40,6 @@ private:
                             const float reproj_err_thr_sq, const std::vector<bool>& is_inlier_match,
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                             float& parallax);
-
-    //! reprojection error threshold in pixel and pixel^2
-    const float sigma_, sigma_sq_;
 
     // reference frame information
     //! camera model of reference frame

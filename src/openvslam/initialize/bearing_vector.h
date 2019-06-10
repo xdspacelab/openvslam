@@ -19,7 +19,7 @@ class bearing_vector final : public base {
 public:
     bearing_vector() = delete;
 
-    explicit bearing_vector(const data::frame& ref_frm, const float sigma = 1.0, const unsigned int max_num_iters = 200);
+    explicit bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters = 200);
 
     ~bearing_vector() override;
 
@@ -35,9 +35,6 @@ private:
                             const float reproj_err_thr_sq, const std::vector<bool>& is_inlier_match,
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                             float& parallax);
-
-    //! reprojection error threshold in pixel and pixel^2
-    const float sigma_sq_;
 
     // reference frame information
     //! camera model of reference frame

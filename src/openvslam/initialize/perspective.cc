@@ -13,8 +13,8 @@
 namespace openvslam {
 namespace initialize {
 
-perspective::perspective(const data::frame& ref_frm, const float sigma, const unsigned int max_num_iters)
-        : base(max_num_iters), sigma_(sigma), sigma_sq_(sigma * sigma) {
+perspective::perspective(const data::frame& ref_frm, const unsigned int max_num_iters)
+        : base(max_num_iters) {
     spdlog::debug("CONSTRUCT: initialize::perspective");
 
     // カメラ行列をセット
@@ -74,8 +74,8 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
     }
 
     // HとFを並列で計算
-    auto homography_solver = solve::homography_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, sigma_);
-    auto fundamental_solver = solve::fundamental_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, sigma_);
+    auto homography_solver = solve::homography_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, 1.0);
+    auto fundamental_solver = solve::fundamental_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, 1.0);
     std::thread thread_for_H(&solve::homography_solver::find_via_ransac, &homography_solver, max_num_iters_, true);
     std::thread thread_for_F(&solve::fundamental_solver::find_via_ransac, &fundamental_solver, max_num_iters_, true);
     thread_for_H.join();
@@ -134,7 +134,7 @@ bool perspective::reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vec
     std::array<unsigned int, num_hypothesis> nums_valid_pts;
 
     for (unsigned int i = 0; i < num_hypothesis; ++i) {
-        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0 * sigma_sq_,
+        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0,
                                           is_inlier_match, init_triangulated_pts.at(i), init_is_triangulated.at(i),
                                           init_parallax.at(i));
     }
@@ -207,7 +207,7 @@ bool perspective::reconstruct_with_F(const Mat33_t& F_ref_to_cur, const std::vec
     std::array<unsigned int, num_hypothesis> nums_valid_pts;
 
     for (unsigned int i = 0; i < num_hypothesis; ++i) {
-        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0 * sigma_sq_,
+        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0,
                                           is_inlier_match, init_triangulated_pts.at(i), init_is_triangulated.at(i),
                                           init_parallax.at(i));
     }
