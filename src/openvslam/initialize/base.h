@@ -23,18 +23,39 @@ public:
 
     base() = delete;
 
+    /**
+     * Constructor
+     */
     base(const data::frame& ref_frm, const unsigned int max_num_iters);
 
+    /**
+     * Destructor
+     */
     virtual ~base() = default;
 
+    /**
+     * Initialize with the current frame
+     */
     virtual bool initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) = 0;
 
+    /**
+     * Get the rotation from the reference to the current
+     */
     Mat33_t get_rotation_ref_to_cur() const;
 
+    /**
+     * Get the translation from the reference to the current
+     */
     Vec3_t get_translation_ref_to_cur() const;
 
+    /**
+     * Get the triangulated 3D points
+     */
     eigen_alloc_vector<Vec3_t> get_triangulated_pts() const;
 
+    /**
+     * Get the valid/invalid flags of triangulated 3D points
+     */
     std::vector<bool> get_triangulated_flags() const;
 
 protected:

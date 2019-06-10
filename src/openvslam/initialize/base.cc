@@ -30,13 +30,13 @@ bool base::find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots
     assert(init_rots.size() == init_transes.size());
     const auto num_hypothesis = init_rots.size();
 
-    // triangulationした3次元点座標
+    // triangulated 3D points
     std::vector<eigen_alloc_vector<Vec3_t>> init_triangulated_pts(num_hypothesis);
-    // 有効/無効フラグ
+    // valid/invalid flag for each 3D point
     std::vector<std::vector<bool>> init_is_triangulated(num_hypothesis);
-    // 各3次元点をtriangulationした際の視差
+    // parallax between the two observations of each 3D point
     std::vector<float> init_parallax(num_hypothesis);
-    // 有効な3次元点数
+    // number of valid 3D points
     std::vector<unsigned int> nums_valid_pts(num_hypothesis);
 
     for (unsigned int i = 0; i < num_hypothesis; ++i) {
@@ -47,33 +47,31 @@ bool base::find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots
     rot_ref_to_cur_ = Mat33_t::Zero();
     trans_ref_to_cur_ = Vec3_t::Zero();
 
-    // triangulationされた3次元点数の最大値を求める
-    // nums_valid_ptsのイテレータ
+    // find the maximum number of the triangulated 3D points among all of the hypothesis
     const auto max_num_valid_pts_iter = std::max_element(nums_valid_pts.begin(), nums_valid_pts.end());
-    // index
+    // get the index of the hypothesis
     const unsigned int max_num_valid_index = std::distance(nums_valid_pts.begin(), max_num_valid_pts_iter);
 
-    // 3次元点数の条件を満たしていなければ破棄
+    // reject if the number of 3D points does not fulfill the threshold
     if (*max_num_valid_pts_iter < min_num_triangulated_) {
         return false;
     }
 
-    // どれが正しい姿勢かはっきりしなければ破棄
+    // reject if most plausible hypothesis is unclear
     const auto num_similars = std::count_if(nums_valid_pts.begin(), nums_valid_pts.end(),
                                             [max_num_valid_pts_iter](unsigned int num_valid_pts) {
                                                 return 0.7 * (*max_num_valid_pts_iter) < num_valid_pts;
                                             });
-
     if (1 < num_similars) {
         return false;
     }
 
-    // 視差が小さければ破棄
+    // reject if the parallax is too small
     if (init_parallax.at(max_num_valid_index) < min_parallax_deg_) {
         return false;
     }
 
-    // reconstructionに成功したので情報を保存
+    // store the reconstructed map
     rot_ref_to_cur_ = init_rots.at(max_num_valid_index);
     trans_ref_to_cur_ = init_transes.at(max_num_valid_index);
     triangulated_pts_ = init_triangulated_pts.at(max_num_valid_index);
@@ -89,20 +87,20 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
     // = cos(0.5deg)
     constexpr float cos_parallax_thr = 0.99996192306;
 
+    // resize buffers according to the number of observed keypoints in the reference
     is_triangulated.resize(ref_undist_keypts_.size(), false);
     triangulated_pts.resize(ref_undist_keypts_.size());
 
     std::vector<float> cos_parallaxes;
     cos_parallaxes.reserve(ref_undist_keypts_.size());
 
-    // referenceのカメラ中心
+    // camera centers
     const Vec3_t ref_cam_center = Vec3_t::Zero();
-
-    // currentのカメラ中心
     const Vec3_t cur_cam_center = -rot_ref_to_cur.transpose() * trans_ref_to_cur;
 
     unsigned int num_valid_pts = 0;
 
+    // for each matching, triangulate a 3D point and compute a parallax and a reprojection error
     for (unsigned int i = 0; i < ref_cur_matches_.size(); ++i) {
         if (!is_inlier_match.at(i)) {
             continue;
@@ -119,19 +117,19 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
             continue;
         }
 
-        // 視差角を計算
+        // compute a parallax
         const Vec3_t ref_normal = pos_c_in_ref - ref_cam_center;
         const float ref_norm = ref_normal.norm();
         const Vec3_t cur_normal = pos_c_in_ref - cur_cam_center;
         const float cur_norm = cur_normal.norm();
         const float cos_parallax = ref_normal.dot(cur_normal) / (ref_norm * cur_norm);
 
-        // 視野角が十分あることを確認
+        // reject if the parallax is to small
         if (cos_parallax_thr < cos_parallax) {
             continue;
         }
 
-        // 3次元点がカメラの前にあることを確認
+        // reject if the 3D point is in front of the cameras
         if (depth_is_positive) {
             if (pos_c_in_ref(2) <= 0) {
                 continue;
@@ -145,7 +143,7 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
         const auto& ref_undist_keypt = ref_undist_keypts_.at(ref_cur_matches_.at(i).first);
         const auto& cur_undist_keypt = cur_undist_keypts_.at(ref_cur_matches_.at(i).second);
 
-        // referenceの画像で再投影誤差を計算
+        // compute a reprojection error in the reference
         Vec2_t reproj_in_ref;
         float x_right_in_ref;
         const auto is_valid_ref = ref_camera_->reproject_to_image(Mat33_t::Identity(), Vec3_t::Zero(), pos_c_in_ref,
@@ -159,7 +157,7 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
             continue;
         }
 
-        // currentの画像で再投影誤差を計算
+        // compute a reprojection error in the current
         Vec2_t reproj_in_cur;
         float x_right_in_cur;
         const auto is_valid_cur = cur_camera_->reproject_to_image(rot_ref_to_cur, trans_ref_to_cur, pos_c_in_ref,
@@ -172,6 +170,7 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
             continue;
         }
 
+        // triagulation is valid!
         triangulated_pts.at(ref_cur_matches_.at(i).first) = pos_c_in_ref;
         is_triangulated.at(ref_cur_matches_.at(i).first) = true;
         ++num_valid_pts;
@@ -180,7 +179,7 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
     }
 
     if (0 < num_valid_pts) {
-        // 50番目に大きい視差角で評価
+        // return the 50th smallest parallax
         std::sort(cos_parallaxes.begin(), cos_parallaxes.end());
         const auto idx = std::min(50, static_cast<int>(cos_parallaxes.size() - 1));
         parallax_deg = std::acos(cos_parallaxes.at(idx)) * 180.0 / M_PI;
