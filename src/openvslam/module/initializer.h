@@ -34,7 +34,7 @@ public:
     /**
      * Constructor
      */
-    initializer(const std::shared_ptr<config>& cfg, data::map_database* map_db, data::bow_database* bow_db);
+    initializer(const camera::setup_type_t setup_type, data::map_database* map_db, data::bow_database* bow_db);
 
     /**
      * Destructor
@@ -67,8 +67,8 @@ public:
     bool initialize(data::frame& curr_frm);
 
 private:
-    //! config
-    std::shared_ptr<config> cfg_ = nullptr;
+    //! camera setup type
+    const camera::setup_type_t setup_type_;
     //! map database
     data::map_database* map_db_ = nullptr;
     //! BoW database

@@ -13,8 +13,8 @@
 namespace openvslam {
 namespace module {
 
-initializer::initializer(const std::shared_ptr<config>& cfg, data::map_database* map_db, data::bow_database* bow_db)
-        : cfg_(cfg), map_db_(map_db), bow_db_(bow_db) {
+initializer::initializer(const camera::setup_type_t setup_type, data::map_database* map_db, data::bow_database* bow_db)
+        : setup_type_(setup_type), map_db_(map_db), bow_db_(bow_db) {
     spdlog::debug("CONSTRUCT: module::initializer");
 }
 
@@ -41,7 +41,7 @@ std::vector<int> initializer::get_initial_matches() const {
 }
 
 bool initializer::initialize(data::frame& curr_frm) {
-    switch (cfg_->camera_->setup_type_) {
+    switch (setup_type_) {
         case camera::setup_type_t::Monocular: {
             // initializerが構築されていない時は構築する
             if (state_ == initializer_state_t::NotReady) {
