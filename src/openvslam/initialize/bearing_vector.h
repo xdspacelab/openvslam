@@ -27,10 +27,7 @@ public:
     bool initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) override;
 
 private:
-    bool reconstruct_with_E(const Mat33_t& E_ref_to_cur, const std::vector<bool>& is_inlier_match,
-                            Mat33_t& rot_ref_to_cur, Vec3_t& trans_ref_to_cur,
-                            eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
-                            const float min_parallax_deg = 1.0, const unsigned int min_num_triangulated = 50);
+    bool reconstruct_with_E(const Mat33_t& E_ref_to_cur, const std::vector<bool>& is_inlier_match);
 };
 
 } // namespace initialize

@@ -29,15 +29,9 @@ public:
 private:
     static Mat33_t get_camera_matrix(camera::base* camera);
 
-    bool reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vector<bool>& is_inlier_match,
-                            Mat33_t& rot_ref_to_cur, Vec3_t& trans_ref_to_cur,
-                            eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
-                            const float min_parallax_deg = 1.0, const unsigned int min_num_triangulated = 50);
+    bool reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vector<bool>& is_inlier_match);
 
-    bool reconstruct_with_F(const Mat33_t& F_ref_to_cur, const std::vector<bool>& is_inlier_match,
-                            Mat33_t& rot_ref_to_cur, Vec3_t& trans_ref_to_cur,
-                            eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
-                            const float min_parallax_deg = 1.0, const unsigned int min_num_triangulated = 50);
+    bool reconstruct_with_F(const Mat33_t& F_ref_to_cur, const std::vector<bool>& is_inlier_match);
 
     //! camera matrix of the reference frame
     const Mat33_t ref_cam_matrix_;

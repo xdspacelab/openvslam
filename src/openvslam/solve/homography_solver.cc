@@ -220,6 +220,9 @@ Mat33_t homography_solver::compute_H_21(const std::vector<cv::Point2f>& keypts_1
 
 bool homography_solver::decompose(const Mat33_t& H_21, const Mat33_t& cam_matrix_1, const Mat33_t& cam_matrix_2,
                                   eigen_alloc_vector<Mat33_t>& init_rots, eigen_alloc_vector<Vec3_t>& init_transes, eigen_alloc_vector<Vec3_t>& init_normals) {
+    // Motion and structure from motion in a piecewise planar environment
+    // (Faugeras et al. in IJPRAI 1988)
+
     init_rots.reserve(8);
     init_transes.reserve(8);
     init_normals.reserve(8);

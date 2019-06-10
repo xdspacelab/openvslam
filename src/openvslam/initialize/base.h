@@ -39,6 +39,12 @@ public:
 
 protected:
     /**
+     * Find the most plausible pose and set them to the member variables (outputs)
+     */
+    bool find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots, const eigen_alloc_vector<Vec3_t>& init_transes,
+                                  const std::vector<bool>& is_inlier_match, const bool depth_is_positive);
+
+    /**
      * Check the reconstructed camera poses via triangulation
      */
     unsigned int check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur, const float reproj_err_thr_sq,
@@ -46,7 +52,9 @@ protected:
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                             float& parallax_deg);
 
+    //-----------------------------------------
     // reference frame information
+
     //! camera model of reference frame
     camera::base* const ref_camera_;
     //! undistorted keypoints of reference frame
@@ -54,7 +62,9 @@ protected:
     //! bearing vectors of reference frame
     const eigen_alloc_vector<Vec3_t> ref_bearings_;
 
+    //-----------------------------------------
     // current frame information
+
     //! camera matrix of current frame
     camera::base* cur_camera_;
     //! undistorted keypoints of current frame
@@ -62,11 +72,24 @@ protected:
     //! bearing vectors of current frame
     eigen_alloc_vector<Vec3_t> cur_bearings_;
 
-    //! max number of iterations of RANSAC
-    const unsigned int max_num_iters_;
+    //-----------------------------------------
+    // matching information
 
     //! matching between reference and current frames
     std::vector<std::pair<int, int>> ref_cur_matches_;
+
+    //-----------------------------------------
+    // parameters
+
+    //! max number of iterations of RANSAC
+    const unsigned int max_num_iters_;
+    //! min number of triangulated pts
+    const unsigned int min_num_triangulated_ = 50;
+    //! min parallax
+    const float min_parallax_deg_ = 1.0;
+
+    //-----------------------------------------
+    // outputs
 
     //! initial rotation from reference to current
     Mat33_t rot_ref_to_cur_ = Mat33_t::Identity();

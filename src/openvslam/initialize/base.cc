@@ -25,6 +25,63 @@ std::vector<bool> base::get_triangulated_flags() const {
     return is_triangulated_;
 }
 
+bool base::find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots, const eigen_alloc_vector<Vec3_t>& init_transes,
+                                    const std::vector<bool>& is_inlier_match, const bool depth_is_positive) {
+    assert(init_rots.size() == init_transes.size());
+    const auto num_hypothesis = init_rots.size();
+
+    // triangulationした3次元点座標
+    std::vector<eigen_alloc_vector<Vec3_t>> init_triangulated_pts(num_hypothesis);
+    // 有効/無効フラグ
+    std::vector<std::vector<bool>> init_is_triangulated(num_hypothesis);
+    // 各3次元点をtriangulationした際の視差
+    std::vector<float> init_parallax(num_hypothesis);
+    // 有効な3次元点数
+    std::vector<unsigned int> nums_valid_pts(num_hypothesis);
+
+    for (unsigned int i = 0; i < num_hypothesis; ++i) {
+        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0, is_inlier_match, depth_is_positive,
+                                          init_triangulated_pts.at(i), init_is_triangulated.at(i), init_parallax.at(i));
+    }
+
+    rot_ref_to_cur_ = Mat33_t::Zero();
+    trans_ref_to_cur_ = Vec3_t::Zero();
+
+    // triangulationされた3次元点数の最大値を求める
+    // nums_valid_ptsのイテレータ
+    const auto max_num_valid_pts_iter = std::max_element(nums_valid_pts.begin(), nums_valid_pts.end());
+    // index
+    const unsigned int max_num_valid_index = std::distance(nums_valid_pts.begin(), max_num_valid_pts_iter);
+
+    // 3次元点数の条件を満たしていなければ破棄
+    if (*max_num_valid_pts_iter < min_num_triangulated_) {
+        return false;
+    }
+
+    // どれが正しい姿勢かはっきりしなければ破棄
+    const auto num_similars = std::count_if(nums_valid_pts.begin(), nums_valid_pts.end(),
+                                            [max_num_valid_pts_iter](unsigned int num_valid_pts) {
+                                                return 0.7 * (*max_num_valid_pts_iter) < num_valid_pts;
+                                            });
+
+    if (1 < num_similars) {
+        return false;
+    }
+
+    // 視差が小さければ破棄
+    if (init_parallax.at(max_num_valid_index) < min_parallax_deg_) {
+        return false;
+    }
+
+    // reconstructionに成功したので情報を保存
+    rot_ref_to_cur_ = init_rots.at(max_num_valid_index);
+    trans_ref_to_cur_ = init_transes.at(max_num_valid_index);
+    triangulated_pts_ = init_triangulated_pts.at(max_num_valid_index);
+    is_triangulated_ = init_is_triangulated.at(max_num_valid_index);
+
+    return true;
+}
+
 unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur, const float reproj_err_thr_sq,
                               const std::vector<bool>& is_inlier_match, const bool depth_is_positive,
                               eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
