@@ -174,6 +174,8 @@ Mat33_t essential_solver::compute_E_21(const eigen_alloc_vector<Vec3_t>& bearing
 }
 
 bool essential_solver::decompose(const Mat33_t& E_21, eigen_alloc_vector<Mat33_t>& init_rots, eigen_alloc_vector<Vec3_t>& init_transes) {
+    // https://en.wikipedia.org/wiki/Essential_matrix#Determining_R_and_t_from_E
+
     const Eigen::JacobiSVD<Mat33_t> svd(E_21, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
     Vec3_t trans = svd.matrixU().col(2);

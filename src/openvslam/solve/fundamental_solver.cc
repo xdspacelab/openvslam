@@ -221,6 +221,8 @@ Mat33_t fundamental_solver::compute_F_21(const std::vector<cv::Point2f>& keypts_
 
 bool fundamental_solver::decompose(const Mat33_t& F_21, const Mat33_t& cam_matrix_1, const Mat33_t& cam_matrix_2,
                                    eigen_alloc_vector<Mat33_t>& init_rots, eigen_alloc_vector<Vec3_t>& init_transes) {
+    // https://en.wikipedia.org/wiki/Essential_matrix#Determining_R_and_t_from_E
+
     const Mat33_t E_21 = cam_matrix_2.transpose() * F_21 * cam_matrix_1;
 
     const Eigen::JacobiSVD<Mat33_t> svd(E_21, Eigen::ComputeFullU | Eigen::ComputeFullV);

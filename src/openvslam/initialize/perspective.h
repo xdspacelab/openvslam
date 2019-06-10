@@ -39,11 +39,6 @@ private:
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                             const float min_parallax_deg = 1.0, const unsigned int min_num_triangulated = 50);
 
-    unsigned int check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur,
-                            const float reproj_err_thr_sq, const std::vector<bool>& is_inlier_match,
-                            eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
-                            float& parallax);
-
     //! camera matrix of the reference frame
     const Mat33_t ref_cam_matrix_;
     //! camera matrix of the current frame

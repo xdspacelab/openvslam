@@ -38,6 +38,14 @@ public:
     std::vector<bool> get_triangulated_flags() const;
 
 protected:
+    /**
+     * Check the reconstructed camera poses via triangulation
+     */
+    unsigned int check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur, const float reproj_err_thr_sq,
+                            const std::vector<bool>& is_inlier_match, const bool depth_is_positive,
+                            eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
+                            float& parallax_deg);
+
     // reference frame information
     //! camera model of reference frame
     camera::base* const ref_camera_;
