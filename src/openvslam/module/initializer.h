@@ -2,6 +2,7 @@
 #define OPENVSLAM_MODULE_INITIALIZER_H
 
 #include "openvslam/data/frame.h"
+#include "openvslam/initialize/base.h"
 
 #include <memory>
 
@@ -14,10 +15,6 @@ class frame;
 class map_database;
 class bow_database;
 } // namespace data
-
-namespace initialize {
-class base;
-} // namespace initialize
 
 namespace module {
 
@@ -100,7 +97,7 @@ private:
     void scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_keyfrm, const double scale);
 
     //! initializer for monocular
-    initialize::base* initializer_ = nullptr;
+    std::unique_ptr<initialize::base> initializer_ = nullptr;
     //! initial frame
     data::frame init_frm_;
     //! coordinates of previously matched points to perform area-based matching

@@ -23,8 +23,7 @@ initializer::~initializer() {
 }
 
 void initializer::reset() {
-    delete initializer_;
-    initializer_ = nullptr;
+    initializer_.reset(nullptr);
     state_ = initializer_state_t::NotReady;
 }
 
@@ -95,16 +94,15 @@ void initializer::create_initializer(data::frame& curr_frm) {
     std::fill(init_matches_.begin(), init_matches_.end(), -1);
 
     // build a initializer
-    delete initializer_;
-    initializer_ = nullptr;
+    initializer_.reset(nullptr);
     switch (init_frm_.camera_->model_type_) {
         case camera::model_type_t::Perspective:
         case camera::model_type_t::Fisheye: {
-            initializer_ = new initialize::perspective(init_frm_);
+            initializer_ = std::unique_ptr<initialize::perspective>(new initialize::perspective(init_frm_));
             break;
         }
         case camera::model_type_t::Equirectangular: {
-            initializer_ = new initialize::bearing_vector(init_frm_);
+            initializer_ = std::unique_ptr<initialize::bearing_vector>(new initialize::bearing_vector(init_frm_));
             break;
         }
     }
@@ -157,8 +155,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
         curr_frm.set_cam_pose(cam_pose_cw);
 
         // destruct the initializer
-        delete initializer_;
-        initializer_ = nullptr;
+        initializer_.reset(nullptr);
     }
 
     // create initial keyframes
