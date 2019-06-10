@@ -14,28 +14,8 @@ namespace openvslam {
 namespace initialize {
 
 perspective::perspective(const data::frame& ref_frm, const unsigned int max_num_iters)
-        : base(max_num_iters) {
+        : base(ref_frm, max_num_iters), ref_cam_matrix_(get_camera_matrix(ref_frm.camera_)) {
     spdlog::debug("CONSTRUCT: initialize::perspective");
-
-    // カメラ行列をセット
-    switch (ref_frm.camera_->model_type_) {
-        case camera::model_type_t::Perspective: {
-            auto c = static_cast<camera::perspective*>(ref_frm.camera_);
-            ref_cam_matrix_ = c->eigen_cam_matrix_;
-            break;
-        }
-        case camera::model_type_t::Fisheye: {
-            auto c = static_cast<camera::fisheye*>(ref_frm.camera_);
-            ref_cam_matrix_ = c->eigen_cam_matrix_;
-            break;
-        }
-        default: {
-            throw std::runtime_error("Cannot initialize with equirectangular camera model");
-        }
-    }
-
-    // 特徴点を保存
-    ref_undist_keypts_ = ref_frm.undist_keypts_;
 }
 
 perspective::~perspective() {
@@ -43,26 +23,11 @@ perspective::~perspective() {
 }
 
 bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) {
-    // カメラ行列をセット
-    switch (cur_frm.camera_->model_type_) {
-        case camera::model_type_t::Perspective: {
-            auto c = static_cast<camera::perspective*>(cur_frm.camera_);
-            cur_cam_matrix_ = c->eigen_cam_matrix_;
-            break;
-        }
-        case camera::model_type_t::Fisheye: {
-            auto c = static_cast<camera::fisheye*>(cur_frm.camera_);
-            cur_cam_matrix_ = c->eigen_cam_matrix_;
-            break;
-        }
-        default: {
-            throw std::runtime_error("Cannot initialize with equirectangular camera model");
-        }
-    }
-
+    // カメラモデルをセット
+    cur_camera_ = cur_frm.camera_;
     // 特徴点を保存
     cur_undist_keypts_ = cur_frm.undist_keypts_;
-
+    cur_bearings_ = cur_frm.bearings_;
     // matching情報を整形
     ref_cur_matches_.clear();
     ref_cur_matches_.reserve(cur_frm.undist_keypts_.size());
@@ -72,6 +37,9 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
             ref_cur_matches_.emplace_back(std::make_pair(ref_idx, cur_idx));
         }
     }
+
+    // set a camera matrix
+    cur_cam_matrix_ = get_camera_matrix(cur_frm.camera_);
 
     // HとFを並列で計算
     auto homography_solver = solve::homography_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, 1.0);
@@ -101,6 +69,22 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
     }
     else {
         return false;
+    }
+}
+
+Mat33_t perspective::get_camera_matrix(camera::base* camera) {
+    switch (camera->model_type_) {
+        case camera::model_type_t::Perspective: {
+            auto c = static_cast<camera::perspective*>(camera);
+            return c->eigen_cam_matrix_;
+        }
+        case camera::model_type_t::Fisheye: {
+            auto c = static_cast<camera::fisheye*>(camera);
+            return c->eigen_cam_matrix_;
+        }
+        default: {
+            throw std::runtime_error("Cannot get a camera matrix from the camera model");
+        }
     }
 }
 
@@ -265,18 +249,10 @@ unsigned int perspective::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t
     std::vector<float> cos_parallaxes;
     cos_parallaxes.reserve(ref_undist_keypts_.size());
 
-    // referenceの透視投影行列(原点として設定する)
-    Mat34_t P_ref = Mat34_t::Zero();
-    P_ref.block<3, 3>(0, 0) = ref_cam_matrix_;
-    // カメラ中心
+    // referenceのカメラ中心
     const Vec3_t ref_cam_center = Vec3_t::Zero();
 
-    // currentの透視投影行列(reference基準のの相対姿勢として設定する)
-    Mat34_t P_cur = Mat34_t::Zero();
-    P_cur.block<3, 3>(0, 0) = rot_ref_to_cur;
-    P_cur.block<3, 1>(0, 3) = trans_ref_to_cur;
-    P_cur = cur_cam_matrix_ * P_cur;
-    // カメラ中心
+    // currentのカメラ中心
     const Vec3_t cur_cam_center = -rot_ref_to_cur.transpose() * trans_ref_to_cur;
 
     unsigned int num_valid_pts = 0;
@@ -286,10 +262,10 @@ unsigned int perspective::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t
             continue;
         }
 
-        const auto& ref_undist_keypt = ref_undist_keypts_.at(ref_cur_matches_.at(i).first);
-        const auto& cur_undist_keypt = cur_undist_keypts_.at(ref_cur_matches_.at(i).second);
+        const Vec3_t& ref_bearing = ref_bearings_.at(ref_cur_matches_.at(i).first);
+        const Vec3_t& cur_bearing = cur_bearings_.at(ref_cur_matches_.at(i).second);
 
-        const Vec3_t pos_c_in_ref = solve::triangulator::triangulate(ref_undist_keypt.pt, cur_undist_keypt.pt, P_ref, P_cur);
+        const Vec3_t pos_c_in_ref = solve::triangulator::triangulate(ref_bearing, cur_bearing, rot_ref_to_cur, trans_ref_to_cur);
 
         if (!std::isfinite(pos_c_in_ref(0))
             || !std::isfinite(pos_c_in_ref(1))
@@ -300,10 +276,8 @@ unsigned int perspective::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t
         // 視差角を計算
         const Vec3_t ref_normal = pos_c_in_ref - ref_cam_center;
         const float ref_norm = ref_normal.norm();
-
         const Vec3_t cur_normal = pos_c_in_ref - cur_cam_center;
         const float cur_norm = cur_normal.norm();
-
         const float cos_parallax = ref_normal.dot(cur_normal) / (ref_norm * cur_norm);
 
         // 視野角が十分あることを確認
@@ -319,24 +293,33 @@ unsigned int perspective::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t
             continue;
         }
 
+        const auto& ref_undist_keypt = ref_undist_keypts_.at(ref_cur_matches_.at(i).first);
+        const auto& cur_undist_keypt = cur_undist_keypts_.at(ref_cur_matches_.at(i).second);
+
         // referenceの画像で再投影誤差を計算
-        const float ref_reproj_x = ref_cam_matrix_(0, 0) * pos_c_in_ref(0) / pos_c_in_ref(2) + ref_cam_matrix_(0, 2);
-        const float ref_reproj_y = ref_cam_matrix_(1, 1) * pos_c_in_ref(1) / pos_c_in_ref(2) + ref_cam_matrix_(1, 2);
+        Vec2_t reproj_in_ref;
+        float x_right_in_ref;
+        const auto is_valid_ref = ref_camera_->reproject_to_image(Mat33_t::Identity(), Vec3_t::Zero(), pos_c_in_ref,
+                                                                  reproj_in_ref, x_right_in_ref);
+        if (cos_parallax < cos_parallax_thr && !is_valid_ref) {
+            continue;
+        }
 
-        const float ref_reproj_err_sq = (ref_reproj_x - ref_undist_keypt.pt.x) * (ref_reproj_x - ref_undist_keypt.pt.x)
-                                        + (ref_reproj_y - ref_undist_keypt.pt.y) * (ref_reproj_y - ref_undist_keypt.pt.y);
-
+        const float ref_reproj_err_sq = (reproj_in_ref - ref_undist_keypt.pt).squaredNorm();
         if (reproj_err_thr_sq < ref_reproj_err_sq) {
             continue;
         }
 
         // currentの画像で再投影誤差を計算
-        const float cur_reproj_x = cur_cam_matrix_(0, 0) * pos_c_in_cur(0) / pos_c_in_cur(2) + cur_cam_matrix_(0, 2);
-        const float cur_reproj_y = cur_cam_matrix_(1, 1) * pos_c_in_cur(1) / pos_c_in_cur(2) + cur_cam_matrix_(1, 2);
+        Vec2_t reproj_in_cur;
+        float x_right_in_cur;
+        const auto is_valid_cur = cur_camera_->reproject_to_image(rot_ref_to_cur, trans_ref_to_cur, pos_c_in_ref,
+                                                                  reproj_in_cur, x_right_in_cur);
+        if (cos_parallax < cos_parallax_thr && !is_valid_cur) {
+            continue;
+        }
 
-        const float cur_reproj_err_sq = (cur_reproj_x - cur_undist_keypt.pt.x) * (cur_reproj_x - cur_undist_keypt.pt.x)
-                                        + (cur_reproj_y - cur_undist_keypt.pt.y) * (cur_reproj_y - cur_undist_keypt.pt.y);
-
+        const float cur_reproj_err_sq = (reproj_in_cur - cur_undist_keypt.pt).squaredNorm();
         if (reproj_err_thr_sq < cur_reproj_err_sq) {
             continue;
         }

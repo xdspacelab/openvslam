@@ -2,7 +2,6 @@
 #define OPENVSLAM_INITIALIZE_PERSPECTIVE_H
 
 #include "openvslam/type.h"
-#include "openvslam/camera/base.h"
 #include "openvslam/initialize/base.h"
 
 #include <opencv2/opencv.hpp>
@@ -17,15 +16,19 @@ namespace initialize {
 
 class perspective final : public base {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     perspective() = delete;
 
-    explicit perspective(const data::frame& ref_frm, const unsigned int max_num_iters = 200);
+    explicit perspective(const data::frame& ref_frm, const unsigned int max_num_iters = 100);
 
     ~perspective() override;
 
     bool initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) override;
 
 private:
+    static Mat33_t get_camera_matrix(camera::base* camera);
+
     bool reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vector<bool>& is_inlier_match,
                             Mat33_t& rot_ref_to_cur, Vec3_t& trans_ref_to_cur,
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
@@ -41,17 +44,10 @@ private:
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                             float& parallax);
 
-    // reference frame information
-    //! camera model of reference frame
-    Mat33_t ref_cam_matrix_;
-    //! undistorted keypoints of reference frame
-    std::vector<cv::KeyPoint> ref_undist_keypts_;
-
-    // current frame information
-    //! camera matrix of current frame
+    //! camera matrix of the reference frame
+    const Mat33_t ref_cam_matrix_;
+    //! camera matrix of the current frame
     Mat33_t cur_cam_matrix_;
-    //! undistorted keypoints of current frame
-    std::vector<cv::KeyPoint> cur_undist_keypts_;
 };
 
 } // namespace initialize

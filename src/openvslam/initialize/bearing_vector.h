@@ -2,7 +2,6 @@
 #define OPENVSLAM_INITIALIZE_BEARING_VECTOR_H
 
 #include "openvslam/type.h"
-#include "openvslam/camera/base.h"
 #include "openvslam/initialize/base.h"
 
 #include <opencv2/opencv.hpp>
@@ -17,9 +16,11 @@ namespace initialize {
 
 class bearing_vector final : public base {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     bearing_vector() = delete;
 
-    explicit bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters = 200);
+    explicit bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters = 100);
 
     ~bearing_vector() override;
 
@@ -35,22 +36,6 @@ private:
                             const float reproj_err_thr_sq, const std::vector<bool>& is_inlier_match,
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                             float& parallax);
-
-    // reference frame information
-    //! camera model of reference frame
-    camera::base* ref_camera_;
-    //! undistorted keypoints of reference frame
-    std::vector<cv::KeyPoint> ref_undist_keypts_;
-    //! bearing vectors of reference frame
-    eigen_alloc_vector<Vec3_t> ref_bearings_;
-
-    // current frame information
-    //! camera matrix of current frame
-    camera::base* cur_camera_;
-    //! undistorted keypoints of current frame
-    std::vector<cv::KeyPoint> cur_undist_keypts_;
-    //! bearing vectors of current frame
-    eigen_alloc_vector<Vec3_t> cur_bearings_;
 };
 
 } // namespace initialize

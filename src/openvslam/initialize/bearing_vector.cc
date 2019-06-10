@@ -9,8 +9,7 @@ namespace openvslam {
 namespace initialize {
 
 bearing_vector::bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters)
-        : base(max_num_iters),
-          ref_camera_(ref_frm.camera_), ref_undist_keypts_(ref_frm.undist_keypts_), ref_bearings_(ref_frm.bearings_) {
+        : base(ref_frm, max_num_iters) {
     spdlog::debug("CONSTRUCT: initialize::bearing_vector");
 }
 
@@ -21,11 +20,9 @@ bearing_vector::~bearing_vector() {
 bool bearing_vector::initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) {
     // カメラモデルをセット
     cur_camera_ = cur_frm.camera_;
-
     // 特徴点を保存
     cur_undist_keypts_ = cur_frm.undist_keypts_;
     cur_bearings_ = cur_frm.bearings_;
-
     // matching情報を整形
     ref_cur_matches_.clear();
     ref_cur_matches_.reserve(cur_frm.undist_keypts_.size());
@@ -165,10 +162,8 @@ unsigned int bearing_vector::check_pose(const Mat33_t& rot_ref_to_cur, const Vec
         // 視差角を計算
         const Vec3_t ref_normal = pos_c_in_ref - ref_cam_center;
         const float ref_norm = ref_normal.norm();
-
         const Vec3_t cur_normal = pos_c_in_ref - cur_cam_center;
         const float cur_norm = cur_normal.norm();
-
         const float cos_parallax = ref_normal.dot(cur_normal) / (ref_norm * cur_norm);
 
         const auto& ref_undist_keypt = ref_undist_keypts_.at(ref_cur_matches_.at(i).first);

@@ -7,6 +7,10 @@
 
 namespace openvslam {
 
+namespace camera {
+class base;
+} // namespace camera
+
 namespace data {
 class frame;
 } // namespace data
@@ -19,7 +23,7 @@ public:
 
     base() = delete;
 
-    explicit base(const unsigned int max_num_iters);
+    base(const data::frame& ref_frm, const unsigned int max_num_iters);
 
     virtual ~base() = default;
 
@@ -34,6 +38,22 @@ public:
     std::vector<bool> get_triangulated_flags() const;
 
 protected:
+    // reference frame information
+    //! camera model of reference frame
+    camera::base* const ref_camera_;
+    //! undistorted keypoints of reference frame
+    const std::vector<cv::KeyPoint> ref_undist_keypts_;
+    //! bearing vectors of reference frame
+    const eigen_alloc_vector<Vec3_t> ref_bearings_;
+
+    // current frame information
+    //! camera matrix of current frame
+    camera::base* cur_camera_;
+    //! undistorted keypoints of current frame
+    std::vector<cv::KeyPoint> cur_undist_keypts_;
+    //! bearing vectors of current frame
+    eigen_alloc_vector<Vec3_t> cur_bearings_;
+
     //! max number of iterations of RANSAC
     const unsigned int max_num_iters_;
 
