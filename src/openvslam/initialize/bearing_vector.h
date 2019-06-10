@@ -20,13 +20,26 @@ public:
 
     bearing_vector() = delete;
 
+    /**
+     * Constructor
+     */
     explicit bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters = 100);
 
+    /**
+     * Destructor
+     */
     ~bearing_vector() override;
 
+    /**
+     * Initialize with the current frame
+     */
     bool initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) override;
 
 private:
+    /**
+     * Reconstruct map with the E matrix
+     * (NOTE: the output variables will be set if succeeded)
+     */
     bool reconstruct_with_E(const Mat33_t& E_ref_to_cur, const std::vector<bool>& is_inlier_match);
 };
 

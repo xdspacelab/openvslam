@@ -22,12 +22,12 @@ perspective::~perspective() {
 }
 
 bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) {
-    // カメラモデルをセット
+    // set the current camera model
     cur_camera_ = cur_frm.camera_;
-    // 特徴点を保存
+    // store the keypoints and bearings
     cur_undist_keypts_ = cur_frm.undist_keypts_;
     cur_bearings_ = cur_frm.bearings_;
-    // matching情報を整形
+    // align matching information
     ref_cur_matches_.clear();
     ref_cur_matches_.reserve(cur_frm.undist_keypts_.size());
     for (unsigned int ref_idx = 0; ref_idx < ref_matches_with_cur.size(); ++ref_idx) {
@@ -37,10 +37,10 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
         }
     }
 
-    // set a camera matrix
+    // set the current camera matrix
     cur_cam_matrix_ = get_camera_matrix(cur_frm.camera_);
 
-    // HとFを並列で計算
+    // compute H and F matrices
     auto homography_solver = solve::homography_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, 1.0);
     auto fundamental_solver = solve::fundamental_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, 1.0);
     std::thread thread_for_H(&solve::homography_solver::find_via_ransac, &homography_solver, max_num_iters_, true);
@@ -48,12 +48,12 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
     thread_for_H.join();
     thread_for_F.join();
 
-    // スコア計算
+    // compute a score
     const auto score_H = homography_solver.get_best_score();
     const auto score_F = fundamental_solver.get_best_score();
     const float rel_score_H = score_H / (score_H + score_F);
 
-    // 閾値に従って場合分け
+    // select a case accroding to the score
     if (0.40 < rel_score_H && homography_solver.solution_is_valid()) {
         const Mat33_t H_ref_to_cur = homography_solver.get_best_H_21();
         const auto is_inlier_match = homography_solver.get_inlier_matches();
@@ -86,9 +86,9 @@ Mat33_t perspective::get_camera_matrix(camera::base* camera) {
 }
 
 bool perspective::reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vector<bool>& is_inlier_match) {
-    // 8個の姿勢候補に対して，3次元点をtriangulationして有効な3次元点の数を数える
+    // found the most plausible pose from the EIGHT hypothesis computed from the H matrix
 
-    // H行列を分解
+    // decompose the H matrix
     eigen_alloc_vector<Mat33_t> init_rots;
     eigen_alloc_vector<Vec3_t> init_transes;
     eigen_alloc_vector<Vec3_t> init_normals;
@@ -109,9 +109,9 @@ bool perspective::reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vec
 }
 
 bool perspective::reconstruct_with_F(const Mat33_t& F_ref_to_cur, const std::vector<bool>& is_inlier_match) {
-    // 4個の姿勢候補に対して，3次元点をtriangulationして有効な3次元点の数を数える
+    // found the most plausible pose from the FOUR hypothesis computed from the F matrix
 
-    // F行列を分解
+    // decompose the F matrix
     eigen_alloc_vector<Mat33_t> init_rots;
     eigen_alloc_vector<Vec3_t> init_transes;
     if (!solve::fundamental_solver::decompose(F_ref_to_cur, ref_cam_matrix_, cur_cam_matrix_, init_rots, init_transes)) {

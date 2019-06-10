@@ -17,12 +17,12 @@ bearing_vector::~bearing_vector() {
 }
 
 bool bearing_vector::initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) {
-    // カメラモデルをセット
+    // set the current camera model
     cur_camera_ = cur_frm.camera_;
-    // 特徴点を保存
+    // store the keypoints and bearings
     cur_undist_keypts_ = cur_frm.undist_keypts_;
     cur_bearings_ = cur_frm.bearings_;
-    // matching情報を整形
+    // align matching information
     ref_cur_matches_.clear();
     ref_cur_matches_.reserve(cur_frm.undist_keypts_.size());
     for (unsigned int ref_idx = 0; ref_idx < ref_matches_with_cur.size(); ++ref_idx) {
@@ -32,11 +32,11 @@ bool bearing_vector::initialize(const data::frame& cur_frm, const std::vector<in
         }
     }
 
-    // Eを計算
+    // compute an E matrix
     auto essential_solver = solve::essential_solver(ref_bearings_, cur_bearings_, ref_cur_matches_);
     essential_solver.find_via_ransac(max_num_iters_);
 
-    // 3次元点を作成
+    // reconstruct map if the solution is valid
     if (essential_solver.solution_is_valid()) {
         const Mat33_t E_ref_to_cur = essential_solver.get_best_E_21();
         const auto is_inlier_match = essential_solver.get_inlier_matches();
@@ -48,9 +48,9 @@ bool bearing_vector::initialize(const data::frame& cur_frm, const std::vector<in
 }
 
 bool bearing_vector::reconstruct_with_E(const Mat33_t& E_ref_to_cur, const std::vector<bool>& is_inlier_match) {
-    // 4個の姿勢候補に対して，3次元点をtriangulationして有効な3次元点の数を数える
+    // found the most plausible pose from the FOUR hypothesis computed from the E matrix
 
-    // E行列を分解
+    // decompose the E matrix
     eigen_alloc_vector<Mat33_t> init_rots;
     eigen_alloc_vector<Vec3_t> init_transes;
     if (!solve::essential_solver::decompose(E_ref_to_cur, init_rots, init_transes)) {
