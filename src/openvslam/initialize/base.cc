@@ -170,7 +170,7 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
             continue;
         }
 
-        // triagulation is valid!
+        // triangulation is valid!
         triangulated_pts.at(ref_cur_matches_.at(i).first) = pos_c_in_ref;
         is_triangulated.at(ref_cur_matches_.at(i).first) = true;
         ++num_valid_pts;

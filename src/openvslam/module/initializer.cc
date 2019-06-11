@@ -53,7 +53,7 @@ bool initializer::initialize(data::frame& curr_frm) {
                 // failed
                 return false;
             }
-            // succeded
+            // succeeded
 
             // create new map, then check the state is succeeded or not
             create_map_for_monocular(curr_frm);
@@ -269,7 +269,7 @@ bool initializer::create_map_for_stereo(data::frame& curr_frm) {
     map_db_->update_frame_statistics(curr_frm, false);
 
     for (unsigned int idx = 0; idx < curr_frm.num_keypts_; ++idx) {
-        // add a new landmark if tht corresponding depth is vaild
+        // add a new landmark if tht corresponding depth is valid
         const auto z = curr_frm.depths_.at(idx);
         if (z <= 0) {
             continue;
@@ -279,7 +279,7 @@ bool initializer::create_map_for_stereo(data::frame& curr_frm) {
         const Vec3_t pos_w = curr_frm.triangulate_stereo(idx);
         auto lm = new data::landmark(pos_w, curr_keyfrm, map_db_);
 
-        // set the assocications to the new keyframe
+        // set the associations to the new keyframe
         lm->add_observation(curr_keyfrm, idx);
         curr_keyfrm->add_landmark(lm, idx);
 
@@ -288,7 +288,7 @@ bool initializer::create_map_for_stereo(data::frame& curr_frm) {
         // update the geometry
         lm->update_normal_and_depth();
 
-        // set the 2D-3D assocications to the current frame
+        // set the 2D-3D associations to the current frame
         curr_frm.landmarks_.at(idx) = lm;
         curr_frm.outlier_flags_.at(idx) = false;
 

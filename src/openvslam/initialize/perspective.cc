@@ -53,7 +53,7 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
     const auto score_F = fundamental_solver.get_best_score();
     const float rel_score_H = score_H / (score_H + score_F);
 
-    // select a case accroding to the score
+    // select a case according to the score
     if (0.40 < rel_score_H && homography_solver.solution_is_valid()) {
         const Mat33_t H_ref_to_cur = homography_solver.get_best_H_21();
         const auto is_inlier_match = homography_solver.get_inlier_matches();
