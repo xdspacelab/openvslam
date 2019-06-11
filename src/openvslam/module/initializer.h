@@ -90,6 +90,8 @@ private:
     const float reproj_err_thr_;
     //! max number of iterations of BA (only for monocular initializer)
     const unsigned int num_ba_iters_;
+    //! initial scaling factor (only for monocular initializer)
+    const float scaling_factor_;
 
     //-----------------------------------------
     // for monocular camera model

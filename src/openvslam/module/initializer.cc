@@ -21,7 +21,8 @@ initializer::initializer(const camera::setup_type_t setup_type,
           min_num_triangulated_(yaml_node["Initializer.num_min_triangulated_pts"].as<unsigned int>(50)),
           parallax_deg_thr_(yaml_node["Initializer.parallax_deg_threshold"].as<float>(1.0)),
           reproj_err_thr_(yaml_node["Initializer.reprojection_error_threshold"].as<float>(4.0)),
-          num_ba_iters_(yaml_node["Initializer.num_ba_iterations"].as<unsigned int>(20)) {
+          num_ba_iters_(yaml_node["Initializer.num_ba_iterations"].as<unsigned int>(20)),
+          scaling_factor_(yaml_node["Initializer.scaling_factor"].as<float>(1.0)) {
     spdlog::debug("CONSTRUCT: module::initializer");
 }
 
@@ -228,7 +229,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
         state_ = initializer_state_t::Wrong;
         return false;
     }
-    scale_map(init_keyfrm, curr_keyfrm, inv_median_depth);
+    scale_map(init_keyfrm, curr_keyfrm, inv_median_depth * scaling_factor_);
 
     // update the current frame pose
     curr_frm.set_cam_pose(curr_keyfrm->get_cam_pose());
