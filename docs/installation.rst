@@ -376,18 +376,18 @@ After building, check to see if it was successfully built by executing ``./run_k
 
 .. code-block:: bash
 
-    $ ./build/run_kitti_slam -h
+    $ ./run_kitti_slam -h
     Allowed options:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
     -d, --data-dir arg     directory path which contains dataset
-    -s, --setting arg      setting file path
-    --frame-skip arg (=1)  interval of frame skipB
+    -c, --config arg       config file path
+    --frame-skip arg (=1)  interval of frame skip
     --no-sleep             not wait for next frame in real time
     --auto-term            automatically terminate the viewer
     --debug                debug mode
     --eval-log             store trajectory and tracking times for evaluation
-    --map-db arg           store a map database at this path after SLAM
+    -p, --map-db arg       store a map database at this path after SLAM
 
 .. NOTE ::
 

@@ -262,7 +262,7 @@ int main(int argc, char* argv[]) {
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
     auto vocab_file_path = op.add<popl::Value<std::string>>("v", "vocab", "vocabulary file path");
     auto data_dir_path = op.add<popl::Value<std::string>>("d", "data-dir", "directory path which contains dataset");
-    auto setting_file_path = op.add<popl::Value<std::string>>("s", "setting", "setting file path");
+    auto config_file_path = op.add<popl::Value<std::string>>("c", "config", "config file path");
     auto frame_skip = op.add<popl::Value<unsigned int>>("", "frame-skip", "interval of frame skip", 1);
     auto no_sleep = op.add<popl::Switch>("", "no-sleep", "not wait for next frame in real time");
     auto auto_term = op.add<popl::Switch>("", "auto-term", "automatically terminate the viewer");
@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
         std::cerr << op << std::endl;
         return EXIT_FAILURE;
     }
-    if (!vocab_file_path->is_set() || !data_dir_path->is_set() || !setting_file_path->is_set()) {
+    if (!vocab_file_path->is_set() || !data_dir_path->is_set() || !config_file_path->is_set()) {
         std::cerr << "invalid arguments" << std::endl;
         std::cerr << std::endl;
         std::cerr << op << std::endl;
@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
     // load configuration
     std::shared_ptr<openvslam::config> cfg;
     try {
-        cfg = std::make_shared<openvslam::config>(setting_file_path->value());
+        cfg = std::make_shared<openvslam::config>(config_file_path->value());
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

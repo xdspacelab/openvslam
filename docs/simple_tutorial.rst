@@ -44,12 +44,12 @@ The later parts of this chapter explains what each of the commands do in more de
     unzip aist_living_lab_2.zip
 
     # run tracking and mapping
-    ./run_video_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_1/movie.mp4 -s ./aist_living_lab_1/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
+    ./run_video_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_1/movie.mp4 -c ./aist_living_lab_1/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
     # click the [Terminate] button to close the viewer
     # you can find map.msg in the current directory
 
     # run localization
-    ./run_video_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_2/movie.mp4 -s ./aist_living_lab_2/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
+    ./run_video_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_2/movie.mp4 -c ./aist_living_lab_2/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
 
 
 Sample Datasets
@@ -163,14 +163,14 @@ You can use ``./run_video_slam`` to run SLAM with the video file.
       -h, --help             produce help message
       -v, --vocab arg        vocabulary file path
       -m, --video arg        video file path
-      -s, --setting arg      setting file path
+      -c, --config arg       config file path
       --mask arg             mask image path
       --frame-skip arg (=1)  interval of frame skip
       --no-sleep             not wait for next frame in real time
       --auto-term            automatically terminate the viewer
       --debug                debug mode
       --eval-log             store trajectory and tracking times for evaluation
-      --map-db arg           store a map database at this path after SLAM
+      -p, --map-db arg       store a map database at this path after SLAM
 
 
 Execute the following command to run SLAM.
@@ -181,7 +181,7 @@ The paths should be changed accordingly.
 
     $ ./run_video_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
-        -s /path/to/aist_living_lab_1/config.yaml \
+        -c /path/to/aist_living_lab_1/config.yaml \
         -m /path/to/aist_living_lab_1/movie.mp4 \
         --frame-skip 3 \
         --map-db aist_living_lab_1_map.msg
@@ -303,8 +303,8 @@ You can use ``./run_video_localization`` to run localization.
       -h, --help             produce help message
       -v, --vocab arg        vocabulary file path
       -m, --video arg        video file path
-      -s, --setting arg      setting file path
-      -d, --map-db arg       path to a prebuilt map database
+      -c, --config arg       config file path
+      -p, --map-db arg       path to a prebuilt map database
       --mapping              perform mapping as well as localization
       --mask arg             mask image path
       --frame-skip arg (=1)  interval of frame skip
@@ -321,7 +321,7 @@ The paths should be changed accordingly.
 
     $ ./run_video_localization \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
-        -s /path/to/aist_living_lab_2/config.yaml \
+        -c /path/to/aist_living_lab_2/config.yaml \
         -m /path/to/aist_living_lab_2/movie.mp4 \
         --frame-skip 3 \
         --map-db aist_living_lab_1_map.msg

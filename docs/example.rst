@@ -25,14 +25,14 @@ The following options are allowed:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
     -m, --video arg        video file path
-    -s, --setting arg      setting file path
+    -c, --config arg       config file path
     --mask arg             mask image path
     --frame-skip arg (=1)  interval of frame skip
     --no-sleep             not wait for next frame in real time
     --auto-term            automatically terminate the viewer
     --debug                debug mode
     --eval-log             store trajectory and tracking times for evaluation
-    --map-db arg           store a map database at this path after SLAM
+    -p, --map-db arg       store a map database at this path after SLAM
 
 | The camera that captures the video file must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
 | We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
@@ -51,8 +51,8 @@ The following options are allowed:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
     -m, --video arg        video file path
-    -s, --setting arg      setting file path
-    -d, --map-db arg       path to a prebuilt map database
+    -c, --config arg       config file path
+    -p, --map-db arg       path to a prebuilt map database
     --mapping              perform mapping as well as localization
     --mask arg             mask image path
     --frame-skip arg (=1)  interval of frame skip
@@ -84,14 +84,14 @@ The following options are allowed:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
     -i, --img-dir arg      directory path which contains images
-    -s, --setting arg      setting file path
+    -c, --config arg       config file path
     --mask arg             mask image path
     --frame-skip arg (=1)  interval of frame skip
     --no-sleep             not wait for next frame in real time
     --auto-term            automatically terminate the viewer
     --debug                debug mode
     --eval-log             store trajectory and tracking times for evaluation
-    --map-db arg           store a map database at this path after SLAM
+    -p, --map-db arg       store a map database at this path after SLAM
 
 | The camera that captures the video file must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
 | We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
@@ -110,8 +110,8 @@ The following options are allowed:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
     -i, --img-dir arg      directory path which contains images
-    -s, --setting arg      setting file path
-    -d, --map-db arg       path to a prebuilt map database
+    -c, --config arg       config file path
+    -p, --map-db arg       path to a prebuilt map database
     --mapping              perform mapping as well as localization
     --mask arg             mask image path
     --frame-skip arg (=1)  interval of frame skip
@@ -166,12 +166,12 @@ If you built examples with Pangolin Viewer support, a map viewer and frame viewe
     $ ./run_kitti_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -d /path/to/KITTI/Odometry/sequences/00/ \
-        -s ../example/kitti/KITTI_mono_00-02.yaml
+        -c ../example/kitti/KITTI_mono_00-02.yaml
     # stereo SLAM with sequence 05
     $ ./run_kitti_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -d /path/to/KITTI/Odometry/sequences/05/ \
-        -s ../example/kitti/KITTI_stereo_04-12.yaml
+        -c ../example/kitti/KITTI_stereo_04-12.yaml
 
 The following options are allowed:
 
@@ -182,13 +182,13 @@ The following options are allowed:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
     -d, --data-dir arg     directory path which contains dataset
-    -s, --setting arg      setting file path
+    -c, --config arg       config file path
     --frame-skip arg (=1)  interval of frame skip
     --no-sleep             not wait for next frame in real time
     --auto-term            automatically terminate the viewer
     --debug                debug mode
     --eval-log             store trajectory and tracking times for evaluation
-    --map-db arg           store a map database at this path after SLAM
+    -p, --map-db arg       store a map database at this path after SLAM
 
 .. _subsection-example-euroc:
 
@@ -212,7 +212,7 @@ After downloading and uncompressing it, you will find several directories under 
 In addition, download a vocabulary file for DBoW2 from `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__ and uncompress it.
 You can find ``orb_vocab.dbow2`` in the zip file.
 
-We provided the two setting files for EuRoC, ``./example/euroc/EuRoC_mono.yaml`` for monocular and ``./example/euroc/EuRoC_stereo.yaml`` for stereo.
+We provided the two config files for EuRoC, ``./example/euroc/EuRoC_mono.yaml`` for monocular and ``./example/euroc/EuRoC_stereo.yaml`` for stereo.
 
 If you have built examples with Pangolin Viewer support, a map viewer and frame viewer will be launched right after executing the following command.
 
@@ -227,12 +227,12 @@ If you have built examples with Pangolin Viewer support, a map viewer and frame 
     $ ./run_euroc_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -d /path/to/EuRoC/MAV/mav0/ \
-        -s ../example/euroc/EuRoC_mono.yaml
+        -c ../example/euroc/EuRoC_mono.yaml
     # stereo SLAM with any EuRoC sequence
     $ ./run_euroc_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -d /path/to/EuRoC/MAV/mav0/ \
-        -s ../example/euroc/EuRoC_stereo.yaml
+        -c ../example/euroc/EuRoC_stereo.yaml
 
 The following options are allowed:
 
@@ -243,13 +243,13 @@ The following options are allowed:
     -h, --help             produce help message
     -v, --vocab arg        vocabulary file path
     -d, --data-dir arg     directory path which contains dataset
-    -s, --setting arg      setting file path
+    -c, --config arg       config file path
     --frame-skip arg (=1)  interval of frame skip
     --no-sleep             not wait for next frame in real time
     --auto-term            automatically terminate the viewer
     --debug                debug mode
     --eval-log             store trajectory and tracking times for evaluation
-    --map-db arg           store a map database at this path after SLAM
+    -p, --map-db arg       store a map database at this path after SLAM
 
 .. _subsection-example-tum-rgbd:
 
@@ -268,10 +268,10 @@ The following options are allowed:
     -v, --vocab arg        vocabulary file path
     -d, --data-dir arg     directory path which contains dataset
     -a, --assoc arg        association file path
-    -s, --setting arg      setting file path
+    -c, --config arg       config file path
     --frame-skip arg (=1)  interval of frame skip
     --no-sleep             not wait for next frame in real time
     --auto-term            automatically terminate the viewer
     --debug                debug mode
     --eval-log             store trajectory and tracking times for evaluation
-    --map-db arg           store a map database at this path after SLAM
+    -p, --map-db arg       store a map database at this path after SLAM
