@@ -26,7 +26,9 @@ public:
     /**
      * Constructor
      */
-    base(const data::frame& ref_frm, const unsigned int max_num_iters);
+    base(const data::frame& ref_frm,
+         const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
+         const float parallax_deg_thr, const float reproj_err_thr);
 
     /**
      * Destructor
@@ -68,7 +70,7 @@ protected:
     /**
      * Check the reconstructed camera poses via triangulation
      */
-    unsigned int check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur, const float reproj_err_thr_sq,
+    unsigned int check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur,
                             const std::vector<bool>& is_inlier_match, const bool depth_is_positive,
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                             float& parallax_deg);
@@ -103,11 +105,13 @@ protected:
     // parameters
 
     //! max number of iterations of RANSAC
-    const unsigned int max_num_iters_;
+    const unsigned int num_ransac_iters_;
     //! min number of triangulated pts
-    const unsigned int min_num_triangulated_ = 50;
+    const unsigned int min_num_triangulated_;
     //! min parallax
-    const float min_parallax_deg_ = 1.0;
+    const float parallax_deg_thr_;
+    //! reprojection error threshold
+    const float reproj_err_thr_;
 
     //-----------------------------------------
     // outputs

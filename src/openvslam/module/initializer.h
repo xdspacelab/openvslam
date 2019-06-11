@@ -28,10 +28,14 @@ enum class initializer_state_t {
 
 class initializer {
 public:
+    initializer() = delete;
+
     /**
      * Constructor
      */
-    initializer(const camera::setup_type_t setup_type, data::map_database* map_db, data::bow_database* bow_db);
+    initializer(const camera::setup_type_t setup_type,
+                data::map_database* map_db, data::bow_database* bow_db,
+                const YAML::Node& yaml_node);
 
     /**
      * Destructor
@@ -72,6 +76,20 @@ private:
     data::bow_database* bow_db_ = nullptr;
     //! initializer status
     initializer_state_t state_ = initializer_state_t::NotReady;
+
+    //-----------------------------------------
+    // parameters
+
+    //! max number of iterations of RANSAC (only for monocular initializer)
+    const unsigned int num_ransac_iters_;
+    //! min number of triangulated pts
+    const unsigned int min_num_triangulated_;
+    //! min parallax (only for monocular initializer)
+    const float parallax_deg_thr_;
+    //! reprojection error threshold (only for monocular initializer)
+    const float reproj_err_thr_;
+    //! max number of iterations of BA (only for monocular initializer)
+    const unsigned int num_ba_iters_;
 
     //-----------------------------------------
     // for monocular camera model

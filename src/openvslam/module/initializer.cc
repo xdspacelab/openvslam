@@ -13,8 +13,15 @@
 namespace openvslam {
 namespace module {
 
-initializer::initializer(const camera::setup_type_t setup_type, data::map_database* map_db, data::bow_database* bow_db)
-        : setup_type_(setup_type), map_db_(map_db), bow_db_(bow_db) {
+initializer::initializer(const camera::setup_type_t setup_type,
+                         data::map_database* map_db, data::bow_database* bow_db,
+                         const YAML::Node& yaml_node)
+        : setup_type_(setup_type), map_db_(map_db), bow_db_(bow_db),
+          num_ransac_iters_(yaml_node["Initializer.num_ransac_iterations"].as<unsigned int>(100)),
+          min_num_triangulated_(yaml_node["Initializer.num_min_triangulated_pts"].as<unsigned int>(50)),
+          parallax_deg_thr_(yaml_node["Initializer.parallax_deg_threshold"].as<float>(1.0)),
+          reproj_err_thr_(yaml_node["Initializer.reprojection_error_threshold"].as<float>(4.0)),
+          num_ba_iters_(yaml_node["Initializer.num_ba_iterations"].as<unsigned int>(20)) {
     spdlog::debug("CONSTRUCT: module::initializer");
 }
 
@@ -98,11 +105,15 @@ void initializer::create_initializer(data::frame& curr_frm) {
     switch (init_frm_.camera_->model_type_) {
         case camera::model_type_t::Perspective:
         case camera::model_type_t::Fisheye: {
-            initializer_ = std::unique_ptr<initialize::perspective>(new initialize::perspective(init_frm_));
+            initializer_ = std::unique_ptr<initialize::perspective>(new initialize::perspective(init_frm_,
+                                                                                                num_ransac_iters_, min_num_triangulated_,
+                                                                                                parallax_deg_thr_, reproj_err_thr_));
             break;
         }
         case camera::model_type_t::Equirectangular: {
-            initializer_ = std::unique_ptr<initialize::bearing_vector>(new initialize::bearing_vector(init_frm_));
+            initializer_ = std::unique_ptr<initialize::bearing_vector>(new initialize::bearing_vector(init_frm_,
+                                                                                                      num_ransac_iters_, min_num_triangulated_,
+                                                                                                      parallax_deg_thr_, reproj_err_thr_));
             break;
         }
     }
@@ -116,7 +127,7 @@ bool initializer::try_initialize_for_monocular(data::frame& curr_frm) {
     match::area matcher(0.9, true);
     const auto num_matches = matcher.match_in_consistent_area(init_frm_, curr_frm, prev_matched_coords_, init_matches_, 100);
 
-    if (num_matches < 100) {
+    if (num_matches < min_num_triangulated_) {
         // rebuild the initializer with the next frame
         reset();
         return false;
@@ -206,13 +217,13 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
     }
 
     // global bundle adjustment
-    const auto global_bundle_adjuster = optimize::global_bundle_adjuster(map_db_, 20, true);
+    const auto global_bundle_adjuster = optimize::global_bundle_adjuster(map_db_, num_ba_iters_, true);
     global_bundle_adjuster.optimize();
 
     // scale the map so that the median of depths is 1.0
     const auto median_depth = init_keyfrm->compute_median_depth(init_keyfrm->camera_->model_type_ == camera::model_type_t::Equirectangular);
     const auto inv_median_depth = 1.0 / median_depth;
-    if (curr_keyfrm->get_num_tracked_landmarks(1) < 100 && median_depth < 0) {
+    if (curr_keyfrm->get_num_tracked_landmarks(1) < min_num_triangulated_ && median_depth < 0) {
         spdlog::info("seems to be wrong initialization, resetting");
         state_ = initializer_state_t::Wrong;
         return false;
@@ -248,7 +259,7 @@ void initializer::scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_ke
 
 bool initializer::try_initialize_for_stereo(data::frame& curr_frm) {
     assert(state_ == initializer_state_t::Initializing);
-    return 500 <= curr_frm.num_keypts_;
+    return min_num_triangulated_ <= curr_frm.num_keypts_;
 }
 
 bool initializer::create_map_for_stereo(data::frame& curr_frm) {

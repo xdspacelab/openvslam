@@ -7,8 +7,10 @@
 namespace openvslam {
 namespace initialize {
 
-bearing_vector::bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters)
-        : base(ref_frm, max_num_iters) {
+bearing_vector::bearing_vector(const data::frame& ref_frm,
+                               const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
+                               const float parallax_deg_thr, const float reproj_err_thr)
+        : base(ref_frm, num_ransac_iters, min_num_triangulated, parallax_deg_thr, reproj_err_thr) {
     spdlog::debug("CONSTRUCT: initialize::bearing_vector");
 }
 
@@ -34,7 +36,7 @@ bool bearing_vector::initialize(const data::frame& cur_frm, const std::vector<in
 
     // compute an E matrix
     auto essential_solver = solve::essential_solver(ref_bearings_, cur_bearings_, ref_cur_matches_);
-    essential_solver.find_via_ransac(max_num_iters_);
+    essential_solver.find_via_ransac(num_ransac_iters_);
 
     // reconstruct map if the solution is valid
     if (essential_solver.solution_is_valid()) {

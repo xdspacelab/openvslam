@@ -23,7 +23,9 @@ public:
     /**
      * Constructor
      */
-    explicit bearing_vector(const data::frame& ref_frm, const unsigned int max_num_iters = 100);
+    bearing_vector(const data::frame& ref_frm,
+                   const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
+                   const float parallax_deg_thr, const float reproj_err_thr);
 
     /**
      * Destructor

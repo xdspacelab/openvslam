@@ -12,8 +12,11 @@
 namespace openvslam {
 namespace initialize {
 
-perspective::perspective(const data::frame& ref_frm, const unsigned int max_num_iters)
-        : base(ref_frm, max_num_iters), ref_cam_matrix_(get_camera_matrix(ref_frm.camera_)) {
+perspective::perspective(const data::frame& ref_frm,
+                         const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
+                         const float parallax_deg_thr, const float reproj_err_thr)
+        : base(ref_frm, num_ransac_iters, min_num_triangulated, parallax_deg_thr, reproj_err_thr),
+          ref_cam_matrix_(get_camera_matrix(ref_frm.camera_)) {
     spdlog::debug("CONSTRUCT: initialize::perspective");
 }
 
@@ -43,8 +46,8 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
     // compute H and F matrices
     auto homography_solver = solve::homography_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, 1.0);
     auto fundamental_solver = solve::fundamental_solver(ref_undist_keypts_, cur_undist_keypts_, ref_cur_matches_, 1.0);
-    std::thread thread_for_H(&solve::homography_solver::find_via_ransac, &homography_solver, max_num_iters_, true);
-    std::thread thread_for_F(&solve::fundamental_solver::find_via_ransac, &fundamental_solver, max_num_iters_, true);
+    std::thread thread_for_H(&solve::homography_solver::find_via_ransac, &homography_solver, num_ransac_iters_, true);
+    std::thread thread_for_F(&solve::fundamental_solver::find_via_ransac, &fundamental_solver, num_ransac_iters_, true);
     thread_for_H.join();
     thread_for_F.join();
 

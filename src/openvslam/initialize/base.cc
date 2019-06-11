@@ -5,9 +5,12 @@
 namespace openvslam {
 namespace initialize {
 
-base::base(const data::frame& ref_frm, const unsigned int max_num_iters)
+base::base(const data::frame& ref_frm,
+           const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
+           const float parallax_deg_thr, const float reproj_err_thr)
         : ref_camera_(ref_frm.camera_), ref_undist_keypts_(ref_frm.undist_keypts_), ref_bearings_(ref_frm.bearings_),
-          max_num_iters_(max_num_iters) {}
+          num_ransac_iters_(num_ransac_iters), min_num_triangulated_(min_num_triangulated),
+          parallax_deg_thr_(parallax_deg_thr), reproj_err_thr_(reproj_err_thr) {}
 
 Mat33_t base::get_rotation_ref_to_cur() const {
     return rot_ref_to_cur_;
@@ -40,7 +43,7 @@ bool base::find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots
     std::vector<unsigned int> nums_valid_pts(num_hypothesis);
 
     for (unsigned int i = 0; i < num_hypothesis; ++i) {
-        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), 4.0, is_inlier_match, depth_is_positive,
+        nums_valid_pts.at(i) = check_pose(init_rots.at(i), init_transes.at(i), is_inlier_match, depth_is_positive,
                                           init_triangulated_pts.at(i), init_is_triangulated.at(i), init_parallax.at(i));
     }
 
@@ -60,14 +63,14 @@ bool base::find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots
     // reject if most plausible hypothesis is unclear
     const auto num_similars = std::count_if(nums_valid_pts.begin(), nums_valid_pts.end(),
                                             [max_num_valid_pts_iter](unsigned int num_valid_pts) {
-                                                return 0.7 * (*max_num_valid_pts_iter) < num_valid_pts;
+                                                return 0.8 * (*max_num_valid_pts_iter) < num_valid_pts;
                                             });
     if (1 < num_similars) {
         return false;
     }
 
     // reject if the parallax is too small
-    if (init_parallax.at(max_num_valid_index) < min_parallax_deg_) {
+    if (init_parallax.at(max_num_valid_index) < parallax_deg_thr_) {
         return false;
     }
 
@@ -80,12 +83,13 @@ bool base::find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots
     return true;
 }
 
-unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur, const float reproj_err_thr_sq,
+unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur,
                               const std::vector<bool>& is_inlier_match, const bool depth_is_positive,
                               eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
                               float& parallax_deg) {
     // = cos(0.5deg)
     constexpr float cos_parallax_thr = 0.99996192306;
+    const float reproj_err_thr_sq = reproj_err_thr_ * reproj_err_thr_;
 
     // resize buffers according to the number of observed keypoints in the reference
     is_triangulated.resize(ref_undist_keypts_.size(), false);
