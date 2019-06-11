@@ -44,12 +44,12 @@ The later parts of this chapter explains what each of the commands do in more de
     unzip aist_living_lab_2.zip
 
     # run tracking and mapping
-    ./run_video_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_1/movie.mp4 -c ./aist_living_lab_1/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
+    ./run_video_slam -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_1/video.mp4 -c ./aist_living_lab_1/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
     # click the [Terminate] button to close the viewer
     # you can find map.msg in the current directory
 
     # run localization
-    ./run_video_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_2/movie.mp4 -c ./aist_living_lab_2/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
+    ./run_video_localization -v ./orb_vocab/orb_vocab.dbow2 -m ./aist_living_lab_2/video.mp4 -c ./aist_living_lab_2/config.yaml --frame-skip 3 --no-sleep --map-db map.msg
 
 
 Sample Datasets
@@ -133,7 +133,7 @@ After downloading and uncompressing a zip file, you will find a video file and a
 .. code-block:: bash
 
     $ ls dataset_name_X/
-    config.yaml  movie.mp4
+    config.yaml  video.mp4
 
 
 You can put the dataset in any directory where you have access to.
@@ -182,7 +182,7 @@ The paths should be changed accordingly.
     $ ./run_video_slam \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -c /path/to/aist_living_lab_1/config.yaml \
-        -m /path/to/aist_living_lab_1/movie.mp4 \
+        -m /path/to/aist_living_lab_1/video.mp4 \
         --frame-skip 3 \
         --map-db aist_living_lab_1_map.msg
 
@@ -322,7 +322,7 @@ The paths should be changed accordingly.
     $ ./run_video_localization \
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -c /path/to/aist_living_lab_2/config.yaml \
-        -m /path/to/aist_living_lab_2/movie.mp4 \
+        -m /path/to/aist_living_lab_2/video.mp4 \
         --frame-skip 3 \
         --map-db aist_living_lab_1_map.msg
 
