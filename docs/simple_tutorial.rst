@@ -60,6 +60,8 @@ If you want to run OpenVSLAM with standard benchmarking detasets, please see :re
 
 Start by downloading some datasets you like.
 
+Equirectangular Datasets
+````````````````````````
 
 .. list-table::
     :header-rows: 1
@@ -125,6 +127,58 @@ Start by downloading some datasets you like.
       - equirectangular (mono)
       - 1:18
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+
+Fisheye Datasets
+````````````````
+
+.. list-table::
+    :header-rows: 1
+    :widths: 8, 8, 2, 8
+
+    * - name
+      - camera model
+      - length
+      - download link
+    * - aist_entrance_hall_1
+      - fisheye (mono)
+      - 1:05
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - aist_entrance_hall_2
+      - fisheye (mono)
+      - 1:06
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - aist_entrance_hall_3
+      - fisheye (mono)
+      - 1:23
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - aist_entrance_hall_4
+      - fisheye (mono)
+      - 1:27
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - aist_living_lab_1
+      - fisheye (mono)
+      - 1:20
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - aist_living_lab_2
+      - fisheye (mono)
+      - 2:26
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - aist_living_lab_3
+      - fisheye (mono)
+      - 3:43
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - nu_eng2_corridor_1
+      - fisheye (mono)
+      - 2:56
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - nu_eng2_corridor_2
+      - fisheye (mono)
+      - 2:45
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+    * - nu_eng2_corridor_3
+      - fisheye (mono)
+      - 2:04
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
 
 
 After downloading and uncompressing a zip file, you will find a video file and a config file under the uncompressed directory.
