@@ -20,7 +20,7 @@ The later parts of this chapter explains what each of the commands do in more de
     $ pwd
     /path/to/openvslam/build/
     $ ls
-    run_euroc_slam   lib/   ...
+    run_video_slam   run_video_localization   lib/   ...
 
     # download an ORB vocabulary from Google Drive
     FILE_ID="1wUPb328th8bUqhOk-i8xllt5mgRW4n84"
