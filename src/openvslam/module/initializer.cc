@@ -260,7 +260,12 @@ void initializer::scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_ke
 
 bool initializer::try_initialize_for_stereo(data::frame& curr_frm) {
     assert(state_ == initializer_state_t::Initializing);
-    return min_num_triangulated_ <= curr_frm.num_keypts_;
+    // count the number of valid depths
+    unsigned int num_valid_depths = std::count_if(curr_frm.depths_.begin(), curr_frm.depths_.end(),
+                                                  [](const float depth) {
+                                                      return 0 < depth;
+                                                  });
+    return min_num_triangulated_ <= num_valid_depths;
 }
 
 bool initializer::create_map_for_stereo(data::frame& curr_frm) {
@@ -311,7 +316,7 @@ bool initializer::create_map_for_stereo(data::frame& curr_frm) {
     // set the origin keyframe
     map_db_->origin_keyfrm_ = curr_keyfrm;
 
-    spdlog::info("new map created with {} points", map_db_->get_num_landmarks());
+    spdlog::info("new map created with {} points: frame {}", map_db_->get_num_landmarks(), curr_frm.id_);
     state_ = initializer_state_t::Succeeded;
     return true;
 }
