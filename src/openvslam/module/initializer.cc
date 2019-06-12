@@ -13,8 +13,16 @@
 namespace openvslam {
 namespace module {
 
-initializer::initializer(const std::shared_ptr<config>& cfg, data::map_database* map_db, data::bow_database* bow_db)
-        : cfg_(cfg), map_db_(map_db), bow_db_(bow_db) {
+initializer::initializer(const camera::setup_type_t setup_type,
+                         data::map_database* map_db, data::bow_database* bow_db,
+                         const YAML::Node& yaml_node)
+        : setup_type_(setup_type), map_db_(map_db), bow_db_(bow_db),
+          num_ransac_iters_(yaml_node["Initializer.num_ransac_iterations"].as<unsigned int>(100)),
+          min_num_triangulated_(yaml_node["Initializer.num_min_triangulated_pts"].as<unsigned int>(50)),
+          parallax_deg_thr_(yaml_node["Initializer.parallax_deg_threshold"].as<float>(1.0)),
+          reproj_err_thr_(yaml_node["Initializer.reprojection_error_threshold"].as<float>(4.0)),
+          num_ba_iters_(yaml_node["Initializer.num_ba_iterations"].as<unsigned int>(20)),
+          scaling_factor_(yaml_node["Initializer.scaling_factor"].as<float>(1.0)) {
     spdlog::debug("CONSTRUCT: module::initializer");
 }
 
@@ -23,8 +31,7 @@ initializer::~initializer() {
 }
 
 void initializer::reset() {
-    delete initializer_;
-    initializer_ = nullptr;
+    initializer_.reset(nullptr);
     state_ = initializer_state_t::NotReady;
 }
 
@@ -41,20 +48,22 @@ std::vector<int> initializer::get_initial_matches() const {
 }
 
 bool initializer::initialize(data::frame& curr_frm) {
-    switch (cfg_->camera_->setup_type_) {
+    switch (setup_type_) {
         case camera::setup_type_t::Monocular: {
-            // initializerが構築されていない時は構築する
+            // construct an initializer if not constructed
             if (state_ == initializer_state_t::NotReady) {
                 create_initializer(curr_frm);
                 return false;
             }
 
-            // initializeを試みて，成功したらマップ構築を試行
+            // try to initialize
             if (!try_initialize_for_monocular(curr_frm)) {
+                // failed
                 return false;
             }
+            // succeeded
 
-            // マップ構築が正しく行えたらinitialize成功
+            // create new map, then check the state is succeeded or not
             create_map_for_monocular(curr_frm);
             return state_ == initializer_state_t::Succeeded;
         }
@@ -62,12 +71,14 @@ bool initializer::initialize(data::frame& curr_frm) {
         case camera::setup_type_t::RGBD: {
             state_ = initializer_state_t::Initializing;
 
-            // initializeを試みて，成功したらマップ構築を試行
+            // try to initialize
             if (!try_initialize_for_stereo(curr_frm)) {
+                // failed
                 return false;
             }
+            //succeeded
 
-            // マップ構築が正しく行えたらinitialize成功
+            // create new map, then check the state is succeeded or not
             create_map_for_stereo(curr_frm);
             return state_ == initializer_state_t::Succeeded;
         }
@@ -78,29 +89,32 @@ bool initializer::initialize(data::frame& curr_frm) {
 }
 
 void initializer::create_initializer(data::frame& curr_frm) {
-    // 初期フレーム
+    // set the initial frame
     init_frm_ = data::frame(curr_frm);
 
-    // 初期フレームでの特徴点の位置をセット
+    // initialize the previously matched coordinates
     prev_matched_coords_.resize(init_frm_.undist_keypts_.size());
     for (unsigned int i = 0; i < init_frm_.undist_keypts_.size(); ++i) {
         prev_matched_coords_.at(i) = init_frm_.undist_keypts_.at(i).pt;
     }
 
-    // 初期フレーム->現在フレームの特徴点の対応を初期化
+    // initialize matchings (init_idx -> curr_idx)
     std::fill(init_matches_.begin(), init_matches_.end(), -1);
 
-    // initializerを構築
-    delete initializer_;
-    initializer_ = nullptr;
+    // build a initializer
+    initializer_.reset(nullptr);
     switch (init_frm_.camera_->model_type_) {
         case camera::model_type_t::Perspective:
         case camera::model_type_t::Fisheye: {
-            initializer_ = new initialize::perspective(init_frm_);
+            initializer_ = std::unique_ptr<initialize::perspective>(new initialize::perspective(init_frm_,
+                                                                                                num_ransac_iters_, min_num_triangulated_,
+                                                                                                parallax_deg_thr_, reproj_err_thr_));
             break;
         }
         case camera::model_type_t::Equirectangular: {
-            initializer_ = new initialize::bearing_vector(init_frm_);
+            initializer_ = std::unique_ptr<initialize::bearing_vector>(new initialize::bearing_vector(init_frm_,
+                                                                                                      num_ransac_iters_, min_num_triangulated_,
+                                                                                                      parallax_deg_thr_, reproj_err_thr_));
             break;
         }
     }
@@ -114,13 +128,13 @@ bool initializer::try_initialize_for_monocular(data::frame& curr_frm) {
     match::area matcher(0.9, true);
     const auto num_matches = matcher.match_in_consistent_area(init_frm_, curr_frm, prev_matched_coords_, init_matches_, 100);
 
-    if (num_matches < 100) {
-        // 次のフレームでinitializerを構築し直す
+    if (num_matches < min_num_triangulated_) {
+        // rebuild the initializer with the next frame
         reset();
         return false;
     }
 
-    // initializeを試みる
+    // try to initialize with the current frame
     assert(initializer_);
     return initializer_->initialize(curr_frm, init_matches_);
 }
@@ -134,7 +148,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
         init_triangulated_pts = initializer_->get_triangulated_pts();
         const auto is_triangulated = initializer_->get_triangulated_flags();
 
-        // triangulationされなかったmatchを無効にする
+        // make invalid the matchings which have not been triangulated
         for (unsigned int i = 0; i < init_matches_.size(); ++i) {
             if (init_matches_.at(i) < 0) {
                 continue;
@@ -145,81 +159,82 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
             init_matches_.at(i) = -1;
         }
 
-        // 姿勢をセット
+        // set the camera poses
         init_frm_.set_cam_pose(Mat44_t::Identity());
         Mat44_t cam_pose_cw = Mat44_t::Identity();
         cam_pose_cw.block<3, 3>(0, 0) = initializer_->get_rotation_ref_to_cur();
         cam_pose_cw.block<3, 1>(0, 3) = initializer_->get_translation_ref_to_cur();
         curr_frm.set_cam_pose(cam_pose_cw);
 
-        delete initializer_;
-        initializer_ = nullptr;
+        // destruct the initializer
+        initializer_.reset(nullptr);
     }
 
-    // 初期キーフレームを作成
+    // create initial keyframes
     auto init_keyfrm = new data::keyframe(init_frm_, map_db_, bow_db_);
     auto curr_keyfrm = new data::keyframe(curr_frm, map_db_, bow_db_);
 
+    // compute BoW representations
     init_keyfrm->compute_bow();
     curr_keyfrm->compute_bow();
 
-    // データベースに追加
+    // add the keyframes to the map DB
     map_db_->add_keyframe(init_keyfrm);
     map_db_->add_keyframe(curr_keyfrm);
 
-    // 評価用のframe statisticsを更新
+    // update the frame statistics
     init_frm_.ref_keyfrm_ = init_keyfrm;
     curr_frm.ref_keyfrm_ = curr_keyfrm;
     map_db_->update_frame_statistics(init_frm_, false);
     map_db_->update_frame_statistics(curr_frm, false);
 
-    // 3次元点に対して2D-3D対応を追加
+    // assign 2D-3D associations
     for (unsigned int init_idx = 0; init_idx < init_matches_.size(); init_idx++) {
         const auto curr_idx = init_matches_.at(init_idx);
         if (curr_idx < 0) {
             continue;
         }
 
-        // 3次元点を作成
+        // construct a landmark
         auto lm = new data::landmark(init_triangulated_pts.at(init_idx), curr_keyfrm, map_db_);
 
+        // set the assocications to the new keyframes
         init_keyfrm->add_landmark(lm, init_idx);
         curr_keyfrm->add_landmark(lm, curr_idx);
-
         lm->add_observation(init_keyfrm, init_idx);
         lm->add_observation(curr_keyfrm, curr_idx);
 
+        // update the descriptor
         lm->compute_descriptor();
+        // update the geometry
         lm->update_normal_and_depth();
 
-        // 2D-3D対応を追加
+        // set the 2D-3D assocications to the current frame
         curr_frm.landmarks_.at(curr_idx) = lm;
         curr_frm.outlier_flags_.at(curr_idx) = false;
 
-        // データベースに追加
+        // add the landmark to the map DB
         map_db_->add_landmark(lm);
     }
 
     // global bundle adjustment
-    const auto global_bundle_adjuster = optimize::global_bundle_adjuster(map_db_, 20, true);
+    const auto global_bundle_adjuster = optimize::global_bundle_adjuster(map_db_, num_ba_iters_, true);
     global_bundle_adjuster.optimize();
 
-    // depthの中央値が1になるように座標系をスケーリング
+    // scale the map so that the median of depths is 1.0
     const auto median_depth = init_keyfrm->compute_median_depth(init_keyfrm->camera_->model_type_ == camera::model_type_t::Equirectangular);
     const auto inv_median_depth = 1.0 / median_depth;
-
-    if (curr_keyfrm->get_num_tracked_landmarks(1) < 100 && median_depth < 0) {
+    if (curr_keyfrm->get_num_tracked_landmarks(1) < min_num_triangulated_ && median_depth < 0) {
         spdlog::info("seems to be wrong initialization, resetting");
         state_ = initializer_state_t::Wrong;
         return false;
     }
+    scale_map(init_keyfrm, curr_keyfrm, inv_median_depth * scaling_factor_);
 
-    // mapをスケーリング
-    scale_map(init_keyfrm, curr_keyfrm, inv_median_depth);
-    // 最適化後の姿勢をフレームに再セット
+    // update the current frame pose
     curr_frm.set_cam_pose(curr_keyfrm->get_cam_pose());
 
-    // 原点を設定
+    // set the origin keyframe
     map_db_->origin_keyfrm_ = init_keyfrm;
 
     spdlog::info("new map created with {} points: frame {} - frame {}", map_db_->get_num_landmarks(), init_frm_.id_, curr_frm.id_);
@@ -228,12 +243,12 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
 }
 
 void initializer::scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_keyfrm, const double scale) {
-    // keyframeをスケーリング
+    // scaling keyframes
     Mat44_t cam_pose_cw = curr_keyfrm->get_cam_pose();
     cam_pose_cw.block<3, 1>(0, 3) *= scale;
     curr_keyfrm->set_cam_pose(cam_pose_cw);
 
-    // landmarksをスケーリング
+    // scaling landmarks
     const auto landmarks = init_keyfrm->get_landmarks();
     for (auto lm : landmarks) {
         if (!lm) {
@@ -245,53 +260,63 @@ void initializer::scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_ke
 
 bool initializer::try_initialize_for_stereo(data::frame& curr_frm) {
     assert(state_ == initializer_state_t::Initializing);
-    return 500 <= curr_frm.num_keypts_;
+    // count the number of valid depths
+    unsigned int num_valid_depths = std::count_if(curr_frm.depths_.begin(), curr_frm.depths_.end(),
+                                                  [](const float depth) {
+                                                      return 0 < depth;
+                                                  });
+    return min_num_triangulated_ <= num_valid_depths;
 }
 
 bool initializer::create_map_for_stereo(data::frame& curr_frm) {
     assert(state_ == initializer_state_t::Initializing);
 
-    // 初期キーフレームを作成
+    // create an initial keyframe
     curr_frm.set_cam_pose(Mat44_t::Identity());
     auto curr_keyfrm = new data::keyframe(curr_frm, map_db_, bow_db_);
 
+    // compute BoW representation
     curr_keyfrm->compute_bow();
 
-    // データベースに追加
+    // add to the map DB
     map_db_->add_keyframe(curr_keyfrm);
 
-    // 評価用のframe statisticsを更新
+    // update the frame statistics
     curr_frm.ref_keyfrm_ = curr_keyfrm;
     map_db_->update_frame_statistics(curr_frm, false);
 
     for (unsigned int idx = 0; idx < curr_frm.num_keypts_; ++idx) {
-        // stereo triangulationされていたら3次元点を追加する
+        // add a new landmark if tht corresponding depth is valid
         const auto z = curr_frm.depths_.at(idx);
         if (z <= 0) {
             continue;
         }
 
-        // 3次元点を作成
+        // build a landmark
         const Vec3_t pos_w = curr_frm.triangulate_stereo(idx);
         auto lm = new data::landmark(pos_w, curr_keyfrm, map_db_);
 
-        // frame,keyframeとlandmarkの対応情報を記録
+        // set the associations to the new keyframe
         lm->add_observation(curr_keyfrm, idx);
         curr_keyfrm->add_landmark(lm, idx);
-        curr_frm.landmarks_.at(idx) = lm;
 
-        // 3次元点の情報を計算
+        // update the descriptor
         lm->compute_descriptor();
+        // update the geometry
         lm->update_normal_and_depth();
 
-        // データベースに追加
+        // set the 2D-3D associations to the current frame
+        curr_frm.landmarks_.at(idx) = lm;
+        curr_frm.outlier_flags_.at(idx) = false;
+
+        // add the landmark to the map DB
         map_db_->add_landmark(lm);
     }
 
-    // 原点を設定
+    // set the origin keyframe
     map_db_->origin_keyfrm_ = curr_keyfrm;
 
-    spdlog::info("new map created with {} points", map_db_->get_num_landmarks());
+    spdlog::info("new map created with {} points: frame {}", map_db_->get_num_landmarks(), curr_frm.id_);
     state_ = initializer_state_t::Succeeded;
     return true;
 }

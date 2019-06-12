@@ -2,6 +2,7 @@
 #define OPENVSLAM_MODULE_INITIALIZER_H
 
 #include "openvslam/data/frame.h"
+#include "openvslam/initialize/base.h"
 
 #include <memory>
 
@@ -15,10 +16,6 @@ class map_database;
 class bow_database;
 } // namespace data
 
-namespace initialize {
-class base;
-} // namespace initialize
-
 namespace module {
 
 // initializer state
@@ -31,10 +28,14 @@ enum class initializer_state_t {
 
 class initializer {
 public:
+    initializer() = delete;
+
     /**
      * Constructor
      */
-    initializer(const std::shared_ptr<config>& cfg, data::map_database* map_db, data::bow_database* bow_db);
+    initializer(const camera::setup_type_t setup_type,
+                data::map_database* map_db, data::bow_database* bow_db,
+                const YAML::Node& yaml_node);
 
     /**
      * Destructor
@@ -67,14 +68,30 @@ public:
     bool initialize(data::frame& curr_frm);
 
 private:
-    //! config
-    std::shared_ptr<config> cfg_ = nullptr;
+    //! camera setup type
+    const camera::setup_type_t setup_type_;
     //! map database
     data::map_database* map_db_ = nullptr;
     //! BoW database
     data::bow_database* bow_db_ = nullptr;
     //! initializer status
     initializer_state_t state_ = initializer_state_t::NotReady;
+
+    //-----------------------------------------
+    // parameters
+
+    //! max number of iterations of RANSAC (only for monocular initializer)
+    const unsigned int num_ransac_iters_;
+    //! min number of triangulated pts
+    const unsigned int min_num_triangulated_;
+    //! min parallax (only for monocular initializer)
+    const float parallax_deg_thr_;
+    //! reprojection error threshold (only for monocular initializer)
+    const float reproj_err_thr_;
+    //! max number of iterations of BA (only for monocular initializer)
+    const unsigned int num_ba_iters_;
+    //! initial scaling factor (only for monocular initializer)
+    const float scaling_factor_;
 
     //-----------------------------------------
     // for monocular camera model
@@ -100,7 +117,7 @@ private:
     void scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_keyfrm, const double scale);
 
     //! initializer for monocular
-    initialize::base* initializer_ = nullptr;
+    std::unique_ptr<initialize::base> initializer_ = nullptr;
     //! initial frame
     data::frame init_frm_;
     //! coordinates of previously matched points to perform area-based matching

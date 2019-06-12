@@ -42,6 +42,12 @@ Feature.min_fast_threshold: 7
 
 depth_threshold: 40
 
+#========================#
+# Initializer Parameters #
+#========================#
+
+Initializer.num_min_triangulated_pts: 100
+
 #===========================#
 # PangolinViewer Parameters #
 #===========================#
