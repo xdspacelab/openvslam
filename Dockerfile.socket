@@ -133,7 +133,7 @@ RUN set -x && \
   make install && \
   cd /tmp && \
   rm -rf *
-ENV OpenCV_DIR=${CMAKE_INSTALL_PREFIX}/share/OpenCV
+ENV OpenCV_DIR=${CMAKE_INSTALL_PREFIX}/lib/cmake/opencv4
 
 # DBoW2
 ARG DBOW2_COMMIT=687fcb74dd13717c46add667e3fbfa9828a7019f
