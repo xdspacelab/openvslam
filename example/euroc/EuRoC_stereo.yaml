@@ -36,6 +36,12 @@ Feature.num_levels: 8
 Feature.ini_fast_threshold: 20
 Feature.min_fast_threshold: 7
 
+#========================#
+# Initializer Parameters #
+#========================#
+
+Initializer.num_min_triangulated_pts: 100
+
 #===========================#
 # PangolinViewer Parameters #
 #===========================#
