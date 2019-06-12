@@ -44,7 +44,7 @@ Requirements for OpenVSLAM
 
 * `yaml-cpp <https://github.com/jbeder/yaml-cpp>`_ : version 0.6.0 or later.
 
-* `OpenCV <https://opencv.org/>`_ : version 3.4.0 or later.
+* `OpenCV <https://opencv.org/>`_ : version 3.3.1 or later.
 
 .. NOTE ::
 

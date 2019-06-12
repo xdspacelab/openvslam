@@ -147,11 +147,11 @@ else()
 endif()
 
 # OpenCV
-find_package(OpenCV 3.4 QUIET)
+find_package(OpenCV 3.3.1 QUIET)
 if(NOT OpenCV_FOUND)
     find_package(OpenCV 4.0)
     if(NOT OpenCV_FOUND)
-        message(FATAL_ERROR "OpenCV > 3.4.0 not found")
+        message(FATAL_ERROR "OpenCV > 3.3.1 not found")
     endif()
 endif()
 message(STATUS "Use OpenCV ${OpenCV_VERSION}")
