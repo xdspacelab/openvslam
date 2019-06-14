@@ -224,7 +224,7 @@ bool bow_database::compute_scores(const T* const qry_shot, const unsigned int mi
 #ifdef USE_DBOW2
             const float score = bow_vocab_->score(qry_shot->bow_vec_, candidate->bow_vec_);
 #else
-            const float score = fbow::BoWVector::score(qry_frm->bow_vec_, init_reloc_candidate->bow_vec_);
+            const float score = fbow::BoWVector::score(qry_shot->bow_vec_, candidate->bow_vec_);
 #endif
             // スコアを保存
             scores_[candidate] = score;
