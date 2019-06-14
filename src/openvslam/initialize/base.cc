@@ -128,18 +128,15 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
         const float cur_norm = cur_normal.norm();
         const float cos_parallax = ref_normal.dot(cur_normal) / (ref_norm * cur_norm);
 
-        // reject if the parallax is to small
-        if (cos_parallax_thr < cos_parallax) {
-            continue;
-        }
+        const bool parallax_is_small = cos_parallax_thr < cos_parallax;
 
         // reject if the 3D point is in front of the cameras
         if (depth_is_positive) {
-            if (pos_c_in_ref(2) <= 0) {
+            if (!parallax_is_small && pos_c_in_ref(2) <= 0) {
                 continue;
             }
             const Vec3_t pos_c_in_cur = rot_ref_to_cur * pos_c_in_ref + trans_ref_to_cur;
-            if (pos_c_in_cur(2) <= 0) {
+            if (!parallax_is_small && pos_c_in_cur(2) <= 0) {
                 continue;
             }
         }
@@ -152,7 +149,7 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
         float x_right_in_ref;
         const auto is_valid_ref = ref_camera_->reproject_to_image(Mat33_t::Identity(), Vec3_t::Zero(), pos_c_in_ref,
                                                                   reproj_in_ref, x_right_in_ref);
-        if (!is_valid_ref) {
+        if (!parallax_is_small && !is_valid_ref) {
             continue;
         }
 
@@ -166,7 +163,7 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
         float x_right_in_cur;
         const auto is_valid_cur = cur_camera_->reproject_to_image(rot_ref_to_cur, trans_ref_to_cur, pos_c_in_ref,
                                                                   reproj_in_cur, x_right_in_cur);
-        if (!is_valid_cur) {
+        if (!parallax_is_small && !is_valid_cur) {
             continue;
         }
         const float cur_reproj_err_sq = (reproj_in_cur - cur_undist_keypt.pt).squaredNorm();
@@ -175,11 +172,12 @@ unsigned int base::check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans
         }
 
         // triangulation is valid!
-        triangulated_pts.at(ref_cur_matches_.at(i).first) = pos_c_in_ref;
-        is_triangulated.at(ref_cur_matches_.at(i).first) = true;
         ++num_valid_pts;
-
         cos_parallaxes.push_back(cos_parallax);
+        if (!parallax_is_small) {
+            triangulated_pts.at(ref_cur_matches_.at(i).first) = pos_c_in_ref;
+            is_triangulated.at(ref_cur_matches_.at(i).first) = true;
+        }
     }
 
     if (0 < num_valid_pts) {
