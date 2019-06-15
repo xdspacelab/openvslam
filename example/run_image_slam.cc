@@ -32,8 +32,8 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     // load the mask image
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
 
-    image_sequence sequence(image_dir_path);
-    const auto img_paths = sequence.get_image_paths();
+    const image_sequence sequence(image_dir_path, cfg->camera_->fps_);
+    const auto frames = sequence.get_frames();
 
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
@@ -47,21 +47,19 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
 #endif
 
     std::vector<double> track_times;
-    track_times.reserve(img_paths.size());
-
-    double timestamp = 0.0;
+    track_times.reserve(frames.size());
 
     // run the SLAM in another thread
     std::thread thread([&]() {
-        for (unsigned int i = 0; i < img_paths.size(); ++i) {
-            const auto& img_path = img_paths.at(i);
-            const auto img = cv::imread(img_path, cv::IMREAD_UNCHANGED);
+        for (unsigned int i = 0; i < frames.size(); ++i) {
+            const auto& frame = frames.at(i);
+            const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
 
             const auto tp_1 = std::chrono::steady_clock::now();
 
             if (!img.empty() && (i % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
-                SLAM.track_for_monocular(img, timestamp, mask);
+                SLAM.track_for_monocular(img, frame.timestamp_, mask);
             }
 
             const auto tp_2 = std::chrono::steady_clock::now();
@@ -72,14 +70,12 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
             }
 
             // wait until the timestamp of the next frame
-            if (!no_sleep) {
-                const auto wait_time = 1.0 / cfg->camera_->fps_ - track_time;
+            if (!no_sleep && i < frames.size() - 1) {
+                const auto wait_time = frames.at(i + 1).timestamp_ - (frame.timestamp_ + track_time);
                 if (0.0 < wait_time) {
                     std::this_thread::sleep_for(std::chrono::microseconds(static_cast<unsigned int>(wait_time * 1e6)));
                 }
             }
-
-            timestamp += 1.0 / cfg->camera_->fps_;
 
             // check if the termination of SLAM system is requested or not
             if (SLAM.terminate_is_requested()) {

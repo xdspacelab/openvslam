@@ -1,19 +1,29 @@
-#ifndef IMAGE_UTIL_H
-#define IMAGE_UTIL_H
+#ifndef EXAMPLE_UTIL_IMAGE_UTIL_H
+#define EXAMPLE_UTIL_IMAGE_UTIL_H
 
 #include <string>
 #include <vector>
 
 class image_sequence {
 public:
-    explicit image_sequence(const std::string& img_dir_path);
+    struct frame {
+        frame(const std::string& img_path, const double timestamp)
+                : img_path_(img_path), timestamp_(timestamp) {};
+
+        const std::string img_path_;
+        const double timestamp_;
+    };
+
+    image_sequence(const std::string& img_dir_path, const double fps);
 
     virtual ~image_sequence() = default;
 
-    std::vector<std::string> get_image_paths() const;
+    std::vector<frame> get_frames() const;
 
 private:
-    std::vector<std::string> img_paths_;
+    const double fps_;
+
+    std::vector<std::string> img_file_paths_;
 };
 
-#endif // IMAGE_UTIL_H
+#endif // EXAMPLE_UTIL_IMAGE_UTIL_H
