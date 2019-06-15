@@ -1,4 +1,4 @@
-#include "util/tum_util.h"
+#include "util/tum_rgbd_util.h"
 
 #ifdef USE_PANGOLIN_VIEWER
 #include "pangolin_viewer/viewer.h"
@@ -29,10 +29,10 @@
 #endif
 
 void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
-                   const std::string& vocab_file_path, const std::string& sequence_dir_path, const std::string& assoc_file_path,
+                   const std::string& vocab_file_path, const std::string& sequence_dir_path,
                    const unsigned int frame_skip, const bool no_sleep, const bool auto_term,
                    const bool eval_log, const std::string& map_db_path) {
-    tum_mono_sequence sequence(sequence_dir_path, assoc_file_path);
+    tum_rgbd_sequence sequence(sequence_dir_path);
     const auto frames = sequence.get_frames();
 
     // build a SLAM system
@@ -140,10 +140,10 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
 }
 
 void rgbd_tracking(const std::shared_ptr<openvslam::config>& cfg,
-                   const std::string& vocab_file_path, const std::string& sequence_dir_path, const std::string& assoc_file_path,
+                   const std::string& vocab_file_path, const std::string& sequence_dir_path,
                    const unsigned int frame_skip, const bool no_sleep, const bool auto_term,
                    const bool eval_log, const std::string& map_db_path) {
-    tum_rgbd_sequence sequence(sequence_dir_path, assoc_file_path);
+    tum_rgbd_sequence sequence(sequence_dir_path);
     const auto frames = sequence.get_frames();
 
     // SLAM systemを構築
@@ -251,7 +251,6 @@ int main(int argc, char* argv[]) {
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
     auto vocab_file_path = op.add<popl::Value<std::string>>("v", "vocab", "vocabulary file path");
     auto data_dir_path = op.add<popl::Value<std::string>>("d", "data-dir", "directory path which contains dataset");
-    auto assoc_file_path = op.add<popl::Value<std::string>>("a", "assoc", "association file path");
     auto config_file_path = op.add<popl::Value<std::string>>("c", "config", "config file path");
     auto frame_skip = op.add<popl::Value<unsigned int>>("", "frame-skip", "interval of frame skip", 1);
     auto no_sleep = op.add<popl::Switch>("", "no-sleep", "not wait for next frame in real time");
@@ -274,7 +273,7 @@ int main(int argc, char* argv[]) {
         std::cerr << op << std::endl;
         return EXIT_FAILURE;
     }
-    if (!vocab_file_path->is_set() || !data_dir_path->is_set() || !assoc_file_path->is_set() || !config_file_path->is_set()) {
+    if (!vocab_file_path->is_set() || !data_dir_path->is_set() || !config_file_path->is_set()) {
         std::cerr << "invalid arguments" << std::endl;
         std::cerr << std::endl;
         std::cerr << op << std::endl;
@@ -306,12 +305,12 @@ int main(int argc, char* argv[]) {
 
     // run tracking
     if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
-        mono_tracking(cfg, vocab_file_path->value(), data_dir_path->value(), assoc_file_path->value(),
+        mono_tracking(cfg, vocab_file_path->value(), data_dir_path->value(),
                       frame_skip->value(), no_sleep->is_set(), auto_term->is_set(),
                       eval_log->is_set(), map_db_path->value());
     }
     else if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::RGBD) {
-        rgbd_tracking(cfg, vocab_file_path->value(), data_dir_path->value(), assoc_file_path->value(),
+        rgbd_tracking(cfg, vocab_file_path->value(), data_dir_path->value(),
                       frame_skip->value(), no_sleep->is_set(), auto_term->is_set(),
                       eval_log->is_set(), map_db_path->value());
     }
