@@ -32,7 +32,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
                    const std::string& vocab_file_path, const std::string& sequence_dir_path,
                    const unsigned int frame_skip, const bool no_sleep, const bool auto_term,
                    const bool eval_log, const std::string& map_db_path) {
-    kitti_mono_sequence sequence(sequence_dir_path);
+    const kitti_sequence sequence(sequence_dir_path);
     const auto frames = sequence.get_frames();
 
     // build a SLAM system
@@ -55,7 +55,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     std::thread thread([&]() {
         for (unsigned int i = 0; i < frames.size(); ++i) {
             const auto& frame = frames.at(i);
-            const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
+            const auto img = cv::imread(frame.left_img_path_, cv::IMREAD_UNCHANGED);
 
             const auto tp_1 = std::chrono::steady_clock::now();
 
@@ -143,7 +143,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
                      const std::string& vocab_file_path, const std::string& sequence_dir_path,
                      const unsigned int frame_skip, const bool no_sleep, const bool auto_term,
                      const bool eval_log, const std::string& map_db_path) {
-    kitti_stereo_sequence sequence(sequence_dir_path);
+    const kitti_sequence sequence(sequence_dir_path);
     const auto frames = sequence.get_frames();
 
     // build a SLAM system
