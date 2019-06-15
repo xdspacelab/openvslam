@@ -96,6 +96,16 @@ else()
     remove_definitions(-DUSE_SSE_ORB)
 endif()
 
+set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point operation (-mfpmath=sse)")
+
+if(USE_SSE_FP_MATH)
+    message(STATUS "SSE for floating-point operation (-mfpmath=sse): ENABLED")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=sse")
+else()
+    message(STATUS "SSE for floating-point operation (-mfpmath=sse): DISABLED")
+endif()
+
 #######################
 # Check C++11 support #
 #######################
