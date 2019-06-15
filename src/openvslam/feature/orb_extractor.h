@@ -45,14 +45,6 @@ public:
 
     void set_minimum_fast_threshold(const unsigned int minimum_fast_threshold);
 
-    unsigned int get_edge_threshold() const;
-
-    void set_edge_threshold(const unsigned int edge_threshold);
-
-    unsigned int get_patch_size() const;
-
-    void set_patch_size(const unsigned int patch_size);
-
     std::vector<float> get_scale_factors() const;
 
     std::vector<float> get_inv_scale_factors() const;
@@ -64,8 +56,6 @@ public:
     std::vector<cv::Mat> image_pyramid_;
 
 private:
-    void create_point_pairs();
-
     void initialize();
 
     void calc_scale_factors();
@@ -119,7 +109,7 @@ private:
 
     void compute_orb_descriptors(const cv::Mat& image, const std::vector<cv::KeyPoint>& keypts, cv::Mat& descriptors) const;
 
-    void compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::Mat& image, const cv::Point* pattern, uchar* desc) const;
+    void compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::Mat& image, uchar* desc) const;
 
     //! parameters for ORB extraction
     orb_params orb_params_;
@@ -143,7 +133,6 @@ private:
 
     std::vector<unsigned int> num_keypts_per_level_;
     std::vector<int> u_max_;
-    std::vector<cv::Point> pattern_;
 };
 
 } // namespace feature

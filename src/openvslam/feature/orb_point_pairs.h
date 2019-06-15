@@ -39,10 +39,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace openvslam {
 namespace feature {
 
+// (X, Y) x 2 points x 256 bits = 1024
+static constexpr unsigned int orb_point_pairs_size = 256 * 4;
+
 // quoted from
 // https://github.com/opencv/opencv/blob/50bec53afcf010e425b3f015c71297d46ef78903/modules/features2d/src/orb.cpp#L375
-
-static constexpr int orb_point_pairs[256 * 4] = {
+alignas(16) static constexpr float orb_point_pairs[orb_point_pairs_size] = {
         8, -3, 9, 5, /* mean (0), correlation (0) */
         4, 2, 7, -12, /* mean (1.12461e-05), correlation (0.0437584) */
         -11, 9, -8, 2, /* mean (3.37382e-05), correlation (0.0617409) */
