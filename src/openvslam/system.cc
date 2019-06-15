@@ -206,7 +206,7 @@ void system::disable_mapping_module() {
 }
 
 bool system::mapping_module_is_enabled() const {
-    return !mapper_->is_paused() && !mapper_->is_terminated();
+    return !mapper_->is_paused();
 }
 
 void system::enable_loop_detector() {
