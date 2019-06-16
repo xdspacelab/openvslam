@@ -26,17 +26,12 @@ private:
         img_info(const double timestamp, const std::string& img_file_path)
                 : timestamp_(timestamp), img_file_path_(img_file_path) {};
 
-        bool operator<(const img_info& other) const { return timestamp_ < other.timestamp_; }
-
-        double timestamp() const { return timestamp_; }
-        std::string img_file_path() const { return img_file_path_; }
-
-    private:
-        double timestamp_;
-        std::string img_file_path_;
+        const double timestamp_;
+        const std::string img_file_path_;
     };
 
-    std::vector<img_info> acquire_image_information(const std::string& img_dir_path) const;
+    std::vector<img_info> acquire_image_information(const std::string& seq_dir_path,
+                                                    const std::string& timestamp_file_path) const;
 
     std::vector<double> timestamps_;
     std::vector<std::string> rgb_img_file_paths_;
