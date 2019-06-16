@@ -1,5 +1,6 @@
-#include "openvslam/match/area.h"
 #include "openvslam/data/frame.h"
+#include "openvslam/match/area.h"
+#include "openvslam/match/angle_checker.h"
 
 namespace openvslam {
 namespace match {
@@ -8,10 +9,7 @@ unsigned int area::match_in_consistent_area(data::frame& frm_1, data::frame& frm
                                             std::vector<int>& matched_indices_2_in_frm_1, int margin) {
     unsigned int num_matches = 0;
 
-    std::array<std::vector<int>, HISTOGRAM_LENGTH> orientation_histogram;
-    for (auto& bin : orientation_histogram) {
-        bin.reserve(500);
-    }
+    angle_checker<int> angle_checker;
 
     matched_indices_2_in_frm_1 = std::vector<int>(frm_1.undist_keypts_.size(), -1);
 
@@ -87,36 +85,18 @@ unsigned int area::match_in_consistent_area(data::frame& frm_1, data::frame& frm
         ++num_matches;
 
         if (check_orientation_) {
-            auto delta_angle = frm_1.undist_keypts_[idx_1].angle - frm_2.undist_keypts_[best_idx_2].angle;
-            if (delta_angle < 0.0) {
-                delta_angle += 360.0;
-            }
-            if (360.0 <= delta_angle) {
-                delta_angle -= 360.0;
-            }
-
-            const auto bin = static_cast<unsigned int>(cvRound(delta_angle * INV_HISTOGRAM_LENGTH));
-
-            assert(bin < HISTOGRAM_LENGTH);
-            orientation_histogram.at(bin).push_back(idx_1);
+            const auto delta_angle
+                    = frm_1.undist_keypts_.at(idx_1).angle - frm_2.undist_keypts_.at(best_idx_2).angle;
+            angle_checker.append_delta_angle(delta_angle, idx_1);
         }
     }
 
     if (check_orientation_) {
-        const auto bins = index_sort_by_size(orientation_histogram);
-        // ヒストグラムのbinのうち，ヒストグラムの上位n個に入っているもののみを有効にする
-        for (unsigned int bin = 0; bin < HISTOGRAM_LENGTH; ++bin) {
-            const bool is_valid_match = std::any_of(bins.begin(), bins.begin() + NUM_BINS_THR,
-                                                    [bin](const unsigned int i) { return bin == i; });
-            if (is_valid_match) {
-                continue;
-            }
-
-            for (const auto invalid_idx : orientation_histogram.at(bin)) {
-                if (0 <= matched_indices_2_in_frm_1.at(invalid_idx)) {
-                    matched_indices_2_in_frm_1.at(invalid_idx) = -1;
-                    --num_matches;
-                }
+        const auto invalid_matches = angle_checker.get_invalid_matches();
+        for (const auto invalid_idx_1 : invalid_matches) {
+            if (0 <= matched_indices_2_in_frm_1.at(invalid_idx_1)) {
+                matched_indices_2_in_frm_1.at(invalid_idx_1) = -1;
+                --num_matches;
             }
         }
     }
