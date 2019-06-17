@@ -39,6 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <opencv2/opencv.hpp>
 
+#ifdef USE_SSE_ORB
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
+#endif // USE_SSE_ORB
+
 namespace openvslam {
 namespace feature {
 
@@ -612,7 +620,7 @@ void orb_extractor::compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::
 
 #ifdef USE_SSE_ORB
 #if !((defined _MSC_VER && defined _M_X64) \
-      || (defined __GNUC__ && defined __x86_64__ && defined __SSE3__ && !defined __APPLE__) \
+      || (defined __GNUC__ && defined __x86_64__ && defined __SSE3__) \
       || CV_SSE3)
 #error "The processor is not compatible with SSE. Please configure the CMake with -DUSE_SSE_ORB=OFF."
 #endif
