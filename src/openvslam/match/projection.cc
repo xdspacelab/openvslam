@@ -1,8 +1,9 @@
-#include "openvslam/match/projection.h"
 #include "openvslam/camera/base.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
+#include "openvslam/match/projection.h"
+#include "openvslam/match/angle_checker.h"
 
 namespace openvslam {
 namespace match {
@@ -83,10 +84,7 @@ unsigned int projection::match_frame_and_landmarks(data::frame& frm, const std::
 unsigned int projection::match_current_and_last_frames(data::frame& curr_frm, const data::frame& last_frm, const float margin) const {
     unsigned int num_matches = 0;
 
-    std::array<std::vector<int>, HISTOGRAM_LENGTH> orientation_histogram;
-    for (auto& bin : orientation_histogram) {
-        bin.reserve(500);
-    }
+    angle_checker<int> angle_checker;
 
     const Mat33_t rot_cw = curr_frm.cam_pose_cw_.block<3, 3>(0, 0);
     const Vec3_t trans_cw = curr_frm.cam_pose_cw_.block<3, 1>(0, 3);
@@ -191,36 +189,17 @@ unsigned int projection::match_current_and_last_frames(data::frame& curr_frm, co
         ++num_matches;
 
         if (check_orientation_) {
-            // 特徴点のangleのチェックをする場合は，angleの差分のヒストグラムを作成しておく
-            auto delta_angle = last_frm.undist_keypts_.at(idx_last).angle - curr_frm.undist_keypts_.at(best_idx).angle;
-            if (delta_angle < 0.0) {
-                delta_angle += 360.0;
-            }
-            if (360.0 <= delta_angle) {
-                delta_angle -= 360.0;
-            }
-
-            const auto bin = static_cast<unsigned int>(cvRound(delta_angle * INV_HISTOGRAM_LENGTH));
-
-            assert(bin < HISTOGRAM_LENGTH);
-            orientation_histogram.at(bin).push_back(best_idx);
+            const auto delta_angle
+                    = last_frm.undist_keypts_.at(idx_last).angle - curr_frm.undist_keypts_.at(best_idx).angle;
+            angle_checker.append_delta_angle(delta_angle, best_idx);
         }
     }
 
     if (check_orientation_) {
-        const auto bins = index_sort_by_size(orientation_histogram);
-        // ヒストグラムのbinのうち，ヒストグラムの上位n個に入っているもののみを有効にする
-        for (unsigned int bin = 0; bin < HISTOGRAM_LENGTH; ++bin) {
-            const bool is_valid_match = std::any_of(bins.begin(), bins.begin() + NUM_BINS_THR,
-                                                    [bin](const unsigned int i){ return bin == i; });
-            if (is_valid_match) {
-                continue;
-            }
-
-            for (const auto invalid_idx : orientation_histogram.at(bin)) {
-                curr_frm.landmarks_.at(invalid_idx) = nullptr;
-                --num_matches;
-            }
+        const auto invalid_matches = angle_checker.get_invalid_matches();
+        for (const auto invalid_idx : invalid_matches) {
+            curr_frm.landmarks_.at(invalid_idx) = nullptr;
+            --num_matches;
         }
     }
 
@@ -231,10 +210,7 @@ unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::k
                                                   const float margin, const unsigned int hamm_dist_thr) const {
     unsigned int num_matches = 0;
 
-    std::array<std::vector<int>, HISTOGRAM_LENGTH> orientation_histogram;
-    for (auto& bin : orientation_histogram) {
-        bin.reserve(500);
-    }
+    angle_checker<int> angle_checker;
 
     const Mat33_t rot_cw = curr_frm.cam_pose_cw_.block<3, 3>(0, 0);
     const Vec3_t trans_cw = curr_frm.cam_pose_cw_.block<3, 1>(0, 3);
@@ -317,37 +293,17 @@ unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::k
         num_matches++;
 
         if (check_orientation_) {
-            // 特徴点のangleのチェックをする場合は，angleの差分のヒストグラムを作成しておく
-            auto delta_angle = keyfrm->undist_keypts_.at(idx).angle - curr_frm.undist_keypts_.at(best_idx).angle;
-            if (delta_angle < 0.0) {
-                delta_angle += 360.0;
-            }
-            if (360.0 <= delta_angle) {
-                delta_angle -= 360.0;
-            }
-
-            const auto bin = static_cast<unsigned int>(cvRound(delta_angle * INV_HISTOGRAM_LENGTH));
-
-            assert(bin < HISTOGRAM_LENGTH);
-            orientation_histogram.at(bin).push_back(best_idx);
+            const auto delta_angle
+                    = keyfrm->undist_keypts_.at(idx).angle - curr_frm.undist_keypts_.at(best_idx).angle;
+            angle_checker.append_delta_angle(delta_angle, best_idx);
         }
-
     }
 
     if (check_orientation_) {
-        const auto bins = index_sort_by_size(orientation_histogram);
-        // ヒストグラムのbinのうち，ヒストグラムの上位n個に入っているもののみを有効にする
-        for (unsigned int bin = 0; bin < HISTOGRAM_LENGTH; ++bin) {
-            const bool is_valid_match = std::any_of(bins.begin(), bins.begin() + NUM_BINS_THR,
-                                                    [bin](const unsigned int i){ return bin == i; });
-            if (is_valid_match) {
-                continue;
-            }
-
-            for (const auto invalid_idx : orientation_histogram.at(bin)) {
-                curr_frm.landmarks_.at(invalid_idx) = nullptr;
-                --num_matches;
-            }
+        const auto invalid_matches = angle_checker.get_invalid_matches();
+        for (const auto invalid_idx : invalid_matches) {
+            curr_frm.landmarks_.at(invalid_idx) = nullptr;
+            --num_matches;
         }
     }
 

@@ -1,7 +1,8 @@
-#include "openvslam/match/bow_tree.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
+#include "openvslam/match/bow_tree.h"
+#include "openvslam/match/angle_checker.h"
 
 #ifdef USE_DBOW2
 #include <DBoW2/FeatureVector.h>
@@ -15,10 +16,7 @@ namespace match {
 unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::frame& frm, std::vector<data::landmark*>& matched_lms_in_frm) const {
     unsigned int num_matches = 0;
 
-    std::array<std::vector<int>, HISTOGRAM_LENGTH> orientation_histogram;
-    for (auto& bin : orientation_histogram) {
-        bin.reserve(500);
-    }
+    angle_checker<int> angle_checker;
 
     matched_lms_in_frm = std::vector<data::landmark*>(frm.num_keypts_, nullptr);
 
@@ -91,20 +89,9 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
                 matched_lms_in_frm.at(best_frm_idx) = lm;
 
                 if (check_orientation_) {
-                    const auto& keypt = keyfrm->keypts_.at(keyfrm_idx);
-
-                    auto delta_angle = keypt.angle - frm.keypts_.at(best_frm_idx).angle;
-                    if (delta_angle < 0.0) {
-                        delta_angle += 360.0;
-                    }
-                    if (360.0 <= delta_angle) {
-                        delta_angle -= 360.0;
-                    }
-
-                    const auto bin = static_cast<unsigned int>(cvRound(delta_angle * INV_HISTOGRAM_LENGTH));
-
-                    assert(bin < HISTOGRAM_LENGTH);
-                    orientation_histogram.at(bin).push_back(best_frm_idx);
+                    const auto delta_angle
+                            = keyfrm->keypts_.at(keyfrm_idx).angle - frm.keypts_.at(best_frm_idx).angle;
+                    angle_checker.append_delta_angle(delta_angle, best_frm_idx);
                 }
 
                 ++num_matches;
@@ -124,19 +111,10 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
     }
 
     if (check_orientation_) {
-        const auto bins = index_sort_by_size(orientation_histogram);
-        // ヒストグラムのbinのうち，ヒストグラムの上位n個に入っているもののみを有効にする
-        for (unsigned int bin = 0; bin < HISTOGRAM_LENGTH; ++bin) {
-            const bool is_valid_match = std::any_of(bins.begin(), bins.begin() + NUM_BINS_THR,
-                                                    [bin](const unsigned int i){ return bin == i; });
-            if (is_valid_match) {
-                continue;
-            }
-
-            for (const auto invalid_idx : orientation_histogram.at(bin)) {
-                matched_lms_in_frm.at(invalid_idx) = nullptr;
-                --num_matches;
-            }
+        const auto invalid_matches = angle_checker.get_invalid_matches();
+        for (const auto invalid_idx : invalid_matches) {
+            matched_lms_in_frm.at(invalid_idx) = nullptr;
+            --num_matches;
         }
     }
 
@@ -146,10 +124,7 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
 unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, std::vector<data::landmark*>& matched_lms_in_keyfrm_1) const {
     unsigned int num_matches = 0;
 
-    std::array<std::vector<int>, HISTOGRAM_LENGTH> orientation_histogram;
-    for (auto& bin : orientation_histogram) {
-        bin.reserve(500);
-    }
+    angle_checker<int> angle_checker;
 
     const auto keyfrm_1_lms = keyfrm_1->get_landmarks();
     const auto keyfrm_2_lms = keyfrm_2->get_landmarks();
@@ -239,22 +214,13 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
                 // keyframe2のbest_idx_2はすでにkeyframe1の特徴点と対応している
                 is_already_matched_in_keyfrm_2.at(best_idx_2) = true;
 
-                if (check_orientation_) {
-                    auto delta_angle = keyfrm_1->keypts_.at(idx_1).angle - keyfrm_2->keypts_.at(best_idx_2).angle;
-                    if (delta_angle < 0.0) {
-                        delta_angle += 360.0;
-                    }
-                    if (360.0 <= delta_angle) {
-                        delta_angle -= 360.0;
-                    }
-
-                    const auto bin = static_cast<unsigned int>(cvRound(delta_angle * INV_HISTOGRAM_LENGTH));
-
-                    assert(bin < HISTOGRAM_LENGTH);
-                    orientation_histogram.at(bin).push_back(idx_1);
-                }
                 num_matches++;
 
+                if (check_orientation_) {
+                    const auto delta_angle
+                            = keyfrm_1->keypts_.at(idx_1).angle - keyfrm_2->keypts_.at(best_idx_2).angle;
+                    angle_checker.append_delta_angle(delta_angle, idx_1);
+                }
             }
 
             ++itr_1;
@@ -269,19 +235,10 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
     }
 
     if (check_orientation_) {
-        const auto bins = index_sort_by_size(orientation_histogram);
-        // ヒストグラムのbinのうち，ヒストグラムの上位n個に入っているもののみを有効にする
-        for (unsigned int bin = 0; bin < HISTOGRAM_LENGTH; ++bin) {
-            const bool is_valid_match = std::any_of(bins.begin(), bins.begin() + NUM_BINS_THR,
-                                                    [bin](const unsigned int i){ return bin == i; });
-            if (is_valid_match) {
-                continue;
-            }
-
-            for (const auto invalid_idx : orientation_histogram.at(bin)) {
-                matched_lms_in_keyfrm_1.at(invalid_idx) = nullptr;
-                --num_matches;
-            }
+        const auto invalid_matches = angle_checker.get_invalid_matches();
+        for (const auto invalid_idx : invalid_matches) {
+            matched_lms_in_keyfrm_1.at(invalid_idx) = nullptr;
+            --num_matches;
         }
     }
 

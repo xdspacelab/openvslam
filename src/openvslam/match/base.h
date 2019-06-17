@@ -14,12 +14,6 @@ static constexpr unsigned int HAMMING_DIST_THR_LOW = 50;
 static constexpr unsigned int HAMMING_DIST_THR_HIGH = 100;
 static constexpr unsigned int MAX_HAMMING_DIST = 256;
 
-static constexpr unsigned int HISTOGRAM_LENGTH = 30;
-static constexpr float INV_HISTOGRAM_LENGTH = 1.0 / HISTOGRAM_LENGTH;
-static constexpr unsigned int NUM_BINS_THR = 3;
-static_assert(NUM_BINS_THR <= HISTOGRAM_LENGTH,
-              "NUM_BINS_THR should be equal to or smaller than HISTOGRAM_LENGTH");
-
 //! ORB特徴量間のハミング距離を計算する
 inline unsigned int compute_descriptor_distance_32(const cv::Mat& desc_1, const cv::Mat& desc_2) {
     // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
@@ -76,18 +70,6 @@ public:
     virtual ~base() = default;
 
 protected:
-    //! arrayの各要素のvectorのsizeに関して，降順のインデックスソートを行う
-    template<typename T, size_t N>
-    inline std::array<unsigned int, N> index_sort_by_size(const std::array<std::vector<T>, N> array) const {
-        std::array<unsigned int, N> indices;
-        std::iota(indices.begin(), indices.end(), 0);
-        std::sort(indices.begin(), indices.end(),
-                  [&array](const unsigned int a, const unsigned int b) {
-                      return (array.at(a).size() > array.at(b).size());
-                  });
-        return indices;
-    }
-
     const float lowe_ratio_;
     const bool check_orientation_;
 };
