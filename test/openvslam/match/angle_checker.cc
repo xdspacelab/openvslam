@@ -36,7 +36,7 @@ TEST(angle_checker, check_matches_top_1) {
     angle_checker.append_delta_angle(180.0, 180);
     angle_checker.append_delta_angle(270.0, 270);
 
-    // check valid matches contains 35
+    // check valid_matches contains 35
     const auto valid_matches = angle_checker.get_valid_matches();
     EXPECT_TRUE(!valid_matches.empty());
     for (const auto match : valid_matches) {
@@ -45,7 +45,7 @@ TEST(angle_checker, check_matches_top_1) {
                     match != 0 && match != 60 && match != 180 && match != 270);
     }
 
-    // check invalid matches does not contain 35
+    // check invalid_matches does not contain 35
     const auto invalid_matches = angle_checker.get_invalid_matches();
     for (const auto match : invalid_matches) {
         EXPECT_TRUE(match != 35);
@@ -81,7 +81,7 @@ TEST(angle_checker, check_matches_top_2) {
     angle_checker.append_delta_angle(180.0, 180);
     angle_checker.append_delta_angle(270.0, 270);
 
-    // check valid matches contains 35
+    // check valid_matches contains 35 and 324
     const auto valid_matches = angle_checker.get_valid_matches();
     EXPECT_TRUE(!valid_matches.empty());
     for (const auto match : valid_matches) {
@@ -90,7 +90,7 @@ TEST(angle_checker, check_matches_top_2) {
                     match != 0 && match != 60 && match != 180 && match != 270);
     }
 
-    // check invalid matches does not contain 35
+    // check invalid_matches does not contain 35 and 324
     const auto invalid_matches = angle_checker.get_invalid_matches();
     EXPECT_TRUE(!invalid_matches.empty());
     for (const auto match : invalid_matches) {
@@ -127,7 +127,7 @@ TEST(angle_checker, check_matches_top_3) {
     angle_checker.append_delta_angle(180.0, 180);
     angle_checker.append_delta_angle(270.0, 270);
 
-    // check valid matches contains 35, 324, and 127
+    // check valid_matches contains 35, 324, and 127
     const auto valid_matches = angle_checker.get_valid_matches();
     EXPECT_TRUE(!valid_matches.empty());
     for (const auto match : valid_matches) {
@@ -135,7 +135,7 @@ TEST(angle_checker, check_matches_top_3) {
         EXPECT_TRUE(match != 0 && match != 60 && match != 180 && match != 270);
     }
 
-    // check invalid matches does not contain 35, 324, and 127
+    // check invalid_matches does not contain 35, 324, and 127
     const auto invalid_matches = angle_checker.get_invalid_matches();
     EXPECT_TRUE(!invalid_matches.empty());
     for (const auto match : invalid_matches) {
@@ -171,7 +171,7 @@ TEST(angle_checker, check_matches_all) {
     angle_checker.append_delta_angle(180.0, 180);
     angle_checker.append_delta_angle(270.0, 270);
 
-    // check valid matches contains 35, 324, and 127
+    // check valid_matches contains all of the entries
     const auto valid_matches = angle_checker.get_valid_matches();
     EXPECT_TRUE(!valid_matches.empty());
     for (const auto match : valid_matches) {
@@ -179,7 +179,7 @@ TEST(angle_checker, check_matches_all) {
                     match == 0 || match == 60 || match == 180 || match == 270);
     }
 
-    // check invalid matches does not contain 35, 324, and 127
+    // check invalid_matches contains no entries
     const auto invalid_matches = angle_checker.get_invalid_matches();
     EXPECT_TRUE(invalid_matches.empty());
 }
