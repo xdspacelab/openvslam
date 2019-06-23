@@ -53,10 +53,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-//     for OpenCV 3
-    ros::Rate pub_rate(video.get(CV_CAP_PROP_FPS));
-//     for OpenCV 4
-//    ros::Rate pub_rate(video.get(cv::CV_CAP_PROP_FPS));
+    ros::Rate pub_rate(video.get(cv::CAP_PROP_FPS));
 
     while (nh.ok() && video.read(frame)) {
         // send message
