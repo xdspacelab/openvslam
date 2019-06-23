@@ -3,15 +3,13 @@
 ===========
 ROS Package
 ===========
-We provided ROS Package example for running OpenVSLAM on ROS framework.
+
+We provide ROS package examples to help you run OpenVSLAM on ROS framework.
 
 .. NOTE ::
 
-    Please build OpenVSLAM with **OpenCV not 4 but 3** if you plan on using ROS Package.
-
-.. NOTE ::
-
-    This example does not suppourt macOS.
+    Please build OpenVSLAM with **OpenCV 3.3.1 or later** if you plan on using ROS package.
+    OpenCV 4.x is not supported yet.
 
 .. _section-installation:
 
@@ -21,33 +19,30 @@ Installation
 Requirements
 ^^^^^^^^^^^^
 
-* `ROS <http://wiki.ros.org/>`_ : version Kinetic or later
+* `ROS <http://wiki.ros.org/>`_ : Please use the version ``kinetic`` or later.
 
-* :ref:`OpenVSLAM <chapter-installation>` : built with **OpenCV not 4 but 3**
+* :ref:`OpenVSLAM <chapter-installation>` : Please build it with **OpenCV 3.x**.
 
-* `image_transport <http://wiki.ros.org/image_transport>`_ : Required by this ROS Package example.
+* `image_transport <http://wiki.ros.org/image_transport>`_ : Required by this ROS package examples.
 
-* `cv_bridge <http://wiki.ros.org/cv_bridge>`_ : built with the same version of OpenCV as OpenVSLAM **Please build from source** .
+* `cv_bridge <http://wiki.ros.org/cv_bridge>`_ : Please build it with the same version of OpenCV used in OpenVSLAM. (**We recommend building it from source.**)
 
 .. _section-prerequisites:
 
 Prerequisites
 ^^^^^^^^^^^^^
 
-Installing for Linux
---------------------
-
 Tested for **Ubuntu 16.04**.
 
 Please install the following dependencies.
 
-* ROS : follow `Installation  <http://wiki.ros.org/ROS/Installation>`_.
+* ROS : Please follow `Installation of ROS <http://wiki.ros.org/ROS/Installation>`_.
 
-* OpenVSLAM : follow :ref:`Installation <chapter-installation>`.
+* OpenVSLAM : Please follow :ref:`Installation of OpenVSLAM <chapter-installation>`.
 
 .. NOTE ::
 
-    Please build OpenVSLAM with it if you plan on using PangolinViewer or SocketViewer on ROS Package.
+    Please build OpenVSLAM with PangolinViewer or SocketViewer if you plan on using it for the examples.
 
 Install the dependencies via ``apt``.
 
@@ -56,25 +51,23 @@ Install the dependencies via ``apt``.
     apt update -y
     apt install ros-${ROS_DISTRO}-image-transport
 
-
-Download the source of cv_bridge.
+Download the source of ``cv_bridge``.
 
 .. code-block:: bash
 
     cd /path/to/openvslam/ros
-    git clone -b ${ROS_DISTRO} https://github.com/ros-perception/vision_opencv.git
+    git clone --branch ${ROS_DISTRO} --depth 1 https://github.com/ros-perception/vision_opencv.git
     cp -r vision_opencv/cv_bridge src/
     rm -rf vision_opencv
 
 .. NOTE ::
 
-    It will be used from the source even if cv_bridge is installed via apt.
+    We recommend building ``cv_bridge`` from the source even if it has been installed via ``apt``.
 
 Build Instructions
 ^^^^^^^^^^^^^^^^^^
 
-When building with support for PangolinViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=ON`` and ``-DUSE_SOCKET_PUBLISHER=OFF`` like :ref:`build of OpenVSLAM <section-build-unix>`.
-
+When building with support for PangolinViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=ON`` and ``-DUSE_SOCKET_PUBLISHER=OFF`` as described in :ref:`build of OpenVSLAM <section-build-unix>`.
 
 .. code-block:: bash
 
@@ -86,14 +79,11 @@ When building with support for PangolinViewer, please specify the following cmak
         -DUSE_STACK_TRACE_LOGGER=ON \
         -DBOW_FRAMEWORK=DBoW2
 
-When building with support for SocketViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=OFF`` and ``-DUSE_SOCKET_PUBLISHER=ON`` like :ref:`build of OpenVSLAM <section-build-unix>`.
-
+Alternatively, when building with support for SocketViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=OFF`` and ``-DUSE_SOCKET_PUBLISHER=ON`` as described in :ref:`build of OpenVSLAM <section-build-unix>`.
 
 .. code-block:: bash
 
     cd /path/to/openvslam/ros
-    export OpenVSLAM_DIR=$(cd ../ && pwd)
-
     catkin_make \
         -DBUILD_WITH_MARCH_NATIVE=ON \
         -DUSE_PANGOLIN_VIEWER=OFF \
@@ -101,26 +91,27 @@ When building with support for SocketViewer, please specify the following cmake 
         -DUSE_STACK_TRACE_LOGGER=ON \
         -DBOW_FRAMEWORK=DBoW2
 
-.. _section-example:
+Examples
+========
 
-Example
-=======
-
-Run core program required for ROS-based system.
+Run the core program required for ROS-based system in advance.
 
 .. code-block:: bash
 
     roscore
 
 .. NOTE ::
-**roscore** and **rosrun** command remains running. Please leave it run.
+
+    Please leave the **roscore** run.
 
 Publisher
 ^^^^^^^^^
-Publisher continually broadcasts images as ROS topic. Please do any one of the following.
 
-Publish with Video Files
-------------------------
+Publishers continually broadcast images as a ROS topic.
+Please execute one of the following command snippets in the new terminal.
+
+Publish a Video File
+--------------------
 
 For using video files (e.g. ``.mp4``) for visual SLAM or localization.
 
@@ -129,14 +120,16 @@ For using video files (e.g. ``.mp4``) for visual SLAM or localization.
     source /path/to/openvslam/ros/devel/setup.bash
     rosrun publisher video -m /path/to/video.mp4
 
+Republish the ROS topic to ``/camera/image_raw``.
+
 .. code-block:: bash
 
     rosrun image_transport republish \
         raw in:=/video/image_raw raw out:=/camera/image_raw
 
 
-Publish with Image Sequences
-----------------------------
+Publish a Image Sequence
+------------------------
 
 For using image sequences for visual SLAM or localization.
 
@@ -145,21 +138,28 @@ For using image sequences for visual SLAM or localization.
     source /path/to/openvslam/ros/devel/setup.bash
     rosrun publisher image -i /path/to/images/
 
+Republish the ROS topic to ``/camera/image_raw``.
+
 .. code-block:: bash
 
     rosrun image_transport republish \
         raw in:=/video/image_raw raw out:=/camera/image_raw
 
-Publish using Camera
---------------------
+Publish Images of a USB Camera
+------------------------------
 
-For using usb-camera for visual SLAM or localization.
+For using a standard USB camera for visual SLAM or localization.
 
 .. code-block:: bash
 
     apt install ros-${ROS_DISTRO}-usb-cam
+
+.. code-block:: bash
+
     rosparam set usb_cam/pixel_format yuyv
     rosrun usb_cam usb_cam_node
+
+Republish the ROS topic to ``/camera/image_raw``.
 
 .. code-block:: bash
 
@@ -168,25 +168,26 @@ For using usb-camera for visual SLAM or localization.
 
 Subscriber
 ^^^^^^^^^^
-Subscriber continually receives images. Please do any one of the following.
+
+Subscribers continually receive images.
+Please execute one of the following command snippets in the new terminal.
 
 .. NOTE ::
 
-    Please set option arguments like the same as :ref:`OpenVSLAM Example <chapter-example>`.
-
+    Option arguments are the same as :ref:`the examples of OpenVSLAM <chapter-example>`.
 
 Tracking and Mapping
 --------------------
 
 We provide an example snippet for visual SLAM.
-The source code is placed at ``./ros/src/openvslam/src/run_slam.cc``.
+The source code is placed at ``./openvslam/ros/src/openvslam/src/run_slam.cc``.
 
 .. code-block:: bash
 
     source /path/to/openvslam/ros/devel/setup.bash
     rosrun openvslam run_slam \
-        -v /path/to/orb_vocab/orb_vocab.dbow2 \
-        -c /path/to/aist_living_lab_1/config.yaml
+        -v /path/to/orb_vocab.dbow2 \
+        -c /path/to/config.yaml
 
 Localization
 ------------
@@ -194,12 +195,10 @@ Localization
 We provide an example snippet for localization based on a prebuilt map.
 The source code is placed at ``./ros/src/openvslam/src/run_localization.cc``.
 
-
 .. code-block:: bash
 
     source /path/to/openvslam/ros/devel/setup.bash
     rosrun openvslam run_localization \
-        -v /path/to/orb_vocab/orb_vocab.dbow2 \
-        -c /path/to/aist_living_lab_1/config.yaml \
+        -v /path/to/orb_vocab.dbow2 \
+        -c /path/to/config.yaml \
         --map-db /path/to/map.msg
-
