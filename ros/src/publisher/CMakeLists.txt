@@ -8,12 +8,13 @@ if(POLICY CMP0074)
     cmake_policy(SET CMP0074 OLD)
 endif()
 
+# digging into the root directory of OpenVSLAM
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
 
-set(OpenVSLAM_ROOT ${DEFAULT_OpenVSLAM_DIR} CACHE STRING "Directory of openvslam")
-message(STATUS "OpenVSLAM_ROOT: ${OpenVSLAM_ROOT}")
+set(OpenVSLAM_ROOT ${DEFAULT_OpenVSLAM_DIR} CACHE STRING "Root directory of OpenVSLAM")
+message(STATUS "Root directory of OpenVSLAM: ${OpenVSLAM_ROOT}")
 
 ##################
 # Set build type #
@@ -106,7 +107,7 @@ find_package(OpenCV 3.3.1 QUIET)
 if(NOT OpenCV_FOUND)
     find_package(OpenCV 4.0)
     if(NOT OpenCV_FOUND)
-        message(FATAL_ERROR "OpenCV > 3.3.1 not found")
+        message(FATAL_ERROR "OpenCV >= 3.3.1 not found")
     endif()
 endif()
 message(STATUS "Use OpenCV ${OpenCV_VERSION}")
@@ -116,16 +117,16 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set(popl_INCLUDE_DIR ${OpenVSLAM_ROOT}/3rd/popl/include)
 include_directories(${popl_INCLUDE_DIR})
 
-###################################
-## catkin specific configuration ##
-###################################
+#################################
+# catkin specific configuration #
+#################################
 
 catkin_package(CATKIN_DEPENDS
         cv_bridge image_transport)
 
-###########
-## Build ##
-###########
+#########
+# Build #
+#########
 
 include_directories(
         ${catkin_INCLUDE_DIRS}

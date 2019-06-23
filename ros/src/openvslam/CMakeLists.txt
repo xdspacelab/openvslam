@@ -8,15 +8,18 @@ if(POLICY CMP0074)
     cmake_policy(SET CMP0074 OLD)
 endif()
 
+# digging into the root directory of OpenVSLAM
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
 
-set(OpenVSLAM_ROOT ${DEFAULT_OpenVSLAM_DIR} CACHE STRING "Directory of openvslam")
-message(STATUS "OpenVSLAM_ROOT: ${OpenVSLAM_ROOT}")
+set(OpenVSLAM_ROOT ${DEFAULT_OpenVSLAM_DIR} CACHE STRING "Root directory of OpenVSLAM")
+message(STATUS "Root directory of OpenVSLAM: ${OpenVSLAM_ROOT}")
 
-set(OpenVSLAM_LIB_DIR ${OpenVSLAM_ROOT}/build/lib CACHE STRING "Directory for dynamic link")
 set(OpenVSLAM_SRC_DIR ${OpenVSLAM_ROOT}/src)
+message(STATUS "Source directory of OpenVSLAM: ${OpenVSLAM_SRC_DIR}")
+set(OpenVSLAM_LIB_DIR ${OpenVSLAM_ROOT}/build/lib CACHE STRING "Directory which contains the shared library of OpenVSLAM")
+message(STATUS "Library directory of OpenVSLAM: ${OpenVSLAM_LIB_DIR}")
 
 list(APPEND CMAKE_MODULE_PATH ${OpenVSLAM_ROOT}/cmake)
 
@@ -138,7 +141,7 @@ find_package(OpenCV 3.3.1 QUIET)
 if(NOT OpenCV_FOUND)
     find_package(OpenCV 4.0)
     if(NOT OpenCV_FOUND)
-        message(FATAL_ERROR "OpenCV > 3.3.1 not found")
+        message(FATAL_ERROR "OpenCV >= 3.3.1 not found")
     endif()
 endif()
 message(STATUS "Use OpenCV ${OpenCV_VERSION}")
@@ -180,9 +183,9 @@ if(USE_SOCKET_PUBLISHER)
     include_directories(${SIOCLIENT_INCLUDE_DIR} ${PROTOBUF_INCLUDE_DIRS})
 endif()
 
-###################################
-## catkin specific configuration ##
-###################################
+#################################
+# catkin specific configuration #
+#################################
 
 catkin_package(CATKIN_DEPENDS
         cv_bridge
@@ -210,14 +213,13 @@ endif()
 include_directories(${BOW_INCLUDE_DIRS})
 message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 
-###########
-## Build ##
-###########
+#########
+# Build #
+#########
 
 include_directories(
         ${catkin_INCLUDE_DIRS}
-        ${OpenVSLAM_SRC_DIR}
-)
+        ${OpenVSLAM_SRC_DIR})
 
 link_libraries(
         ${catkin_LIBRARIES}

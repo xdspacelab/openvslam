@@ -1,8 +1,9 @@
 #include <ros/ros.h>
 
+#include <util/image_util.h>
+
 #include <iostream>
 #include <popl.hpp>
-#include <image_util.h>
 
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
