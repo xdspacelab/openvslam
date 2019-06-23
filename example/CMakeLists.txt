@@ -26,8 +26,8 @@ list(APPEND EXECUTABLE_TARGETS run_euroc_slam)
 add_executable(run_kitti_slam run_kitti_slam.cc util/kitti_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_kitti_slam)
 
-add_executable(run_tum_slam run_tum_slam.cc util/tum_util.cc)
-list(APPEND EXECUTABLE_TARGETS run_tum_slam)
+add_executable(run_tum_rgbd_slam run_tum_rgbd_slam.cc util/tum_rgbd_util.cc)
+list(APPEND EXECUTABLE_TARGETS run_tum_rgbd_slam)
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # set output directory for executables

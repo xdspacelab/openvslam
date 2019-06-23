@@ -1,0 +1,59 @@
+# TUM-RGBD RGBD model for 01
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "TUM-RGBD RGBD 01"
+Camera.setup: "RGBD"
+Camera.model: "perspective"
+
+Camera.fx: 517.306408
+Camera.fy: 516.469215
+Camera.cx: 318.643040
+Camera.cy: 255.313989
+
+Camera.k1: 0.262383
+Camera.k2: -0.953104
+Camera.p1: -0.005358
+Camera.p2: 0.002628
+Camera.k3: 1.163314
+
+Camera.fps: 30.0
+Camera.cols: 640
+Camera.rows: 480
+Camera.focal_x_baseline: 40.0
+
+Camera.color_order: "RGB"
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 1000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
+
+#=====================#
+# Tracking Parameters #
+#=====================#
+
+depth_threshold: 40.0
+depthmap_factor: 5000.0
+
+#===========================#
+# PangolinViewer Parameters #
+#===========================#
+
+PangolinViewer.keyframe_size: 0.05
+PangolinViewer.keyframe_line_width: 1
+PangolinViewer.graph_line_width: 1
+PangolinViewer.point_size: 2
+PangolinViewer.camera_size: 0.08
+PangolinViewer.camera_line_width: 3
+PangolinViewer.viewpoint_x: 0
+PangolinViewer.viewpoint_y: -0.9
+PangolinViewer.viewpoint_z: -1.9
+PangolinViewer.viewpoint_f: 400
