@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <cassert>
 #include <algorithm>
+#include <cmath>
 
 tum_rgbd_sequence::tum_rgbd_sequence(const std::string& seq_dir_path, const double min_timediff_thr) {
     // listing up the files in rgb/ and depth/ directories
