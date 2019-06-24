@@ -28,7 +28,7 @@ public:
     /**
      * Append a delta angle to the histogram
      */
-    void append_delta_angle(const float delta_angle, const T& match);
+    void append_delta_angle(float delta_angle, const T& match);
 
     /**
      * Get the valid matches sampled from the top-N of the histogram
