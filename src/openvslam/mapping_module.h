@@ -7,6 +7,7 @@
 
 #include <mutex>
 #include <atomic>
+#include <memory>
 
 namespace openvslam {
 
@@ -241,7 +242,7 @@ private:
     global_optimization_module* global_optimizer_ = nullptr;
 
     //! local map cleaner
-    module::local_map_cleaner local_map_cleaner_;
+    std::unique_ptr<module::local_map_cleaner> local_map_cleaner_ = nullptr;
 
     //-----------------------------------------
     // database
@@ -267,7 +268,7 @@ private:
     // optimizer
 
     //! local bundle adjuster
-    const optimize::local_bundle_adjuster local_bundle_adjuster_;
+    std::unique_ptr<optimize::local_bundle_adjuster> local_bundle_adjuster_ = nullptr;
 
     //! bridge flag to abort local BA
     bool abort_local_BA_ = false;
