@@ -12,7 +12,9 @@ namespace openvslam {
 
 global_optimization_module::global_optimization_module(data::map_database* map_db, data::bow_database* bow_db,
                                                        data::bow_vocabulary* bow_vocab, const bool fix_scale)
-        : loop_detector_(bow_db, bow_vocab, fix_scale), loop_bundle_adjuster_(map_db), graph_optimizer_(map_db, fix_scale) {
+        : loop_detector_(new module::loop_detector(bow_db, bow_vocab, fix_scale)),
+          loop_bundle_adjuster_(new module::loop_bundle_adjuster(map_db)),
+          graph_optimizer_(new optimize::graph_optimizer(map_db, fix_scale)) {
     spdlog::debug("CONSTRUCT: global_optimization_module");
 }
 
@@ -30,21 +32,21 @@ void global_optimization_module::set_tracking_module(tracking_module* tracker) {
 
 void global_optimization_module::set_mapping_module(mapping_module* mapper) {
     mapper_ = mapper;
-    loop_bundle_adjuster_.set_mapping_module(mapper);
+    loop_bundle_adjuster_->set_mapping_module(mapper);
 }
 
 void global_optimization_module::enable_loop_detector() {
     spdlog::info("enable loop detector");
-    loop_detector_.enable_loop_detector();
+    loop_detector_->enable_loop_detector();
 }
 
 void global_optimization_module::disable_loop_detector() {
     spdlog::info("disable loop detector");
-    loop_detector_.disable_loop_detector();
+    loop_detector_->disable_loop_detector();
 }
 
 bool global_optimization_module::loop_detector_is_enabled() const {
-    return loop_detector_.is_enabled();
+    return loop_detector_->is_enabled();
 }
 
 void global_optimization_module::run() {
@@ -95,10 +97,10 @@ void global_optimization_module::run() {
         cur_keyfrm_->set_not_to_be_erased();
 
         // pass the current keyframe to the loop detector
-        loop_detector_.set_current_keyframe(cur_keyfrm_);
+        loop_detector_->set_current_keyframe(cur_keyfrm_);
 
         // detect some loop candidate with BoW
-        if (!loop_detector_.detect_loop_candidates()) {
+        if (!loop_detector_->detect_loop_candidates()) {
             // could not find
             // allow the removal of the current keyframe
             cur_keyfrm_->set_to_be_erased();
@@ -106,7 +108,7 @@ void global_optimization_module::run() {
         }
 
         // validate candidates and select ONE candidate from them
-        if (!loop_detector_.validate_candidates()) {
+        if (!loop_detector_->validate_candidates()) {
             // could not find
             // allow the removal of the current keyframe
             cur_keyfrm_->set_to_be_erased();
@@ -132,10 +134,10 @@ bool global_optimization_module::keyframe_is_queued() const {
 }
 
 void global_optimization_module::correct_loop() {
-    auto final_candidate_keyfrm = loop_detector_.get_selected_candidate_keyframe();
+    auto final_candidate_keyfrm = loop_detector_->get_selected_candidate_keyframe();
 
     spdlog::info("detect loop: keyframe {} - keyframe {}", final_candidate_keyfrm->id_, cur_keyfrm_->id_);
-    loop_bundle_adjuster_.count_loop_BA_execution();
+    loop_bundle_adjuster_->count_loop_BA_execution();
 
     // 0. pre-processing
 
@@ -144,7 +146,7 @@ void global_optimization_module::correct_loop() {
     // pause the mapping module
     mapper_->request_pause();
     // abort the previous loop bundle adjuster
-    if (thread_for_loop_BA_ || loop_bundle_adjuster_.is_running()) {
+    if (thread_for_loop_BA_ || loop_bundle_adjuster_->is_running()) {
         abort_loop_BA();
     }
     // wait till the mapping module pauses
@@ -169,7 +171,7 @@ void global_optimization_module::correct_loop() {
     // Sim3 camera poses AFTER loop correction
     module::keyframe_Sim3_pairs_t Sim3s_nw_after_correction;
 
-    const auto g2o_Sim3_cw_after_correction = loop_detector_.get_Sim3_world_to_current();
+    const auto g2o_Sim3_cw_after_correction = loop_detector_->get_Sim3_world_to_current();
     {
         std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
 
@@ -189,7 +191,7 @@ void global_optimization_module::correct_loop() {
 
     // 2. resolve duplications of landmarks caused by loop fusion
 
-    const auto curr_match_lms_observed_in_cand = loop_detector_.current_matched_landmarks_observed_in_candidate();
+    const auto curr_match_lms_observed_in_cand = loop_detector_->current_matched_landmarks_observed_in_candidate();
     replace_duplicated_landmarks(curr_match_lms_observed_in_cand, Sim3s_nw_after_correction);
 
     // 3. extract the new connections created after loop fusion
@@ -198,7 +200,7 @@ void global_optimization_module::correct_loop() {
 
     // 4. pose graph optimization
 
-    graph_optimizer_.optimize(final_candidate_keyfrm, cur_keyfrm_, Sim3s_nw_before_correction, Sim3s_nw_after_correction, new_connections);
+    graph_optimizer_->optimize(final_candidate_keyfrm, cur_keyfrm_, Sim3s_nw_before_correction, Sim3s_nw_after_correction, new_connections);
 
     // add a loop edge
     final_candidate_keyfrm->graph_node_->add_loop_edge(cur_keyfrm_);
@@ -206,14 +208,14 @@ void global_optimization_module::correct_loop() {
 
     // 5. launch loop BA
 
-    while (loop_bundle_adjuster_.is_running()) {
+    while (loop_bundle_adjuster_->is_running()) {
         std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
     if (thread_for_loop_BA_) {
         thread_for_loop_BA_->join();
         thread_for_loop_BA_.reset(nullptr);
     }
-    thread_for_loop_BA_ = std::unique_ptr<std::thread>(new std::thread(&module::loop_bundle_adjuster::optimize, &loop_bundle_adjuster_, cur_keyfrm_->id_));
+    thread_for_loop_BA_ = std::unique_ptr<std::thread>(new std::thread(&module::loop_bundle_adjuster::optimize, loop_bundle_adjuster_.get(), cur_keyfrm_->id_));
 
     // 6. post-processing
 
@@ -221,7 +223,7 @@ void global_optimization_module::correct_loop() {
     mapper_->resume();
 
     // set the loop fusion information to the loop detector
-    loop_detector_.set_loop_correct_keyframe_id(cur_keyfrm_->id_);
+    loop_detector_->set_loop_correct_keyframe_id(cur_keyfrm_->id_);
 }
 
 module::keyframe_Sim3_pairs_t global_optimization_module::get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const {
@@ -343,7 +345,7 @@ void global_optimization_module::replace_duplicated_landmarks(const std::vector<
     }
 
     // resolve duplications of landmarks between the current keyframe and the candidates of the loop candidate
-    const auto curr_match_lms_observed_in_cand_covis = loop_detector_.current_matched_landmarks_observed_in_candidate_covisibilities();
+    const auto curr_match_lms_observed_in_cand_covis = loop_detector_->current_matched_landmarks_observed_in_candidate_covisibilities();
     match::fuse fuser(0.8);
     for (const auto& t : Sim3s_nw_after_correction) {
         auto neighbor = t.first;
@@ -418,7 +420,7 @@ void global_optimization_module::reset() {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     spdlog::info("reset global optimization module");
     keyfrms_queue_.clear();
-    loop_detector_.set_loop_correct_keyframe_id(0);
+    loop_detector_->set_loop_correct_keyframe_id(0);
     reset_is_requested_ = false;
 }
 
@@ -479,11 +481,11 @@ void global_optimization_module::terminate() {
 }
 
 bool global_optimization_module::loop_BA_is_running() const {
-    return loop_bundle_adjuster_.is_running();
+    return loop_bundle_adjuster_->is_running();
 }
 
 void global_optimization_module::abort_loop_BA() {
-    loop_bundle_adjuster_.abort();
+    loop_bundle_adjuster_->abort();
 }
 
 } // namespace openvslam

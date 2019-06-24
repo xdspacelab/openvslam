@@ -17,8 +17,8 @@
 namespace openvslam {
 
 mapping_module::mapping_module(data::map_database* map_db, const bool is_monocular)
-        : local_map_cleaner_(is_monocular), map_db_(map_db),
-          local_bundle_adjuster_(), is_monocular_(is_monocular) {
+        : local_map_cleaner_(new module::local_map_cleaner(is_monocular)), map_db_(map_db),
+          local_bundle_adjuster_(new optimize::local_bundle_adjuster()), is_monocular_(is_monocular) {
     spdlog::debug("CONSTRUCT: mapping_module");
 }
 
@@ -135,13 +135,13 @@ void mapping_module::mapping_with_new_keyframe() {
     }
 
     // set the origin keyframe
-    local_map_cleaner_.set_origin_keyframe_id(map_db_->origin_keyfrm_->id_);
+    local_map_cleaner_->set_origin_keyframe_id(map_db_->origin_keyfrm_->id_);
 
     // store the new keyframe to the database
     store_new_keyframe();
 
     // remove redundant landmarks
-    local_map_cleaner_.remove_redundant_landmarks(cur_keyfrm_->id_);
+    local_map_cleaner_->remove_redundant_landmarks(cur_keyfrm_->id_);
 
     // triangulate new landmarks between the current frame and each of the covisibilities
     create_new_landmarks();
@@ -160,9 +160,9 @@ void mapping_module::mapping_with_new_keyframe() {
     // local bundle adjustment
     abort_local_BA_ = false;
     if (2 < map_db_->get_num_keyframes()) {
-        local_bundle_adjuster_.optimize(cur_keyfrm_, &abort_local_BA_);
+        local_bundle_adjuster_->optimize(cur_keyfrm_, &abort_local_BA_);
     }
-    local_map_cleaner_.remove_redundant_keyframes(cur_keyfrm_);
+    local_map_cleaner_->remove_redundant_keyframes(cur_keyfrm_);
 }
 
 void mapping_module::store_new_keyframe() {
@@ -184,7 +184,7 @@ void mapping_module::store_new_keyframe() {
         // add the association between the keyframe and the landmark
         if (lm->is_observed_in_keyframe(cur_keyfrm_)) {
             // if `lm` is correctly observed, make it be checked by the local map cleaner
-            local_map_cleaner_.add_fresh_landmark(lm);
+            local_map_cleaner_->add_fresh_landmark(lm);
             continue;
         }
 
@@ -293,7 +293,7 @@ void mapping_module::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, da
 #pragma omp critical
 #endif
         {
-            local_map_cleaner_.add_fresh_landmark(lm);
+            local_map_cleaner_->add_fresh_landmark(lm);
         }
     }
 }
@@ -430,7 +430,7 @@ void mapping_module::reset() {
     std::lock_guard<std::mutex> lock(mtx_reset_);
     spdlog::info("reset mapping module");
     keyfrms_queue_.clear();
-    local_map_cleaner_.reset();
+    local_map_cleaner_->reset();
     reset_is_requested_ = false;
 }
 

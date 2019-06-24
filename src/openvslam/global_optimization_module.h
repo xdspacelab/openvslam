@@ -11,6 +11,7 @@
 #include <list>
 #include <mutex>
 #include <thread>
+#include <memory>
 
 namespace openvslam {
 
@@ -246,9 +247,9 @@ private:
     mapping_module* mapper_ = nullptr;
 
     //! loop detector
-    module::loop_detector loop_detector_;
+    std::unique_ptr<module::loop_detector> loop_detector_ = nullptr;
     //! loop bundle adjuster
-    module::loop_bundle_adjuster loop_bundle_adjuster_;
+    std::unique_ptr<module::loop_bundle_adjuster> loop_bundle_adjuster_ = nullptr;
 
     //-----------------------------------------
     // keyframe queue
@@ -270,7 +271,7 @@ private:
     // optimizer
 
     //! graph optimizer
-    const optimize::graph_optimizer graph_optimizer_;
+    std::unique_ptr<optimize::graph_optimizer> graph_optimizer_ = nullptr;
 
     //-----------------------------------------
     // variables for loop BA
