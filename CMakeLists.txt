@@ -59,16 +59,6 @@ else()
     message(STATUS "Google Perftools: DISABLED")
 endif()
 
-set(USE_SSE_ORB OFF CACHE BOOL "Enable SSE in ORB extraction")
-
-if(USE_SSE_ORB)
-    message(STATUS "SSE for ORB extraction: ENABLED")
-    add_definitions(-DUSE_SSE_ORB)
-else()
-    message(STATUS "SSE for ORB extraction: DISABLED")
-    remove_definitions(-DUSE_SSE_ORB)
-endif()
-
 ########################
 # Set compiler options #
 ########################
@@ -92,6 +82,28 @@ else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=native")
     set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -mtune=native")
     message(STATUS "Architecture-aware optimization (-march=native): DISABLED")
+endif()
+
+set(USE_SSE_ORB OFF CACHE BOOL "Enable SSE3 instruction for ORB extraction (-msse3)")
+
+if(USE_SSE_ORB)
+    message(STATUS "SSE3 for ORB extraction (-msse3): ENABLED")
+    add_definitions(-DUSE_SSE_ORB)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+else()
+    message(STATUS "SSE3 for ORB extraction (-msse3): DISABLED")
+    remove_definitions(-DUSE_SSE_ORB)
+endif()
+
+set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point operation (-mfpmath=sse)")
+
+if(USE_SSE_FP_MATH)
+    message(STATUS "SSE for floating-point operation (-mfpmath=sse): ENABLED")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=sse")
+else()
+    message(STATUS "SSE for floating-point operation (-mfpmath=sse): DISABLED")
 endif()
 
 #######################
