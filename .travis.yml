@@ -1,0 +1,213 @@
+language: cpp
+
+os:
+  - osx
+osx_image:
+  - xcode10
+
+compiler:
+  - clang
+
+env:
+  global:
+    - DEPS_DIR="${HOME}/deps"
+    - DATASET_DIR="${HOME}/dataset"
+
+before_cache:
+  - brew cleanup
+
+cache:
+  ccache: true
+  directories:
+    - ${HOME}/Library/Caches/Homebrew
+    - ${DEPS_DIR}/DBoW2
+    - ${DEPS_DIR}/g2o
+    - ${DEPS_DIR}/Pangolin
+    - ${DEPS_DIR}/socket.io-client-cpp
+    - ${DATASET_DIR}
+
+addons:
+  homebrew:
+    update: true
+    packages:
+      - pkg-config
+      - cmake
+      - git
+      - suite-sparse
+      - eigen
+      - ffmpeg
+      - opencv
+      - yaml-cpp
+      - glog
+      - gflags
+      - glew
+      - protobuf
+
+before_install:
+  - mkdir -p ${DEPS_DIR}
+  - |
+    cd ${DEPS_DIR}
+    if [ ! -d DBoW2 ]; then
+        echo "clone DBoW2"
+        git clone https://github.com/shinsumicco/DBoW2.git
+    elif [ -z "$(ls DBoW2)" ]; then
+        echo "reclone DBoW2"
+        rm -rf DBoW2
+        git clone https://github.com/shinsumicco/DBoW2.git
+    fi
+    cd DBoW2
+    mkdir -p build && cd build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        ..
+    make -j 3
+    make install
+  - |
+    cd ${DEPS_DIR}
+    if [ ! -d g2o ]; then
+        echo "clone g2o"
+        git clone https://github.com/RainerKuemmerle/g2o.git
+    elif [ -z "$(ls g2o)" ]; then
+        echo "reclone g2o"
+        rm -rf g2o
+        git clone https://github.com/RainerKuemmerle/g2o.git
+    fi
+    cd g2o
+    mkdir -p build && cd build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DCMAKE_CXX_FLAGS=-std=c++11 \
+        -DBUILD_SHARED_LIBS=ON \
+        -DBUILD_UNITTESTS=OFF \
+        -DBUILD_WITH_MARCH_NATIVE=ON \
+        -DG2O_USE_CHOLMOD=ON \
+        -DG2O_USE_CSPARSE=ON \
+        -DG2O_USE_OPENGL=OFF \
+        -DG2O_USE_OPENMP=ON \
+        ..
+    make -j 3
+    make install
+  - |
+    cd ${DEPS_DIR}
+    if [ ! -d Pangolin ]; then
+        echo "clone Pangolin"
+        git clone https://github.com/stevenlovegrove/Pangolin.git
+    elif [ -z "$(ls Pangolin)" ]; then
+        echo "reclone Pangolin"
+        rm -rf Pangolin
+        git clone https://github.com/stevenlovegrove/Pangolin.git
+    fi
+    cd Pangolin
+    mkdir -p build && cd build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        ..
+    make -j 3
+    make install
+  - |
+    cd ${DEPS_DIR}
+    if [ ! -d socket.io-client-cpp ]; then
+        echo "clone socket.io-client-cpp"
+        git clone https://github.com/shinsumicco/socket.io-client-cpp
+    elif [ -z "$(ls socket.io-client-cpp)" ]; then
+        echo "reclone socket.io-client-cpp"
+        rm -rf socket.io-client-cpp
+        git clone https://github.com/shinsumicco/socket.io-client-cpp
+    fi
+    cd socket.io-client-cpp
+    git submodule init
+    git submodule update
+    mkdir -p build && cd build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DBUILD_UNIT_TESTS=OFF \
+        ..
+    make -j 3
+    make install
+
+install:
+  - |
+    cd ${TRAVIS_BUILD_DIR}
+    mkdir -p build && cd build
+    cmake \
+        -DBUILD_WITH_MARCH_NATIVE=ON \
+        -DUSE_PANGOLIN_VIEWER=ON \
+        -DUSE_SOCKET_PUBLISHER=OFF \
+        -DUSE_STACK_TRACE_LOGGER=ON \
+        -DBOW_FRAMEWORK=DBoW2 \
+        -DBUILD_TESTS=ON \
+        ..
+    make -j 3
+  - |
+    cd ${TRAVIS_BUILD_DIR}
+    mkdir -p build && cd build
+    cmake \
+        -DBUILD_WITH_MARCH_NATIVE=ON \
+        -DUSE_PANGOLIN_VIEWER=OFF \
+        -DUSE_SOCKET_PUBLISHER=ON \
+        -DUSE_STACK_TRACE_LOGGER=ON \
+        -DBOW_FRAMEWORK=DBoW2 \
+        -DBUILD_TESTS=ON \
+        ..
+    make -j 3
+  - |
+    cd ${TRAVIS_BUILD_DIR}
+    mkdir -p build && cd build
+    cmake \
+        -DBUILD_WITH_MARCH_NATIVE=ON \
+        -DUSE_PANGOLIN_VIEWER=OFF \
+        -DUSE_SOCKET_PUBLISHER=OFF \
+        -DUSE_STACK_TRACE_LOGGER=ON \
+        -DBOW_FRAMEWORK=DBoW2 \
+        -DBUILD_TESTS=ON \
+        ..
+    make -j 3
+
+before_script:
+  - mkdir -p ${DATASET_DIR}
+  - |
+    cd ${DATASET_DIR}
+    if [ -z "$(ls orb_vocab)" ]; then
+        FILE_ID="1wUPb328th8bUqhOk-i8xllt5mgRW4n84"
+        curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
+        CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
+        curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o orb_vocab.zip
+        unzip orb_vocab.zip
+        rm orb_vocab.zip
+    fi
+  - |
+    cd ${DATASET_DIR}
+    if [ -z "$(ls aist_entrance_hall_1)" ]; then
+        FILE_ID="1mYJ_W6WsMjOqoNGaEoOvIe17NuEMYcSz"
+        curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
+        CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
+        curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o aist_entrance_hall_1.zip
+        unzip aist_entrance_hall_1.zip
+        rm aist_entrance_hall_1.zip
+    fi
+
+script:
+  - |
+    cd ${TRAVIS_BUILD_DIR}
+    cd build
+    ctest -V
+  - |
+    cd ${TRAVIS_BUILD_DIR}
+    cd build
+    ./run_video_slam \
+        -v ${DATASET_DIR}/orb_vocab/orb_vocab.dbow2 \
+        -m ${DATASET_DIR}/aist_entrance_hall_1/video.mp4 \
+        -c ${DATASET_DIR}/aist_entrance_hall_1/config.yaml \
+        --frame-skip 3 --no-sleep --map-db map.msg --debug
+  - |
+    cd ${TRAVIS_BUILD_DIR}
+    cd build
+    ./run_video_localization \
+        -v ${DATASET_DIR}/orb_vocab/orb_vocab.dbow2 \
+        -m ${DATASET_DIR}/aist_entrance_hall_1/video.mp4 \
+        -c ${DATASET_DIR}/aist_entrance_hall_1/config.yaml \
+        --frame-skip 3 --no-sleep --map-db map.msg --debug
