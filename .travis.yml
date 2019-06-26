@@ -30,6 +30,7 @@ addons:
   homebrew:
     update: true
     packages:
+      - ccache
       - pkg-config
       - cmake
       - git
@@ -44,6 +45,7 @@ addons:
       - protobuf
 
 before_install:
+  - ccache -s
   - mkdir -p ${DEPS_DIR}
   - |
     cd ${DEPS_DIR}
