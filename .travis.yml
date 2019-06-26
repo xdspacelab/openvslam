@@ -183,13 +183,13 @@ before_script:
     fi
   - |
     cd ${DATASET_DIR}
-    if [ -z "$(ls aist_entrance_hall_1)" ]; then
-        FILE_ID="1mYJ_W6WsMjOqoNGaEoOvIe17NuEMYcSz"
+    if [ -z "$(ls video_for_ci_1)" ]; then
+        FILE_ID="1JPB4SFrv8Ca4qquf2CrnFtP2BPWlQAYe"
         curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
         CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
-        curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o aist_entrance_hall_1.zip
-        unzip aist_entrance_hall_1.zip
-        rm aist_entrance_hall_1.zip
+        curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o video_for_ci_1.zip
+        unzip video_for_ci_1.zip
+        rm video_for_ci_1.zip
     fi
 
 script:
@@ -202,14 +202,14 @@ script:
     cd build
     ./run_video_slam \
         -v ${DATASET_DIR}/orb_vocab/orb_vocab.dbow2 \
-        -m ${DATASET_DIR}/aist_entrance_hall_1/video.mp4 \
-        -c ${DATASET_DIR}/aist_entrance_hall_1/config.yaml \
+        -m ${DATASET_DIR}/video_for_ci_1/video.mp4 \
+        -c ${DATASET_DIR}/video_for_ci_1/config.yaml \
         --frame-skip 3 --no-sleep --map-db map.msg --debug
   - |
     cd ${TRAVIS_BUILD_DIR}
     cd build
     ./run_video_localization \
         -v ${DATASET_DIR}/orb_vocab/orb_vocab.dbow2 \
-        -m ${DATASET_DIR}/aist_entrance_hall_1/video.mp4 \
-        -c ${DATASET_DIR}/aist_entrance_hall_1/config.yaml \
+        -m ${DATASET_DIR}/video_for_ci_1/video.mp4 \
+        -c ${DATASET_DIR}/video_for_ci_1/config.yaml \
         --frame-skip 3 --no-sleep --map-db map.msg --debug
