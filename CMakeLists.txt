@@ -25,6 +25,18 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 # Set application options #
 ###########################
 
+set(USE_CCACHE ON CACHE BOOL "Use ccache to accelerate a build")
+
+find_program(CCACHE_EXE ccache)
+if(USE_CCACHE AND CCACHE_EXE)
+    message(STATUS "ccache: Enabled")
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_EXE}")
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_EXE}")
+else()
+    message(STATUS "ccache: Disabled")
+    set(USE_CCACHE OFF)
+endif()
+
 set(USE_SANITIZER OFF CACHE BOOL "Enable Address/Memory sanitizer (set env as ASAN_OPTIONS=detect_leaks=1)")
 
 if(USE_SANITIZER)
