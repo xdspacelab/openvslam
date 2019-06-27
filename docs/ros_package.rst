@@ -117,6 +117,54 @@ Run core program required for ROS-based system.
 
 Publisher
 ^^^^^^^^^
+Publisher continually broadcasts images as ROS topic. Please do any one of the following.
+
+Publish with Video Files
+------------------------
+
+For using video files (e.g. ``.mp4``) for visual SLAM or localization.
+
+.. code-block:: bash
+
+    source /path/to/openvslam/ros/devel/setup.bash
+    rosrun publisher video -m /path/to/video.mp4
+
+.. code-block:: bash
+
+    rosrun image_transport republish \
+        raw in:=/video/image_raw raw out:=/camera/image_raw
+
+
+Publish with Image Sequences
+----------------------------
+
+For using image sequences for visual SLAM or localization.
+
+.. code-block:: bash
+
+    source /path/to/openvslam/ros/devel/setup.bash
+    rosrun publisher image -i /path/to/images/
+
+.. code-block:: bash
+
+    rosrun image_transport republish \
+        raw in:=/video/image_raw raw out:=/camera/image_raw
+
+Publish using Camera
+--------------------
+
+For using usb-camera for visual SLAM or localization.
+
+.. code-block:: bash
+
+    apt install ros-${ROS_DISTRO}-usb-cam
+    rosparam set usb_cam/pixel_format yuyv
+    rosrun usb_cam usb_cam_node
+
+.. code-block:: bash
+
+    rosrun image_transport republish \
+        raw in:=/usb_cam/image_raw raw out:=/camera/image_raw
 
 Subscriber
 ^^^^^^^^^^
@@ -154,3 +202,4 @@ The source code is placed at ``./ros/src/openvslam/src/run_localization.cc``.
         -v /path/to/orb_vocab/orb_vocab.dbow2 \
         -c /path/to/aist_living_lab_1/config.yaml \
         --map-db /path/to/map.msg
+
