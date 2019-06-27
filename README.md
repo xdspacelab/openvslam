@@ -60,7 +60,6 @@ If you want to join our Slack community, please fill out the application form fr
 
 ## Currently working on
 
-- ROS support
 - IMU integration
 - Python bindings
 - Implementation of extra camera models
