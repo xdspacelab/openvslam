@@ -29,6 +29,9 @@ Some code snippets to understand the core functionalities of the system are prov
 You can employ these snippets for in your own programs.
 Please see the ``*.cc`` files in ``./example`` directory or check  :ref:`Simple Tutorial <chapter-simple-tutorial>` and :ref:`Example <chapter-example>`.
 
+Also, some examples to run OpenVSLAM on ROS framework are provided.
+Please check :ref:`ROS Package <chapter-ros-package>`.
+
 Please contact us via `GitHub issues <https://github.com/xdspacelab/openvslam/issues>`__ if you have any questions or notice any bugs about the software.
 
 .. _section-overview-installation:

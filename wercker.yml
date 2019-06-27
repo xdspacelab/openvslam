@@ -33,7 +33,7 @@ build_without_gui:
       code: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=OFF -DUSE_SOCKET_PUBLISHER=OFF -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
+        cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_WITH_MARCH_NATIVE=ON -DUSE_PANGOLIN_VIEWER=OFF -DUSE_SOCKET_PUBLISHER=OFF -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON -DUSE_SSE_ORB=ON ..
         make -j $(($(nproc) / 2))
     - script:
       name: unit test
@@ -71,22 +71,22 @@ build_tutorial:
       name: download a dataset
       code: |
         cd build
-        FILE_ID="1mYJ_W6WsMjOqoNGaEoOvIe17NuEMYcSz"
+        FILE_ID="1JPB4SFrv8Ca4qquf2CrnFtP2BPWlQAYe"
         curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
         CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
-        curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o aist_entrance_hall_1.zip
-        unzip aist_entrance_hall_1.zip
-        rm aist_entrance_hall_1.zip
+        curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o video_for_ci_1.zip
+        unzip video_for_ci_1.zip
+        rm video_for_ci_1.zip
     - script:
       name: mapping test with the tutorial
       code: |
         cd build
-        ./run_video_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/video.mp4 -c ./aist_entrance_hall_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
+        ./run_video_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./video_for_ci_1/video.mp4 -c ./video_for_ci_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
     - script:
       name: localization test with the tutorial
       code: |
         cd build
-        ./run_video_localization -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./aist_entrance_hall_1/video.mp4 -c ./aist_entrance_hall_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
+        ./run_video_localization -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./video_for_ci_1/video.mp4 -c ./video_for_ci_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
   after-steps:
     - install-packages:
       packages: ruby

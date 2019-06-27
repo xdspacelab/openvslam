@@ -8,7 +8,20 @@ if(POLICY CMP0074)
     cmake_policy(SET CMP0074 OLD)
 endif()
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+# digging into the root directory of OpenVSLAM
+get_filename_component(DEFAULT_OpenVSLAM_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
+get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
+get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
+
+set(OpenVSLAM_ROOT ${DEFAULT_OpenVSLAM_DIR} CACHE STRING "Root directory of OpenVSLAM")
+message(STATUS "Root directory of OpenVSLAM: ${OpenVSLAM_ROOT}")
+
+set(OpenVSLAM_SRC_DIR ${OpenVSLAM_ROOT}/src)
+message(STATUS "Source directory of OpenVSLAM: ${OpenVSLAM_SRC_DIR}")
+set(OpenVSLAM_LIB_DIR ${OpenVSLAM_ROOT}/build/lib CACHE STRING "Directory which contains the shared library of OpenVSLAM")
+message(STATUS "Library directory of OpenVSLAM: ${OpenVSLAM_LIB_DIR}")
+
+list(APPEND CMAKE_MODULE_PATH ${OpenVSLAM_ROOT}/cmake)
 
 ##################
 # Set build type #
@@ -24,18 +37,6 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 ###########################
 # Set application options #
 ###########################
-
-set(USE_CCACHE ON CACHE BOOL "Use ccache to accelerate a build")
-
-find_program(CCACHE_EXE ccache)
-if(USE_CCACHE AND CCACHE_EXE)
-    message(STATUS "ccache: Enabled")
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_EXE}")
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_EXE}")
-else()
-    message(STATUS "ccache: Disabled")
-    set(USE_CCACHE OFF)
-endif()
 
 set(USE_SANITIZER OFF CACHE BOOL "Enable Address/Memory sanitizer (set env as ASAN_OPTIONS=detect_leaks=1)")
 
@@ -96,28 +97,6 @@ else()
     message(STATUS "Architecture-aware optimization (-march=native): DISABLED")
 endif()
 
-set(USE_SSE_ORB OFF CACHE BOOL "Enable SSE3 instruction for ORB extraction (-msse3)")
-
-if(USE_SSE_ORB)
-    message(STATUS "SSE3 for ORB extraction (-msse3): ENABLED")
-    add_definitions(-DUSE_SSE_ORB)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse3")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
-else()
-    message(STATUS "SSE3 for ORB extraction (-msse3): DISABLED")
-    remove_definitions(-DUSE_SSE_ORB)
-endif()
-
-set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point operation (-mfpmath=sse)")
-
-if(USE_SSE_FP_MATH)
-    message(STATUS "SSE for floating-point operation (-mfpmath=sse): ENABLED")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=sse")
-else()
-    message(STATUS "SSE for floating-point operation (-mfpmath=sse): DISABLED")
-endif()
-
 #######################
 # Check C++11 support #
 #######################
@@ -147,28 +126,15 @@ endif()
 # Find packages #
 #################
 
-include_directories(${PROJECT_SOURCE_DIR}/src)
+find_package(catkin REQUIRED COMPONENTS
+        cv_bridge
+        image_transport)
 
 # thread library
 find_package(Threads REQUIRED)
 
-# OpenMP
-set(USE_OPENMP ON CACHE BOOL "Use OpenMP")
-if(USE_OPENMP)
-    find_package(OpenMP)
-    if(OpenMP_FOUND)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        add_definitions(-DUSE_OPENMP)
-        message(STATUS "OpenMP: ENABLED")
-    else()
-        remove_definitions(-DUSE_OPENMP)
-        message(STATUS "OpenMP: DISABLED")
-    endif()
-else()
-    remove_definitions(-DUSE_OPENMP)
-    message(STATUS "OpenMP: DISABLED")
-endif()
+# OpenVSLAM
+find_library(OpenVSLAM_LIB openvslam HINTS ${OpenVSLAM_LIB_DIR})
 
 # OpenCV
 find_package(OpenCV 3.3.1 QUIET)
@@ -185,41 +151,22 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(Eigen3 3.2 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-# g2o
-find_package(G2O REQUIRED)
-include_directories(${G2O_INCLUDE_DIR})
-
-# CXSparse for g2o
-find_package(CXSparse)
-if(CXSPARSE_FOUND)
-    include_directories(${CXSPARSE_INCLUDE_DIRS})
-endif()
-
-# SuiteSparse for g2o
-find_package(SuiteSparse)
-if(SUITESPARSE_FOUND)
-    include_directories(${SUITESPARSE_INCLUDE_DIRS})
-endif()
-
-# yaml-cpp
-find_package(YamlCpp REQUIRED)
-include_directories(${YAMLCPP_INCLUDE_DIRS})
-
 # spdlog
-set(spdlog_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/spdlog/include)
+set(spdlog_INCLUDE_DIR ${OpenVSLAM_ROOT}/3rd/spdlog/include)
 include_directories(${spdlog_INCLUDE_DIR})
 
 # popl
-set(popl_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/popl/include)
+set(popl_INCLUDE_DIR ${OpenVSLAM_ROOT}/3rd/popl/include)
 include_directories(${popl_INCLUDE_DIR})
 
 # json
-set(json_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/json/include)
+set(json_INCLUDE_DIR ${OpenVSLAM_ROOT}/3rd/json/include)
 include_directories(${json_INCLUDE_DIR})
 
 # pangolin viewer
 set(USE_PANGOLIN_VIEWER ON CACHE BOOL "Enable Pangolin Viewer")
 if(USE_PANGOLIN_VIEWER)
+    find_library(Pangolin_Viewer_LIB pangolin_viewer HINTS ${OpenVSLAM_LIB_DIR})
     find_package(Pangolin REQUIRED)
 endif()
 
@@ -228,11 +175,21 @@ set(USE_SOCKET_PUBLISHER OFF CACHE BOOL "Enable Socket Publisher")
 if(USE_SOCKET_PUBLISHER)
     find_package(sioclient REQUIRED)
     find_package(Protobuf REQUIRED)
+    find_library(Socket_Publisher_LIB socket_publisher HINTS ${OpenVSLAM_LIB_DIR})
     if(NOT PROTOBUF_PROTOC_EXECUTABLE)
         message(FATAL_ERROR "Could not find protoc executable (PROTOBUF_PROTOC_EXECUTABLE)")
     endif()
     message(STATUS "Found protoc executable: ${PROTOBUF_PROTOC_EXECUTABLE}")
+    include_directories(${SIOCLIENT_INCLUDE_DIR} ${PROTOBUF_INCLUDE_DIRS})
 endif()
+
+#################################
+# catkin specific configuration #
+#################################
+
+catkin_package(CATKIN_DEPENDS
+        cv_bridge
+        image_transport)
 
 #################
 # BoW framework #
@@ -256,45 +213,16 @@ endif()
 include_directories(${BOW_INCLUDE_DIRS})
 message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 
-##############################
-# Select g2o library modules #
-##############################
+#########
+# Build #
+#########
 
-set(USE_G2O_DEBUG OFF CACHE BOOL "Use the debug build of g2o")
+include_directories(
+        ${catkin_INCLUDE_DIRS}
+        ${OpenVSLAM_SRC_DIR})
 
-if(USE_G2O_DEBUG)
-    set(G2O_LIBS
-            ${G2O_CORE_LIBRARY_DEBUG}
-            ${G2O_STUFF_LIBRARY_DEBUG}
-            ${G2O_SOLVER_DENSE_DEBUG}
-            ${G2O_SOLVER_EIGEN_DEBUG}
-            ${G2O_SOLVER_CHOLMOD_DEBUG}
-            ${G2O_SOLVER_CSPARSE_DEBUG}
-            ${G2O_SOLVER_CSPARSE_EXTENSION_DEBUG}
-            ${G2O_TYPES_SBA_DEBUG}
-            ${G2O_TYPES_SIM3_DEBUG})
-else()
-    set(G2O_LIBS
-            ${G2O_CORE_LIBRARY}
-            ${G2O_STUFF_LIBRARY}
-            ${G2O_SOLVER_DENSE}
-            ${G2O_SOLVER_EIGEN}
-            ${G2O_SOLVER_CHOLMOD}
-            ${G2O_SOLVER_CSPARSE}
-            ${G2O_SOLVER_CSPARSE_EXTENSION}
-            ${G2O_TYPES_SBA}
-            ${G2O_TYPES_SIM3})
-endif()
-
-###################
-# Build Selection #
-###################
+link_libraries(
+        ${catkin_LIBRARIES}
+        ${OpenVSLAM_LIB})
 
 add_subdirectory(src)
-add_subdirectory(example)
-
-set(BUILD_TESTS OFF CACHE BOOL "Build tests")
-if(BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(test)
-endif()

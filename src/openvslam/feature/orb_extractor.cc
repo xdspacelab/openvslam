@@ -39,6 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <opencv2/opencv.hpp>
 
+#ifdef USE_SSE_ORB
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
+#endif // USE_SSE_ORB
+
 namespace openvslam {
 namespace feature {
 
@@ -51,8 +59,6 @@ orb_extractor::orb_extractor(const unsigned int max_num_keypts, const float scal
 
 orb_extractor::orb_extractor(const orb_params& orb_params)
         : orb_params_(orb_params) {
-    // create ORB point pairs
-    create_point_pairs();
     // initialize parameters
     initialize();
 }
@@ -192,12 +198,6 @@ std::vector<float> orb_extractor::get_level_sigma_sq() const {
 
 std::vector<float> orb_extractor::get_inv_level_sigma_sq() const {
     return inv_level_sigma_sq_;
-}
-
-void orb_extractor::create_point_pairs() {
-    constexpr unsigned int num_sample_pts = 512;
-    auto pattern = reinterpret_cast<const cv::Point*>(orb_point_pairs);
-    std::copy(pattern, pattern + num_sample_pts, std::back_inserter(pattern_));
 }
 
 void orb_extractor::initialize() {
@@ -606,11 +606,11 @@ void orb_extractor::compute_orb_descriptors(const cv::Mat& image, const std::vec
     descriptors = cv::Mat::zeros(keypts.size(), 32, CV_8UC1);
 
     for (unsigned int i = 0; i < keypts.size(); ++i) {
-        compute_orb_descriptor(keypts.at(i), image, &pattern_.at(0), descriptors.ptr(i));
+        compute_orb_descriptor(keypts.at(i), image, descriptors.ptr(i));
     }
 }
 
-void orb_extractor::compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::Mat& image, const cv::Point* pattern, uchar* desc) const {
+void orb_extractor::compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::Mat& image, uchar* desc) const {
     const float angle = keypt.angle * M_PI / 180.0;
     const float cos_angle = util::cos(angle);
     const float sin_angle = util::sin(angle);
@@ -620,48 +620,53 @@ void orb_extractor::compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::
 
 #ifdef USE_SSE_ORB
 #if !((defined _MSC_VER && defined _M_X64) \
-      || (defined __GNUC__ && defined __x86_64__ && defined __SSE2__ && !defined __APPLE__) \
-      || CV_SSE2)
+      || (defined __GNUC__ && defined __x86_64__ && defined __SSE3__) \
+      || CV_SSE3)
 #error "The processor is not compatible with SSE. Please configure the CMake with -DUSE_SSE_ORB=OFF."
 #endif
 
-    __m128 vs;
-    __m128i vi;
-    int32_t i[4] __attribute__ ((aligned(16)));
+    const __m128 _trig1 = _mm_set_ps(cos_angle, sin_angle, cos_angle, sin_angle);
+    const __m128 _trig2 = _mm_set_ps(-sin_angle, cos_angle, -sin_angle, cos_angle);
+    __m128 _point_pairs;
+    __m128 _mul1;
+    __m128 _mul2;
+    __m128 _vs;
+    __m128i _vi;
+    alignas(16) int32_t ii[4];
 
-#define COMPARE_ORB_POINTS(idx1, idx2) \
-        (vs = _mm_setr_ps(pattern[idx1].x * sin_angle + pattern[idx1].y * cos_angle, \
-                          pattern[idx1].x * cos_angle - pattern[idx1].y * sin_angle, \
-                          pattern[idx2].x * sin_angle + pattern[idx2].y * cos_angle, \
-                          pattern[idx2].x * cos_angle - pattern[idx2].y * sin_angle), \
-         vi = _mm_cvtps_epi32(vs), \
-         _mm_store_si128(reinterpret_cast<__m128i*>(i), vi), \
-         center[i[0] * step + i[1]] < center[i[2] * step + i[3]])
+#define COMPARE_ORB_POINTS(shift) \
+        (_point_pairs = _mm_load_ps(orb_point_pairs + shift), \
+         _mul1 = _mm_mul_ps(_point_pairs, _trig1), \
+         _mul2 = _mm_mul_ps(_point_pairs, _trig2), \
+         _vs = _mm_hadd_ps(_mul1, _mul2), \
+         _vi = _mm_cvtps_epi32(_vs), \
+         _mm_store_si128(reinterpret_cast<__m128i*>(ii), _vi), \
+         center[ii[0] * step + ii[2]] < center[ii[1] * step + ii[3]])
 
 #else
 
-#define GET_VALUE(idx) \
-        (center[cvRound(pattern[idx].x * sin_angle + pattern[idx].y * cos_angle) * step \
-                + cvRound(pattern[idx].x * cos_angle - pattern[idx].y * sin_angle)])
+#define GET_VALUE(shift) \
+        (center[cvRound(*(orb_point_pairs + shift) * sin_angle + *(orb_point_pairs + shift + 1) * cos_angle) * step \
+              + cvRound(*(orb_point_pairs + shift) * cos_angle - *(orb_point_pairs + shift + 1) * sin_angle)])
 
-#define COMPARE_ORB_POINTS(idx1, idx2) \
-        (GET_VALUE(idx1) < GET_VALUE(idx2))
+#define COMPARE_ORB_POINTS(shift) \
+        (GET_VALUE(shift) < GET_VALUE(shift + 2))
 
 #endif
 
-    for (unsigned int shift = 0; shift < 32; ++shift, pattern += 16) {
-        int32_t val;
+    // interval: (X, Y) x 2 points x 8 pairs = 32
+    static constexpr unsigned interval = 32;
 
-        val = COMPARE_ORB_POINTS(0, 1);
-        val |= COMPARE_ORB_POINTS(2, 3) << 1;
-        val |= COMPARE_ORB_POINTS(4, 5) << 2;
-        val |= COMPARE_ORB_POINTS(6, 7) << 3;
-        val |= COMPARE_ORB_POINTS(8, 9) << 4;
-        val |= COMPARE_ORB_POINTS(10, 11) << 5;
-        val |= COMPARE_ORB_POINTS(12, 13) << 6;
-        val |= COMPARE_ORB_POINTS(14, 15) << 7;
-
-        desc[shift] = static_cast<uchar>(val);
+    for (unsigned int i = 0; i < orb_point_pairs_size / interval; ++i) {
+        int32_t val = COMPARE_ORB_POINTS(i * interval);
+        val |= COMPARE_ORB_POINTS(i * interval + 4) << 1;
+        val |= COMPARE_ORB_POINTS(i * interval + 8) << 2;
+        val |= COMPARE_ORB_POINTS(i * interval + 12) << 3;
+        val |= COMPARE_ORB_POINTS(i * interval + 16) << 4;
+        val |= COMPARE_ORB_POINTS(i * interval + 20) << 5;
+        val |= COMPARE_ORB_POINTS(i * interval + 24) << 6;
+        val |= COMPARE_ORB_POINTS(i * interval + 28) << 7;
+        desc[i] = static_cast<uchar>(val);
     }
 
 #undef GET_VALUE

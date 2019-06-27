@@ -1,5 +1,6 @@
 # OpenVSLAM: a Versatile Visual SLAM Framework
 [![Wercker Status](https://app.wercker.com/status/8b02a43f48216385658bb3857aae5fd8/s/)](https://app.wercker.com/project/byKey/8b02a43f48216385658bb3857aae5fd8)
+[![Travis CI Status](https://travis-ci.org/xdspacelab/openvslam.svg)](https://travis-ci.org/xdspacelab/openvslam)
 [![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/en/master/?badge=master)
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/shinsumicco/openvslam.svg)](https://hub.docker.com/r/shinsumicco/openvslam)
 
@@ -59,7 +60,6 @@ If you want to join our Slack community, please fill out the application form fr
 
 ## Currently working on
 
-- ROS support
 - IMU integration
 - Python bindings
 - Implementation of extra camera models
