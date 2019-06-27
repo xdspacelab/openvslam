@@ -6,6 +6,12 @@ no-response-timeout: 20
 build_with_gui:
   steps:
     - script:
+      name: setup ccache
+      code: |
+        export CCACHE_DIR=${WERCKER_CACHE_DIR}/.ccache
+        ccache -M 950M
+        ccache -s
+    - script:
       name: cmake and make with pangolin viewer
       code: |
         mkdir build
@@ -28,6 +34,12 @@ build_with_gui:
 
 build_without_gui:
   steps:
+    - script:
+      name: setup ccache
+      code: |
+        export CCACHE_DIR=${WERCKER_CACHE_DIR}/.ccache
+        ccache -M 950M
+        ccache -s
     - script:
       name: cmake and make
       code: |
@@ -60,6 +72,12 @@ build_without_gui:
 
 build_tutorial:
   steps:
+    - script:
+      name: setup ccache
+      code: |
+        export CCACHE_DIR=${WERCKER_CACHE_DIR}/.ccache
+        ccache -M 950M
+        ccache -s
     - script:
       name: cmake and make
       code: |
