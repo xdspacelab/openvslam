@@ -23,6 +23,7 @@ Contents
     ./simple_tutorial
     ./example
     ./docker
+    ./ros_package
     ./trouble_shooting
 
 Cite Us

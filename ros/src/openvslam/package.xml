@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>openvslam</name>
+    <version>0.0.0</version>
+    <description>The ROS package for OpenVSLAM</description>
+
+    <maintainer email="ichihara.mitsumasa@aist.go.jp">Mitsumasa Ichihara</maintainer>
+    <maintainer email="sumikura.shinya@aist.go.jp">Shinya Sumikura</maintainer>
+    <maintainer email="k.sakurada@aist.go.jp">Ken Sakurada</maintainer>
+
+    <license>2-clause BSD</license>
+    <url type="website">https://openvslam.readthedocs.io/en/master/overview.html</url>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>image_transport</build_depend>
+    <build_depend>cv_bridge</build_depend>
+
+    <build_export_depend>image_transport</build_export_depend>
+    <build_export_depend>cv_bridge</build_export_depend>
+
+    <exec_depend>image_transport</exec_depend>
+    <exec_depend>cv_bridge</exec_depend>
+</package>
