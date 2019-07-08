@@ -49,16 +49,16 @@ int main(int argc, char* argv[]) {
     sensor_msgs::ImagePtr msg;
 
     // load video file
-    image_sequence sequence(img_dir_path->value());
-    const auto img_paths = sequence.get_image_paths();
+    image_sequence sequence(img_dir_path->value(), img_fps->value());
+    const auto frames = sequence.get_frames();
 
     ros::Rate pub_rate(img_fps->value());
 
-    for (unsigned int i = 0; i < img_paths.size(); ++i) {
-        const auto& img_path = img_paths.at(i);
+    for (unsigned int i = 0; i < frames.size(); ++i) {
+        const auto& frame = frames.at(i);
         while (nh.ok()) {
-            std::cout << "next img: " << img_path << std::endl;
-            const auto img = cv::imread(img_path, cv::IMREAD_UNCHANGED);
+            std::cout << "next img: " << frame.img_path_ << std::endl;
+            const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
             msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
             publisher.publish(msg);
             ros::spinOnce();
