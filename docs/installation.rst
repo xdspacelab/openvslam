@@ -329,8 +329,6 @@ When building with support for PangolinViewer, please specify the following cmak
 .. code-block:: bash
 
     cd /path/to/openvslam
-    git submodule init
-    git submodule update
     mkdir build && cd build
     cmake \
         -DBUILD_WITH_MARCH_NATIVE=ON \
@@ -347,8 +345,6 @@ When building with support for SocketViewer, please specify the following cmake 
 .. code-block:: bash
 
     cd /path/to/openvslam
-    git submodule init
-    git submodule update
     mkdir build && cd build
     cmake \
         -DBUILD_WITH_MARCH_NATIVE=ON \
