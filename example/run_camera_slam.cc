@@ -25,7 +25,7 @@
 
 void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
                    const std::string& vocab_file_path, const unsigned int cam_num, const std::string& mask_img_path,
-                   const std::string& map_db_path) {
+                   const float scale, const std::string& map_db_path) {
     // load the mask image
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
 
@@ -67,6 +67,9 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
             is_not_end = video.read(frame);
             if (frame.empty()) {
                 continue;
+            }
+            if (scale != 1.0) {
+                cv::resize(frame, frame, cv::Size(), scale, scale, cv::INTER_LINEAR);
             }
 
             const auto tp_1 = std::chrono::steady_clock::now();
@@ -125,6 +128,7 @@ int main(int argc, char* argv[]) {
     auto cam_num = op.add<popl::Value<unsigned int>>("n", "number", "camera number");
     auto config_file_path = op.add<popl::Value<std::string>>("c", "config", "config file path");
     auto mask_img_path = op.add<popl::Value<std::string>>("", "mask", "mask image path", "");
+    auto scale = op.add<popl::Value<float>>("s", "scale", "scaling ratio of images", 1.0);
     auto map_db_path = op.add<popl::Value<std::string>>("p", "map-db", "store a map database at this path after SLAM", "");
     auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
     try {
@@ -176,7 +180,7 @@ int main(int argc, char* argv[]) {
     // run tracking
     if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
         mono_tracking(cfg, vocab_file_path->value(), cam_num->value(), mask_img_path->value(),
-                      map_db_path->value());
+                      scale->value(), map_db_path->value());
     }
     else {
         throw std::runtime_error("Invalid setup type: " + cfg->camera_->get_setup_type_string());

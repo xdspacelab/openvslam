@@ -25,7 +25,7 @@
 
 void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
                        const std::string& vocab_file_path, const unsigned int cam_num, const std::string& mask_img_path,
-                       const std::string& map_db_path, const bool mapping) {
+                       const float scale, const std::string& map_db_path, const bool mapping) {
     // load the mask image
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
 
@@ -76,6 +76,9 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
             is_not_end = video.read(frame);
             if (frame.empty()) {
                 continue;
+            }
+            if (scale != 1.0) {
+                cv::resize(frame, frame, cv::Size(), scale, scale, cv::INTER_LINEAR);
             }
 
             const auto tp_1 = std::chrono::steady_clock::now();
@@ -129,6 +132,7 @@ int main(int argc, char* argv[]) {
     auto cam_num = op.add<popl::Value<unsigned int>>("n", "number", "camera number");
     auto config_file_path = op.add<popl::Value<std::string>>("c", "config", "config file path");
     auto mask_img_path = op.add<popl::Value<std::string>>("", "mask", "mask image path", "");
+    auto scale = op.add<popl::Value<float>>("s", "scale", "scaling ratio of images", 1.0);
     auto map_db_path = op.add<popl::Value<std::string>>("p", "map-db", "path to a prebuilt map database");
     auto mapping = op.add<popl::Switch>("", "mapping", "perform mapping as well as localization");
     auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
@@ -181,7 +185,7 @@ int main(int argc, char* argv[]) {
     // run localization
     if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
         mono_localization(cfg, vocab_file_path->value(), cam_num->value(), mask_img_path->value(),
-                          map_db_path->value(), mapping->is_set());
+                          scale->value(), map_db_path->value(), mapping->is_set());
     }
     else {
         throw std::runtime_error("Invalid setup type: " + cfg->camera_->get_setup_type_string());
