@@ -8,6 +8,12 @@ endif()
 
 set(EXECUTABLE_TARGETS "")
 
+add_executable(run_camera_slam run_camera_slam.cc)
+list(APPEND EXECUTABLE_TARGETS run_camera_slam)
+
+add_executable(run_camera_localization run_camera_localization.cc)
+list(APPEND EXECUTABLE_TARGETS run_camera_localization)
+
 add_executable(run_image_slam run_image_slam.cc util/image_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_image_slam)
 
