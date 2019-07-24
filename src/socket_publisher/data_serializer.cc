@@ -90,6 +90,9 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
 
     std::unordered_map<unsigned int, double> next_keyframe_hash_map;
     for (const auto keyfrm: keyfrms) {
+        if (!keyfrm || keyfrm->will_be_erased()) {
+            continue;
+        }
 
         const auto id = keyfrm->id_;
         const auto pose = keyfrm->get_cam_pose();
@@ -130,12 +133,19 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
 
     // 2. graph registration
     for (const auto keyfrm : keyfrms) {
+        if (!keyfrm || keyfrm->will_be_erased()) {
+            continue;
+        }
+
         const unsigned int keyfrm_id = keyfrm->id_;
 
         // covisibility graph
         const auto covisibilities = keyfrm->graph_node_->get_covisibilities_over_weight(100);
         if (!covisibilities.empty()) {
             for (const auto covisibility : covisibilities) {
+                if (!covisibility || covisibility->will_be_erased()) {
+                    continue;
+                }
                 if (covisibility->id_ < keyfrm_id) {
                     continue;
                 }
@@ -156,6 +166,9 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
         // loop edges
         const auto loop_edges = keyfrm->graph_node_->get_loop_edges();
         for (const auto loop_edge : loop_edges) {
+            if (!loop_edge) {
+                continue;
+            }
             if (loop_edge->id_ < keyfrm_id) {
                 continue;
             }
@@ -169,6 +182,9 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
 
     std::unordered_map<unsigned int, double> next_point_hash_map;
     for (const auto landmark: all_landmarks) {
+        if (!landmark || landmark->will_be_erased()) {
+            continue;
+        }
 
         const auto id = landmark->id_;
         const auto pos = landmark->get_pos_in_world();

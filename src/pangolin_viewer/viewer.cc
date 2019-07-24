@@ -208,6 +208,9 @@ void viewer::draw_keyframes() {
         glLineWidth(keyfrm_line_width_);
         glColor3fv(cs_.kf_line_.data());
         for (const auto keyfrm : keyfrms) {
+            if (!keyfrm || keyfrm->will_be_erased()) {
+                continue;
+            }
             draw_camera(keyfrm->get_cam_pose_inv(), w);
         }
     }
@@ -224,12 +227,19 @@ void viewer::draw_keyframes() {
         glBegin(GL_LINES);
 
         for (const auto keyfrm : keyfrms) {
+            if (!keyfrm || keyfrm->will_be_erased()) {
+                continue;
+            }
+
             const openvslam::Vec3_t cam_center_1 = keyfrm->get_cam_center();
 
             // covisibility graph
             const auto covisibilities = keyfrm->graph_node_->get_covisibilities_over_weight(100);
             if (!covisibilities.empty()) {
                 for (const auto covisibility : covisibilities) {
+                    if (!covisibility || covisibility->will_be_erased()) {
+                        continue;
+                    }
                     if (covisibility->id_ < keyfrm->id_) {
                         continue;
                     }
@@ -248,6 +258,9 @@ void viewer::draw_keyframes() {
             // loop edges
             const auto loop_edges = keyfrm->graph_node_->get_loop_edges();
             for (const auto loop_edge : loop_edges) {
+                if (!loop_edge) {
+                    continue;
+                }
                 if (loop_edge->id_ < keyfrm->id_) {
                     continue;
                 }
@@ -280,7 +293,10 @@ void viewer::draw_landmarks() {
     glBegin(GL_POINTS);
 
     for (const auto lm : landmarks) {
-        if (lm->will_be_erased() || (*menu_show_local_map_ && local_landmarks.count(lm))) {
+        if (!lm || lm->will_be_erased()) {
+            continue;
+        }
+        if (*menu_show_local_map_ && local_landmarks.count(lm)) {
             continue;
         }
         const openvslam::Vec3_t pos_w = lm->get_pos_in_world();
