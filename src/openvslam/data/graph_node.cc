@@ -322,8 +322,9 @@ bool graph_node::has_spanning_child(keyframe* keyfrm) const {
 
 void graph_node::add_loop_edge(keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_);
-    owner_keyfrm_->set_not_to_be_erased();
     loop_edges_.insert(keyfrm);
+    // cannot erase loop edges
+    owner_keyfrm_->set_not_to_be_erased();
 }
 
 std::set<keyframe*> graph_node::get_loop_edges() const {
