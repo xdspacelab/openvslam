@@ -201,7 +201,7 @@ For the rest of this chapter, we will use ``aist_living_lab_1`` and ``aist_livin
 Tracking and Mapping
 ^^^^^^^^^^^^^^^^^^^^
 
-Here we should how to run SLAM and create a map database file with ``aist_living_lab_1`` dataset.
+Here we should know how to run SLAM and create a map database file with ``aist_living_lab_1`` dataset.
 You can use ``./run_video_slam`` to run SLAM with the video file.
 
 
