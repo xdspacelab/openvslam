@@ -366,6 +366,11 @@ void keyframe::prepare_for_erasing() {
         return;
     }
 
+    // cannot erase if the frag is raised
+    if (cannot_be_erased_) {
+        return;
+    }
+
     // 1. raise the flag which indicates it has been erased
 
     will_be_erased_ = true;
