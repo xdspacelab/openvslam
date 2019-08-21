@@ -99,7 +99,7 @@ The following options are allowed:
 Localization
 ^^^^^^^^^^^^
 
-We provided an example snippetfor using image sequences for localization based on a prebuilt map.
+We provided an example snippet for using image sequences for localization based on a prebuilt map.
 The source code is placed at ``./example/run_image_localization.cc``.
 The following options are allowed:
 
