@@ -99,6 +99,10 @@ Prerequisites for Unix
 
     In the following instruction, we assume that ``CMAKE_INSTALL_PREFIX`` is ``/usr/local``. If you want to install the libraries to the different location, set ``CMAKE_INSTALL_PREFIX`` to your environment and **set the environment variables accordingly**.
 
+.. NOTE ::
+
+    If your PC is frozen during the build, please reduce the number of parallel compile jobs when executing ``make`` (e.g. ``make -j2``).
+
 .. _section-linux:
 
 Installing for Linux
@@ -148,7 +152,7 @@ Download and install Eigen from source.
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         ..
-    make -j
+    make -j4
     make install
 
 Download, build and install OpenCV from source.
@@ -175,7 +179,7 @@ Download, build and install OpenCV from source.
         -DWITH_FFMPEG=ON \
         -DWITH_OPENMP=ON \
         ..
-    make -j
+    make -j4
     make install
 
 Jump to :ref:`Common Installation Instructions <subsection-common-linux-macos>` for the next step.
@@ -232,7 +236,7 @@ Download, build and install **the custom DBoW2** from source.
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         ..
-    make -j
+    make -j4
     make install
 
 Download, build and install g2o.
@@ -255,7 +259,7 @@ Download, build and install g2o.
         -DG2O_USE_OPENGL=OFF \
         -DG2O_USE_OPENMP=ON \
         ..
-    make -j
+    make -j4
     make install
 
 | (**if you plan on using PangolinViewer**)
@@ -271,7 +275,7 @@ Download, build and install g2o.
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         ..
-    make -j
+    make -j4
     make install
 
 | (**if you plan on using SocketViewer**)
@@ -290,7 +294,7 @@ Download, build and install g2o.
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         -DBUILD_UNIT_TESTS=OFF \
         ..
-    make -j
+    make -j4
     make install
 
 | (**if you plan on using SocketViewer**)
@@ -316,7 +320,7 @@ Otherwise, please download, build and install Protobuf from source.
     ./configure \
         --prefix=/usr/local \
         --enable-static=no
-    make -j
+    make -j4
     make install
 
 .. _section-build-unix:
@@ -338,7 +342,7 @@ When building with support for PangolinViewer, please specify the following cmak
         -DBOW_FRAMEWORK=DBoW2 \
         -DBUILD_TESTS=ON \
         ..
-    make -j
+    make -j4
 
 When building with support for SocketViewer, please specify the following cmake options: ``-DUSE_PANGOLIN_VIEWER=OFF`` and ``-DUSE_SOCKET_PUBLISHER=ON``.
 
@@ -354,7 +358,7 @@ When building with support for SocketViewer, please specify the following cmake 
         -DBOW_FRAMEWORK=DBoW2 \
         -DBUILD_TESTS=ON \
         ..
-    make -j
+    make -j4
 
 .. NOTE ::
 
