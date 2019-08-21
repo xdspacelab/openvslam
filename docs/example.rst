@@ -275,3 +275,59 @@ The following options are allowed:
     --debug                debug mode
     --eval-log             store trajectory and tracking times for evaluation
     -p, --map-db arg       store a map database at this path after SLAM
+
+.. _section-example-uvc-camera:
+
+SLAM with UVC camera
+=========================
+
+Tracking and Mapping
+^^^^^^^^^^^^^^^^^^^^
+
+We provided an example snippet for using a UVC camera, which is often called a webcam, for visual SLAM.
+The source code is placed at ``./example/run_camera_slam.cc``.
+The following options are allowed:
+
+.. code-block:: bash
+
+    $ ./run_camera_slam  -h
+    Allowed options:
+    -h, --help            produce help message
+    -v, --vocab arg       vocabulary file path
+    -n, --number arg      camera number
+    -c, --config arg      config file path
+    --mask arg            mask image path
+    -s, --scale arg (=1)  scaling ratio of images
+    -p, --map-db arg      store a map database at this path after SLAM
+    --debug               debug mode
+
+| Please specify the camera number you want to use by ``-n`` option.
+| The camera must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
+| You can scale input images to the performance of your machine by ``-s`` option. Please modify the config accordingly.
+| We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
+
+Localization
+^^^^^^^^^^^^
+
+We provided an example snippet for using a UVC camera for localization based on a prebuilt map.
+The source code is placed at ``./example/run_camera_localization.cc``.
+The following options are allowed:
+
+.. code-block:: bash
+
+    $ ./run_camera_localization -h
+    Allowed options:
+    -h, --help            produce help message
+    -v, --vocab arg       vocabulary file path
+    -n, --number arg      camera number
+    -c, --config arg      config file path
+    --mask arg            mask image path
+    -s, --scale arg (=1)  scaling ratio of images
+    -p, --map-db arg      path to a prebuilt map database
+    --mapping             perform mapping as well as localization
+    --debug               debug mode
+
+| Please specify the camera number you want to use by ``-n`` option.
+| The camera must be calibrated. Create a config file (``.yaml``) according to the camera parameters.
+| You can scale input images to the performance of your machine by ``-s`` option. Please modify the config accordingly.
+| We provided a vocabulary file for DBoW2 at `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__. You can use ``orb_vocab.dbow2`` in the zip file.
