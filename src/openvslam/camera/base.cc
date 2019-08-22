@@ -14,11 +14,6 @@ base::base(const std::string& name, const setup_type_t setup_type, const model_t
           focal_x_baseline_(focal_x_baseline), true_baseline_(true_baseline),
           num_grid_cols_(num_grid_cols), num_grid_rows_(num_grid_rows) {
     spdlog::debug("CONSTRUCT: camera::base");
-
-    // equirectangularでmonocular以外が指定されていたらエラー
-    if (model_type == model_type_t::Equirectangular && setup_type != setup_type_t::Monocular) {
-        throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
-    }
 }
 
 base::~base() {

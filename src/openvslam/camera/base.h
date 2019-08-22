@@ -38,10 +38,10 @@ enum class color_order_t {
 const std::array<std::string, 3> color_order_to_string = {{"Gray", "RGB", "BGR"}};
 
 struct image_bounds {
-    // default constructor
+    //! Default constructor
     image_bounds() = default;
 
-    // constructor for uniform initialization
+    //! Constructor with initialization
     template<typename T, typename U>
     image_bounds(const T min_x, const U max_x, const T min_y, const U max_y)
             : min_x_(min_x), max_x_(max_x), min_y_(min_y), max_y_(max_y) {}
@@ -54,11 +54,13 @@ struct image_bounds {
 
 class base {
 public:
+    //! Constructor
     base(const std::string& name, const setup_type_t setup_type, const model_type_t model_type, const color_order_t color_order,
          const unsigned int cols, const unsigned int rows, const double fps,
          const double focal_x_baseline, const double true_baseline,
          const unsigned int num_grid_cols = 64, const unsigned int num_grid_rows = 48);
 
+    //! Destructor
     virtual ~base();
 
     //! camera name
@@ -66,38 +68,36 @@ public:
 
     //! setup type
     const setup_type_t setup_type_;
-    //! setup type as string
+    //! Get setup type as string
     std::string get_setup_type_string() const { return setup_type_to_string.at(static_cast<unsigned int>(setup_type_)); }
-    //! setup type loader from YAML
+    //! Load setup type from YAML
     static setup_type_t load_setup_type(const YAML::Node& yaml_node);
-    //! setup type loader from string
+    //! Load setup type from string
     static setup_type_t load_setup_type(const std::string& setup_type_str);
 
     //! model type
     const model_type_t model_type_;
-    //! model type as string
+    //! Get model type as string
     std::string get_model_type_string() const { return model_type_to_string.at(static_cast<unsigned int>(model_type_)); }
-    //! model type loader from YAML
+    //! Load model type from YAML
     static model_type_t load_model_type(const YAML::Node& yaml_node);
-    //! model type loader from string
+    //! Load model type from string
     static model_type_t load_model_type(const std::string& model_type_str);
 
     //! color order
     const color_order_t color_order_;
-    //! color order as string
+    //! Get color order as string
     std::string get_color_order_string() const { return color_order_to_string.at(static_cast<unsigned int>(color_order_)); }
-    //! color order loader from YAML
+    //! Load color order from YAML
     static color_order_t load_color_order(const YAML::Node& yaml_node);
-    //! color order loader from string
+    //! Load color order from string
     static color_order_t load_color_order(const std::string& color_order_str);
 
-    /**
-     * Show common parameters
-     */
+     //! Show common parameters along camera models
     void show_common_parameters() const;
 
     //---------------------------
-    // 基底クラスでセットする変数群
+    // To be set in the base class
 
     //! width of image
     const unsigned int cols_;
@@ -119,7 +119,7 @@ public:
     const unsigned int num_grid_rows_;
 
     //---------------------------
-    // 派生クラスでセットする変数群
+    // To be set in derived classes
 
     //! information of image boundary
     image_bounds img_bounds_;
@@ -130,86 +130,41 @@ public:
     double inv_cell_height_ = std::numeric_limits<double>::quiet_NaN();
 
     //-------------------------
-    // 派生クラスで実装する関数群
+    // To be implemented in derived classes
 
-    /**
-     * Show camera parameters
-     */
+    //! Show camera parameters
     virtual void show_parameters() const = 0;
 
-    /**
-     * Compute image boundaries according to camera model
-     * @return
-     */
+    //! Compute image boundaries according to camera model
     virtual image_bounds compute_image_bounds() const = 0;
 
-    /**
-     * Undistort keypoint according to camera model
-     * @param dist_keypt
-     * @return
-     */
+    //! Undistort keypoint according to camera model
     virtual cv::KeyPoint undistort_keypoint(const cv::KeyPoint& dist_keypt) const = 0;
 
-    /**
-     * Undistort keypoints according to camera model
-     * @param dist_keypts
-     * @param undist_keypts
-     */
+    //! Undistort keypoints according to camera model
     virtual void undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const = 0;
 
-    /**
-     * Convert undistorted keypoint to bearing vector
-     * @param undist_keypt
-     * @return
-     */
+    //! Convert undistorted keypoint to bearing vector
     virtual Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const = 0;
 
-    /**
-     * Convert undistorted keypoints to bearing vectors
-     * @param undist_keypts
-     * @param bearings
-     */
+    //! Convert undistorted keypoints to bearing vectors
     virtual void convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector <Vec3_t>& bearings) const = 0;
 
-    /**
-     * Convert bearing vector to undistorted keypoint
-     * @param bearing
-     * @return
-     */
+    //! Convert bearing vector to undistorted keypoint
     virtual cv::KeyPoint convert_bearing_to_keypoint(const Vec3_t& bearing) const = 0;
 
-    /**
-     * Convert bearing vectors to undistorted keypoints
-     * @param bearings
-     * @param undist_keypts
-     */
+    //! Convert bearing vectors to undistorted keypoints
     virtual void convert_bearings_to_keypoints(const eigen_alloc_vector <Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const = 0;
 
-    /**
-     * Reproject the specified 3D point to image, using camera pose and projection model
-     * @param rot_cw
-     * @param trans_cw
-     * @param pos_w
-     * @param reproj
-     * @param x_right
-     * @return whether the point is reprojected into image or not
-     */
+    //! Reproject the specified 3D point to image using camera pose and projection model
+    //! (reprojected to inside of image -> true, to outside of image -> false)
     virtual bool reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const = 0;
 
-    /**
-     * Reproject the specified 3D point to bearing vector, using camera pose
-     * @param rot_cw
-     * @param trans_cw
-     * @param pos_w
-     * @param reproj
-     * @return
-     */
+    //! Reproject the specified 3D point to bearing vector using camera pose (Not depends on any projection models)
+    //! (reprojected to inside of image -> true, to outside of image -> false)
     virtual bool reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const = 0;
 
-    /**
-     * Encode camera information as JSON
-     * @return
-     */
+    //! Encode camera information as JSON
     virtual nlohmann::json to_json() const = 0;
 };
 
