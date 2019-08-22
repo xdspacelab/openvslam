@@ -120,9 +120,6 @@ void perspective::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keyp
 
 void perspective::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const {
     bearings.resize(undist_keypts.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned long idx = 0; idx < undist_keypts.size(); ++idx) {
         const auto x_normalized = (undist_keypts.at(idx).pt.x - cx_) / fx_;
         const auto y_normalized = (undist_keypts.at(idx).pt.y - cy_) / fy_;
@@ -133,9 +130,6 @@ void perspective::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>&
 
 void perspective::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const {
     undist_keypts.resize(bearings.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned long idx = 0; idx < bearings.size(); ++idx) {
         const auto x_normalized = bearings.at(idx)(0) / bearings.at(idx)(2);
         const auto y_normalized = bearings.at(idx)(1) / bearings.at(idx)(2);

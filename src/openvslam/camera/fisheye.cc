@@ -117,9 +117,6 @@ void fisheye::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypt, s
 
 void fisheye::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypt, eigen_alloc_vector<Vec3_t>& bearings) const {
     bearings.resize(undist_keypt.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned long idx = 0; idx < undist_keypt.size(); ++idx) {
         const auto x_normalized = (undist_keypt.at(idx).pt.x - cx_) / fx_;
         const auto y_normalized = (undist_keypt.at(idx).pt.y - cy_) / fy_;
@@ -130,9 +127,6 @@ void fisheye::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& und
 
 void fisheye::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypt) const {
     undist_keypt.resize(bearings.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned long idx = 0; idx < bearings.size(); ++idx) {
         const auto x_normalized = bearings.at(idx)(0) / bearings.at(idx)(2);
         const auto y_normalized = bearings.at(idx)(1) / bearings.at(idx)(2);

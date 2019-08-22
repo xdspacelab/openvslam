@@ -43,9 +43,6 @@ void equirectangular::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_
 
 void equirectangular::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const {
     bearings.resize(undist_keypts.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned int idx = 0; idx < undist_keypts.size(); ++idx) {
         // convert to unit polar coordinates
         const double lon = (undist_keypts.at(idx).pt.x / cols_ - 0.5) * (2 * M_PI);
@@ -59,9 +56,6 @@ void equirectangular::convert_keypoints_to_bearings(const std::vector<cv::KeyPoi
 
 void equirectangular::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const {
     undist_keypts.resize(bearings.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned int idx = 0; idx < bearings.size(); ++idx) {
         // convert to unit polar coordinates
         const double lat = -std::asin(bearings.at(idx)[1]);
