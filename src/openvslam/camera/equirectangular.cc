@@ -10,10 +10,8 @@ equirectangular::equirectangular(const std::string& name, const color_order_t& c
         : base(name, setup_type_t::Monocular, model_type_t::Equirectangular, color_order, cols, rows, fps, 0.0, 0.0) {
     spdlog::debug("CONSTRUCT: camera::equirectangular");
 
-    // 画像の最大範囲を計算
     img_bounds_ = compute_image_bounds();
 
-    // セルサイズの逆数を計算しておく
     inv_cell_width_ = static_cast<double>(num_grid_cols_) / (img_bounds_.max_x_ - img_bounds_.min_x_);
     inv_cell_height_ = static_cast<double>(num_grid_rows_) / (img_bounds_.max_y_ - img_bounds_.min_y_);
 }
@@ -75,12 +73,13 @@ void equirectangular::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec
 }
 
 bool equirectangular::reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const {
-    // カメラ基準の座標に変換
+    // convert to camera-coordinates
     const Vec3_t bearing = (rot_cw * pos_w + trans_cw).normalized();
 
     // convert to unit polar coordinates
     const auto latitude = -std::asin(bearing(1));
     const auto longitude = std::atan2(bearing(0), bearing(2));
+
     // convert to pixel image coordinated
     reproj(0) = cols_ * (0.5 + longitude / (2.0 * M_PI));
     reproj(1) = rows_ * (0.5 - latitude / M_PI);
@@ -90,7 +89,7 @@ bool equirectangular::reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& tr
 }
 
 bool equirectangular::reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const {
-    // カメラ基準の座標に変換
+    // convert to camera-coordinates
     reproj = (rot_cw * pos_w + trans_cw).normalized();
 
     return true;
