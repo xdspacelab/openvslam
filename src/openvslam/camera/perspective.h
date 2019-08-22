@@ -22,7 +22,7 @@ public:
 
     image_bounds compute_image_bounds() const override final;
 
-    inline cv::KeyPoint undistort_keypoint(const cv::KeyPoint& dist_keypt) const override final {
+    cv::KeyPoint undistort_keypoint(const cv::KeyPoint& dist_keypt) const override final {
         // fill cv::Mat with distorted keypoints
         cv::Mat mat(1, 2, CV_32F);
         mat.at<float>(0, 0) = dist_keypt.pt.x;
@@ -47,7 +47,7 @@ public:
 
     void undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const override final;
 
-    inline Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
+    Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
         const auto x_normalized = (undist_keypt.pt.x - cx_) / fx_;
         const auto y_normalized = (undist_keypt.pt.y - cy_) / fy_;
         const auto l2_norm = std::sqrt(x_normalized * x_normalized + y_normalized * y_normalized + 1.0);
@@ -56,7 +56,7 @@ public:
 
     void convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const override final;
 
-    inline cv::KeyPoint convert_bearing_to_keypoint(const Vec3_t& bearing) const override final {
+    cv::KeyPoint convert_bearing_to_keypoint(const Vec3_t& bearing) const override final {
         const auto x_normalized = bearing(0) / bearing(2);
         const auto y_normalized = bearing(1) / bearing(2);
 
@@ -69,14 +69,16 @@ public:
 
     void convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const override final;
 
-    // 画像内に再投影->true, 画像外に再投影->false
     bool reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const override final;
 
-    // 画像内に再投影->true, 画像外に再投影->false
     bool reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const override final;
 
     nlohmann::json to_json() const override final;
 
+    //-------------------------
+    // Parameters specific to this model
+
+    //! pinhole params
     const double fx_;
     const double fy_;
     const double cx_;
@@ -84,17 +86,20 @@ public:
     const double fx_inv_;
     const double fy_inv_;
 
+    //! distortion params
     const double k1_;
     const double k2_;
     const double p1_;
     const double p2_;
     const double k3_;
 
-    // camera matrix
+    //! camera matrix in OpenCV format
     cv::Mat cv_cam_matrix_;
+    //! camera matrix in Eigen format
     Mat33_t eigen_cam_matrix_;
-    // distortion params
+    //! distortion params in OpenCV format
     cv::Mat cv_dist_params_;
+    //! distortion params in Eigen format
     Vec5_t eigen_dist_params_;
 };
 
