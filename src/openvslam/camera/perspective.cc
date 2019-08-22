@@ -21,10 +21,8 @@ perspective::perspective(const std::string& name, const setup_type_t& setup_type
     eigen_cam_matrix_ << fx_, 0, cx_, 0, fy_, cy_, 0, 0, 1;
     eigen_dist_params_ << k1_, k2_, p1_, p2_, k3_;
 
-    // 画像の最大範囲を計算
     img_bounds_ = compute_image_bounds();
 
-    // セルサイズの逆数を計算しておく
     inv_cell_width_ = static_cast<double>(num_grid_cols_) / (img_bounds_.max_x_ - img_bounds_.min_x_);
     inv_cell_height_ = static_cast<double>(num_grid_rows_) / (img_bounds_.max_y_ - img_bounds_.min_y_);
 }
@@ -72,19 +70,18 @@ image_bounds perspective::compute_image_bounds() const {
     spdlog::debug("compute image bounds");
 
     if (k1_ == 0 && k2_ == 0 && p1_ == 0 && p2_ == 0 && k3_ == 0) {
-        // 歪み無し
+        // any distortion does not exist
 
         return image_bounds{0.0, cols_, 0.0, rows_};
     }
     else {
-        // 歪み有り
+        // distortion exists
 
-        // 画像の4隅の座標
-        // (x, y) = (列, 行)の順で渡す
-        const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0), // 左上
-                                                cv::KeyPoint(cols_, 0.0, 1.0), // 右上
-                                                cv::KeyPoint(0.0, rows_, 1.0), // 左下
-                                                cv::KeyPoint(cols_, rows_, 1.0)}; // 右下
+        // corner coordinates: (x, y) = (col, row)
+        const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0), // left top
+                                                cv::KeyPoint(cols_, 0.0, 1.0), // right top
+                                                cv::KeyPoint(0.0, rows_, 1.0), // left bottom
+                                                cv::KeyPoint(cols_, rows_, 1.0)}; // right bottom
 
         std::vector<cv::KeyPoint> undist_corners;
         undistort_keypoints(corners, undist_corners);
@@ -123,9 +120,6 @@ void perspective::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keyp
 
 void perspective::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const {
     bearings.resize(undist_keypts.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned long idx = 0; idx < undist_keypts.size(); ++idx) {
         const auto x_normalized = (undist_keypts.at(idx).pt.x - cx_) / fx_;
         const auto y_normalized = (undist_keypts.at(idx).pt.y - cy_) / fy_;
@@ -136,9 +130,6 @@ void perspective::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>&
 
 void perspective::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const {
     undist_keypts.resize(bearings.size());
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
     for (unsigned long idx = 0; idx < bearings.size(); ++idx) {
         const auto x_normalized = bearings.at(idx)(0) / bearings.at(idx)(2);
         const auto y_normalized = bearings.at(idx)(1) / bearings.at(idx)(2);
@@ -149,57 +140,45 @@ void perspective::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>
 }
 
 bool perspective::reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const {
-    // カメラ基準の座標に変換
+    // convert to camera-coordinates
     const Vec3_t pos_c = rot_cw * pos_w + trans_cw;
 
-    // カメラの正面になければ不可視
+    // check if the point is visible
     if (pos_c(2) <= 0.0) {
         return false;
     }
 
-    // 画像上に投影
+    // reproject onto the image
     const auto z_inv = 1.0 / pos_c(2);
     reproj(0) = fx_ * pos_c(0) * z_inv + cx_;
     reproj(1) = fy_ * pos_c(1) * z_inv + cy_;
     x_right = reproj(0) - focal_x_baseline_ * z_inv;
 
-    // 画像内であることを確認
-    if (reproj(0) < img_bounds_.min_x_ || reproj(0) > img_bounds_.max_x_) {
-        return false;
-    }
-    if (reproj(1) < img_bounds_.min_y_ || reproj(1) > img_bounds_.max_y_) {
-        return false;
-    }
-
-    return true;
+    // check if the point is visible
+    return (img_bounds_.min_x_ < reproj(0) && reproj(0) < img_bounds_.max_x_
+            && img_bounds_.min_y_ < reproj(1) && reproj(1) < img_bounds_.max_y_);
 }
 
 bool perspective::reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const {
-    // カメラ基準の座標に変換
+    // convert to camera-coordinates
     reproj = rot_cw * pos_w + trans_cw;
 
-    // カメラの正面になければ不可視
+    // check if the point is visible
     if (reproj(2) <= 0.0) {
         return false;
     }
 
-    // 画像上に投影
+    // reproject onto the image
     const auto z_inv = 1.0 / reproj(2);
     const auto x = fx_ * reproj(0) * z_inv + cx_;
     const auto y = fy_ * reproj(1) * z_inv + cy_;
 
-    // 画像内であることを確認
-    if (x < img_bounds_.min_x_ || x > img_bounds_.max_x_) {
-        return false;
-    }
-    if (y < img_bounds_.min_y_ || y > img_bounds_.max_y_) {
-        return false;
-    }
-
-    // bearingにする
+    // convert to a bearing
     reproj.normalize();
 
-    return true;
+    // check if the point is visible
+    return (img_bounds_.min_x_ < x && x < img_bounds_.max_x_
+            && img_bounds_.min_y_ < y && y < img_bounds_.max_y_);
 }
 
 nlohmann::json perspective::to_json() const {

@@ -19,20 +19,20 @@ public:
 
     image_bounds compute_image_bounds() const override final;
 
-    //! Not needed
-    inline cv::KeyPoint undistort_keypoint(const cv::KeyPoint& distorted) const override final {
+    cv::KeyPoint undistort_keypoint(const cv::KeyPoint& distorted) const override final {
         return distorted;
     }
 
-    //! Not needed
     void undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const override final;
 
-    inline Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
+    Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
+        // "From Google Street View to 3D City Models (ICCVW 2009)"
         Vec3_t bearing;
-        // cite: "From Google Street View to 3D City Models (ICCVW 2009)"
+
         // convert to unit polar coordinates
         const double longitude = (undist_keypt.pt.x / cols_ - 0.5) * (2.0 * M_PI);
         const double latitude = -(undist_keypt.pt.y / rows_ - 0.5) * M_PI;
+
         // convert to equirectangular coordinates
         bearing[0] = std::cos(latitude) * std::sin(longitude);
         bearing[1] = -std::sin(latitude);
@@ -43,11 +43,13 @@ public:
 
     void convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const override final;
 
-    inline cv::KeyPoint convert_bearing_to_keypoint(const Vec3_t& bearing) const override final {
+    cv::KeyPoint convert_bearing_to_keypoint(const Vec3_t& bearing) const override final {
         cv::KeyPoint undistorted;
+
         // convert to unit polar coordinates
         const double latitude = -std::asin(bearing[1]);
         const double longitude = std::atan2(bearing[0], bearing[2]);
+
         // convert to pixel image coordinated
         undistorted.pt.x = cols_ * (0.5 + longitude / (2.0 * M_PI));
         undistorted.pt.y = rows_ * (0.5 - latitude / M_PI);
@@ -57,10 +59,8 @@ public:
 
     void convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const override final;
 
-    // 画像内に再投影->true(always)
     bool reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const override final;
 
-    // 画像内に再投影->true(always)
     bool reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const override final;
 
     nlohmann::json to_json() const override final;
