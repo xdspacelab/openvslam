@@ -1,4 +1,4 @@
-# OpenVSLAM: a Versatile Visual SLAM Framework
+# OpenVSLAM: A Versatile Visual SLAM Framework
 [![Wercker Status](https://app.wercker.com/status/8b02a43f48216385658bb3857aae5fd8/s/)](https://app.wercker.com/project/byKey/8b02a43f48216385658bb3857aae5fd8)
 [![Travis CI Status](https://travis-ci.org/xdspacelab/openvslam.svg)](https://travis-ci.org/xdspacelab/openvslam)
 [![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/en/master/?badge=master)
@@ -98,7 +98,7 @@ If OpenVSLAM helps your research, please cite the preprint paper for OpenVSLAM. 
 ```
 @misc{openvslam2019,
   author={Shinya Sumikura and Mikiya Shibuya and Ken Sakurada},
-  title={OpenVSLAM: a Versatile Visual SLAM Framework},
+  title={OpenVSLAM: A Versatile Visual SLAM Framework},
   year={2019},
   howpublished={\url{https://github.com/xdspacelab/openvslam}},
 }

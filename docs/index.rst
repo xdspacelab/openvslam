@@ -35,7 +35,7 @@ If you use OpenVSLAM for a publication, please cite it as:
 
     @misc{openvslam2019,
       author={Shinya Sumikura and Mikiya Shibuya and Ken Sakurada},
-      title={OpenVSLAM: a Versatile Visual SLAM Framework},
+      title={OpenVSLAM: A Versatile Visual SLAM Framework},
       year={2019},
       howpublished={\url{https://github.com/xdspacelab/openvslam}},
     }
