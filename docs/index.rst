@@ -3,12 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-OpenVSLAM
-=========
-
-.. image:: ./img/teaser.png
-    :width: 800px
+.. image:: ./img/logo.png
+    :height: 150px
     :align: center
+
+|
 
 This is the `OpenVSLAM <https://github.com/xdspacelab/openvslam>`_ documentation.
 
