@@ -1,3 +1,7 @@
+<p align="center">
+<img src="./docs/img/logo.png" height="150px">
+</p>
+
 # OpenVSLAM: A Versatile Visual SLAM Framework
 [![Wercker Status](https://app.wercker.com/status/8b02a43f48216385658bb3857aae5fd8/s/)](https://app.wercker.com/project/byKey/8b02a43f48216385658bb3857aae5fd8)
 [![Travis CI Status](https://travis-ci.org/xdspacelab/openvslam.svg)](https://travis-ci.org/xdspacelab/openvslam)
