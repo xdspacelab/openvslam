@@ -4,6 +4,7 @@ lib/
 .idea/
 cmake-build-debug/
 cmake-build-release/
+*/.python-version
 
 # Prerequisites
 *.d
