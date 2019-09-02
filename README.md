@@ -97,14 +97,23 @@ Please use `g2o` as the dynamic link library because `csparse_extension` module 
 - Ken Sakurada ([@kensakurada](https://github.com/kensakurada))
 
 ## Citation
+
 If OpenVSLAM helps your research, please cite the preprint paper for OpenVSLAM. Here is a BibTeX entry:
 
 ```
-@misc{openvslam2019,
-  author={Shinya Sumikura and Mikiya Shibuya and Ken Sakurada},
-  title={OpenVSLAM: A Versatile Visual SLAM Framework},
-  year={2019},
-  howpublished={\url{https://github.com/xdspacelab/openvslam}},
+@inproceedings{openvslam2019,
+  author = {Sumikura, Shinya and Shibuya, Mikiya and Sakurada, Ken},
+  title = {{OpenVSLAM: A Versatile Visual SLAM Framework}},
+  booktitle = {Proceedings of the 27th ACM International Conference on Multimedia},
+  series = {MM '19},
+  year = {2019},
+  isbn = {978-1-4503-6889-6/19/10},
+  location = {Nice, France},
+  numpages = {4},
+  url = {https://doi.org/10.1145/3343031.3350539},
+  doi = {10.1145/3343031.3350539},
+  publisher = {ACM},
+  address = {New York, NY, USA}
 }
 ```
 
