@@ -25,10 +25,20 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_link_libraries(${PROJECT_NAME}
         Threads::Threads
-        ${OpenCV_LIBS}
-        ${G2O_LIBS}
+        Eigen3::Eigen
+        opencv_core
+        opencv_features2d
+        opencv_calib3d
+        yaml-cpp
+        g2o::core
+        g2o::stuff
+        g2o::solver_dense
+        g2o::solver_eigen
+        g2o::solver_csparse
+        g2o::csparse_extension
+        g2o::types_sba
+        g2o::types_sim3
         ${LAPACK_LIBRARIES}
         ${CXSPARSE_LIBRARIES}
         ${SUITESPARSE_LIBRARIES}
-        ${YAMLCPP_LIBRARIES}
         ${BOW_LIBS})

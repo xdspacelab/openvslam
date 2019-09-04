@@ -171,7 +171,7 @@ else()
 endif()
 
 # OpenCV
-find_package(OpenCV 3.3.1 QUIET)
+find_package(OpenCV 3.3.1 QUIET REQUIRED COMPONENTS core features2d calib3d)
 if(NOT OpenCV_FOUND)
     find_package(OpenCV 4.0)
     if(NOT OpenCV_FOUND)
@@ -183,27 +183,40 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Eigen
 find_package(Eigen3 3.2 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
 
-# g2o
-find_package(G2O REQUIRED)
-include_directories(${G2O_INCLUDE_DIR})
+# Find imported target from g2o
+find_package(g2o REQUIRED COMPONENTS
+    g2o::core
+    g2o::stuff
+    g2o::solver_dense
+    g2o::solver_eigen
+    g2o::solver_csparse
+    g2o::csparse_extension
+    g2o::types_sba
+    g2o::types_sim3
+    OPTIONAL_COMPONENTS
+    g2o::csparse)
 
-# CXSparse for g2o
-find_package(CXSparse)
-if(CXSPARSE_FOUND)
-    include_directories(${CXSPARSE_INCLUDE_DIRS})
-endif()
+# Check first if csparse is build from g2o.
+if(TARGET g2o::csparse)
+    set(${CXSPARSE_LIBRARIES} g2o::csparse)
+else()
+    # CXSparse for g2o
+    find_package(CXSparse)
+    if(CXSPARSE_FOUND)
+        include_directories(${CXSPARSE_INCLUDE_DIRS})
+    endif()
 
-# SuiteSparse for g2o
-find_package(SuiteSparse)
-if(SUITESPARSE_FOUND)
-    include_directories(${SUITESPARSE_INCLUDE_DIRS})
+    # SuiteSparse for g2o
+    find_package(SuiteSparse)
+    if(SUITESPARSE_FOUND)
+        include_directories(${SUITESPARSE_INCLUDE_DIRS})
+    endif()
+
 endif()
 
 # yaml-cpp
 find_package(YamlCpp REQUIRED)
-include_directories(${YAMLCPP_INCLUDE_DIRS})
 
 # spdlog
 set(spdlog_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/spdlog/include)
@@ -256,42 +269,18 @@ endif()
 include_directories(${BOW_INCLUDE_DIRS})
 message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 
-##############################
-# Select g2o library modules #
-##############################
-
-set(USE_G2O_DEBUG OFF CACHE BOOL "Use the debug build of g2o")
-
-if(USE_G2O_DEBUG)
-    set(G2O_LIBS
-            ${G2O_CORE_LIBRARY_DEBUG}
-            ${G2O_STUFF_LIBRARY_DEBUG}
-            ${G2O_SOLVER_DENSE_DEBUG}
-            ${G2O_SOLVER_EIGEN_DEBUG}
-            ${G2O_SOLVER_CHOLMOD_DEBUG}
-            ${G2O_SOLVER_CSPARSE_DEBUG}
-            ${G2O_SOLVER_CSPARSE_EXTENSION_DEBUG}
-            ${G2O_TYPES_SBA_DEBUG}
-            ${G2O_TYPES_SIM3_DEBUG})
-else()
-    set(G2O_LIBS
-            ${G2O_CORE_LIBRARY}
-            ${G2O_STUFF_LIBRARY}
-            ${G2O_SOLVER_DENSE}
-            ${G2O_SOLVER_EIGEN}
-            ${G2O_SOLVER_CHOLMOD}
-            ${G2O_SOLVER_CSPARSE}
-            ${G2O_SOLVER_CSPARSE_EXTENSION}
-            ${G2O_TYPES_SBA}
-            ${G2O_TYPES_SIM3})
-endif()
 
 ###################
 # Build Selection #
 ###################
 
 add_subdirectory(src)
-add_subdirectory(example)
+
+set(BUILD_EXAMPLES OFF CACHE BOOL "Build Examples")
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
 
 set(BUILD_TESTS OFF CACHE BOOL "Build tests")
 if(BUILD_TESTS)
