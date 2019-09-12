@@ -94,6 +94,12 @@ image_bounds perspective::compute_image_bounds() const {
 }
 
 void perspective::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const {
+    // cv::undistortPoints does not accept an empty input
+    if (dist_keypts.empty()) {
+        undist_keypts.clear();
+        return;
+    }
+
     // fill cv::Mat with distorted keypoints
     cv::Mat mat(dist_keypts.size(), 2, CV_32F);
     for (unsigned long idx = 0; idx < dist_keypts.size(); ++idx) {
