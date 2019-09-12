@@ -98,7 +98,7 @@ public:
     //! distortion params in OpenCV format
     cv::Mat cv_dist_params_;
     //! distortion params in Eigen format
-    Vec5_t eigen_dist_params_;
+    Vec4_t eigen_dist_params_;
 };
 
 } // namespace camera

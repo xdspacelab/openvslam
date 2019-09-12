@@ -19,7 +19,7 @@ fisheye::fisheye(const std::string& name, const setup_type_t& setup_type, const 
     cv_dist_params_ = (cv::Mat_<float>(4, 1) << k1_, k2_, k3_, k4_);
 
     eigen_cam_matrix_ << fx_, 0, cx_, 0, fy_, cy_, 0, 0, 1;
-    eigen_dist_params_ << k1_, k2_, k3_, k4_, 0;
+    eigen_dist_params_ << k1_, k2_, k3_, k4_;
 
     img_bounds_ = compute_image_bounds();
 
