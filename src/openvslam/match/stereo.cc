@@ -95,7 +95,10 @@ void stereo::compute(std::vector<float>& stereo_x_right, std::vector<float>& dep
     // 相関の中央値を求める
     std::sort(correlation_and_idx_left.begin(), correlation_and_idx_left.end());
     const auto median_i = correlation_and_idx_left.size() / 2;
-    const float median_correlation = correlation_and_idx_left.at(median_i).first;
+    const float median_correlation =
+        correlation_and_idx_left.empty()
+            ? 0.0f
+            : correlation_and_idx_left.at(median_i).first;
     // 相関の中央値x2より相関が弱いものは破棄する
     const float correlation_thr = 2.0 * median_correlation;
 

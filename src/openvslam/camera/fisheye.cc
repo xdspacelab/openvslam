@@ -92,6 +92,12 @@ image_bounds fisheye::compute_image_bounds() const {
 }
 
 void fisheye::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypt, std::vector<cv::KeyPoint>& undist_keypt) const {
+    // cv::fisheye::undistortPoints does not accept an empty input
+    if (dist_keypt.empty()) {
+        undist_keypt.clear();
+        return;
+    }
+
     // fill cv::Mat with distorted keypoints
     cv::Mat mat(dist_keypt.size(), 2, CV_32F);
     for (unsigned long idx = 0; idx < dist_keypt.size(); ++idx) {
