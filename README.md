@@ -1,5 +1,5 @@
 <p align="center">
-<img src="./docs/img/logo.png" height="150px">
+<img src="https://raw.githubusercontent.com/xdspacelab/openvslam/master/docs/img/logo.png" height="150px">
 </p>
 
 # OpenVSLAM: A Versatile Visual SLAM Framework
