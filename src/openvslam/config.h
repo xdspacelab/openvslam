@@ -10,8 +10,10 @@ namespace openvslam {
 
 class config {
 public:
+    //! Constructor
     explicit config(const std::string& config_file_path);
 
+    //! Destructir
     ~config();
 
     friend std::ostream& operator<<(std::ostream& os, const config& cfg);

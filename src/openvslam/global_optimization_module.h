@@ -26,160 +26,108 @@ class map_database;
 
 class global_optimization_module {
 public:
-    global_optimization_module() = delete;
-
-    /**
-     * Constructor
-     */
+    //! Constructor
     global_optimization_module(data::map_database* map_db, data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale);
 
-    /**
-     * Destructor
-     */
+    //! Destructor
     ~global_optimization_module();
 
-    /**
-     * Set the tracking module
-     */
+    //! Set the tracking module
     void set_tracking_module(tracking_module* tracker);
 
-    /**
-     * Set the mapping module
-     */
+    //! Set the mapping module
     void set_mapping_module(mapping_module* mapper);
 
     //-----------------------------------------
     // interfaces to ON/OFF loop detector
 
-    /**
-     * Enable the loop detector
-     */
+    //! Enable the loop detector
     void enable_loop_detector();
 
-    /**
-     * Disable the loop detector
-     */
+    //! Disable the loop detector
     void disable_loop_detector();
 
-    /**
-     * The loop detector is enabled or not
-     */
+    //! The loop detector is enabled or not
     bool loop_detector_is_enabled() const;
 
     //-----------------------------------------
     // main process
 
-    /**
-     * Run main loop of the global optimization module
-     */
+    //! Run main loop of the global optimization module
     void run();
 
-    /**
-     * Queue a keyframe to the BoW database
-     */
+    //! Queue a keyframe to the BoW database
     void queue_keyframe(data::keyframe* keyfrm);
 
     //-----------------------------------------
     // management for reset process
 
-    /**
-     * Request to reset the global optimization module
-     * (NOTE: this function waits for reset)
-     */
+    //! Request to reset the global optimization module
+    //! (NOTE: this function waits for reset)
     void request_reset();
 
     //-----------------------------------------
     // management for pause process
 
-    /**
-     * Request to pause the global optimization module
-     * (NOTE: this function does not wait for pause)
-     */
+    //! Request to pause the global optimization module
+    //! (NOTE: this function does not wait for pause)
     void request_pause();
 
-    /**
-     * Check if the global optimization module is requested to be paused or not
-     */
+    //! Check if the global optimization module is requested to be paused or not
     bool pause_is_requested() const;
 
-    /**
-     * Check if the global optimization module is paused or not
-     */
+    //! Check if the global optimization module is paused or not
     bool is_paused() const;
 
-    /**
-     * Resume the global optimization module
-     */
+    //! Resume the global optimization module
     void resume();
 
     //-----------------------------------------
     // management for terminate process
 
-    /**
-     * Request to terminate the global optimization module
-     * (NOTE: this function does not wait for terminate)
-     */
+    //! Request to terminate the global optimization module
+    //! (NOTE: this function does not wait for terminate)
     void request_terminate();
 
-    /**
-     * Check if the global optimization module is terminated or not
-     */
+    //! Check if the global optimization module is terminated or not
     bool is_terminated() const;
 
     //-----------------------------------------
     // management for loop BA
 
-    /**
-     * Check if loop BA is running or not
-     */
+    //! Check if loop BA is running or not
     bool loop_BA_is_running() const;
 
-    /**
-     * Abort the loop BA externally
-     * (NOTE: this function does not wait for abort)
-     */
+    //! Abort the loop BA externally
+    //! (NOTE: this function does not wait for abort)
     void abort_loop_BA();
 
 private:
     //-----------------------------------------
     // main process
 
-    /**
-     * Perform loop closing
-     */
+    //! Perform loop closing
     void correct_loop();
 
-    /**
-     * Compute Sim3s (world to covisibility) which are prior to loop correction
-     */
+    //! Compute Sim3s (world to covisibility) which are prior to loop correction
     module::keyframe_Sim3_pairs_t get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const;
 
-    /**
-     * Compute Sim3s (world to covisibility) which are corrected using the estimated Sim3 of the current keyframe
-     */
+    //! Compute Sim3s (world to covisibility) which are corrected using the estimated Sim3 of the current keyframe
     module::keyframe_Sim3_pairs_t get_Sim3s_after_loop_correction(const Mat44_t& cam_pose_wc_before_correction, const g2o::Sim3& g2o_Sim3_cw_after_correction,
                                                                   const std::vector<data::keyframe*>& neighbors) const;
 
-    /**
-     * Correct the positions of the landmarks which are seen in covisibilities
-     */
+    //! Correct the positions of the landmarks which are seen in covisibilities
     void correct_covisibility_landmarks(const module::keyframe_Sim3_pairs_t& Sim3s_nw_before_correction,
                                         const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
-    /**
-     * Correct the camera poses of the covisibilities
-     */
+    //! Correct the camera poses of the covisibilities
     void correct_covisibility_keyframes(const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
-    /**
-     * Detect and replace duplicated landmarks
-     */
+    //! Detect and replace duplicated landmarks
     void replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_match_lms_observed_in_cand,
                                       const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
-    /**
-     * Extract the new connections which will be created AFTER loop correction
-     */
+    //! Extract the new connections which will be created AFTER loop correction
     std::map<data::keyframe*, std::set<data::keyframe*>> extract_new_connections(const std::vector<data::keyframe*>& covisibilities) const;
 
     //-----------------------------------------
@@ -188,14 +136,10 @@ private:
     //! mutex for access to reset procedure
     mutable std::mutex mtx_reset_;
 
-    /**
-     * Check and execute reset
-     */
+    //! Check and execute reset
     bool reset_is_requested() const;
 
-    /**
-     * Reset the global optimization module
-     */
+    //! Reset the global optimization module
     void reset();
 
     //! flag which indicates whether reset is requested or not
@@ -207,9 +151,7 @@ private:
     //! mutex for access to pause procedure
     mutable std::mutex mtx_pause_;
 
-    /**
-     * Pause the global optimizer
-     */
+    //! Pause the global optimizer
     void pause();
 
     //! flag which indicates termination is requested or not
@@ -223,14 +165,10 @@ private:
     //! mutex for access to terminate procedure
     mutable std::mutex mtx_terminate_;
 
-    /**
-     * Check if termination is requested or not
-     */
+    //! Check if termination is requested or not
     bool terminate_is_requested() const;
 
-    /**
-     * Raise the flag which indicates the main loop has been already terminated
-     */
+    //! Raise the flag which indicates the main loop has been already terminated
     void terminate();
 
     //! flag which indicates termination is requested or not
@@ -257,9 +195,7 @@ private:
     //! mutex for access to keyframe queue
     mutable std::mutex mtx_keyfrm_queue_;
 
-    /**
-     * Check if keyframe is queued
-     */
+    //! Check if keyframe is queued
     bool keyframe_is_queued() const;
 
     //! queue for keyframes

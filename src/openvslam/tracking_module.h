@@ -40,97 +40,65 @@ class tracking_module {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    /**
-     * Constructor
-     */
+    //! Constructor
     tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
                     data::bow_vocabulary* bow_vocab, data::bow_database* bow_db);
 
-    /**
-     * Destructor
-     */
+    //! Destructor
     ~tracking_module();
 
-    /**
-     * Set the mapping module
-     */
+    //! Set the mapping module
     void set_mapping_module(mapping_module* mapper);
 
-    /**
-     * Set the global optimization module
-     */
+    //! Set the global optimization module
     void set_global_optimization_module(global_optimization_module* global_optimizer);
 
     //-----------------------------------------
     // interfaces
 
-    /**
-     * Set mapping module status
-     */
+    //! Set mapping module status
     void set_mapping_module_status(const bool mapping_is_enabled);
 
-
-    /**
-     * Get mapping module status
-     */
+    //! Get mapping module status
     bool get_mapping_module_status() const;
 
-    /**
-     * Get the keypoints of the initial frame
-     */
+    //! Get the keypoints of the initial frame
     std::vector<cv::KeyPoint> get_initial_keypoints() const;
 
-    /**
-     * Get the keypoint matches between the initial frame and the current frame
-     */
+    //! Get the keypoint matches between the initial frame and the current frame
     std::vector<int> get_initial_matches() const;
 
-    /**
-     * Track monocular image
-     */
+    //! Track a monocular frame
+    //! (NOTE: distorted images are acceptable if calibrated)
     Mat44_t track_monocular_image(const cv::Mat& img, const double timestamp, const cv::Mat& mask = cv::Mat{});
 
-    /**
-     * Track stereo image
-     * (NOTE: left and right images must be stereo-rectified)
-     */
+    //! Track a stereo frame
+    //! (Note: Left and Right images must be stereo-rectified)
     Mat44_t track_stereo_image(const cv::Mat& left_img_rect, const cv::Mat& right_img_rect, const double timestamp, const cv::Mat& mask = cv::Mat{});
 
-    /**
-     * Track RGBD image
-     * (NOTE: RGB and depth images must be aligned)
-     */
+    //! Track an RGBD frame
+    //! (Note: RGB and Depth images must be aligned)
     Mat44_t track_RGBD_image(const cv::Mat& img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask = cv::Mat{});
 
     //-----------------------------------------
     // management for reset process
 
-    /**
-     * Reset the databases
-     */
+    //! Reset the databases
     void reset();
 
     //-----------------------------------------
     // management for pause process
 
-    /**
-     * Request to pause the tracking module
-     */
+    //! Request to pause the tracking module
     void request_pause();
 
-    /**
-     * Check if the pause of the tracking module is requested or not
-     */
+    //! Check if the pause of the tracking module is requested or not
     bool pause_is_requested() const;
 
-    /**
-     * Check if the tracking module is paused or not
-     */
+    //! Check if the tracking module is paused or not
     bool is_paused() const;
 
-    /**
-     * Resume the tracking module
-     */
+    //! Resume the tracking module
     void resume();
 
     //-----------------------------------------
@@ -159,69 +127,43 @@ protected:
     //-----------------------------------------
     // tracking processes
 
-    /**
-     * Main stream of the tracking module
-     */
+    //! Main stream of the tracking module
     void track();
 
-    /**
-     * Try to initialize with the current frame
-     */
+    //! Try to initialize with the current frame
     bool initialize();
 
-    /**
-     * Track the current frame
-     */
+    //! Track the current frame
     bool track_current_frame();
 
-    /**
-     * Update the motion model using the current and last frames
-     */
+    //! Update the motion model using the current and last frames
     void update_motion_model();
 
-    /**
-     * Replace the landmarks if the `replaced` member has the valid pointer
-     */
+    //! Replace the landmarks if the `replaced` member has the valid pointer
     void apply_landmark_replace();
 
-    /**
-     * Update the camera pose of the last frame
-     */
+    //! Update the camera pose of the last frame
     void update_last_frame();
 
-    /**
-     * Optimize the camera pose of current frame
-     */
+    //! Optimize the camera pose of the current frame
     bool optimize_current_frame_with_local_map();
 
-    /**
-     * Update the local map
-     */
+    //! Update the local map
     void update_local_map();
 
-    /**
-     * Update the local keyframes
-     */
+    //! Update the local keyframes
     void update_local_keyframes();
 
-    /**
-     * Update the local landmarks
-     */
+    //! Update the local landmarks
     void update_local_landmarks();
 
-    /**
-     * Acquire more 2D-3D matches after initial camera pose estimation
-     */
+    //! Acquire more 2D-3D matches using initial camera pose estimation
     void search_local_landmarks();
 
-    /**
-     * Check the new keyframe is needed or not
-     */
+    //! Check the new keyframe is needed or not
     bool new_keyframe_is_needed() const;
 
-    /**
-     * Insert the new keyframe derived from the current frame
-     */
+    //! Insert the new keyframe derived from the current frame
     void insert_new_keyframe();
 
     //! system
@@ -276,7 +218,7 @@ protected:
     //! last frame
     data::frame last_frm_;
 
-    //! latest frame ID which succeded in relocalization
+    //! latest frame ID which succeeded in relocalization
     unsigned int last_reloc_frm_id_ = 0;
 
     //! motion model
@@ -303,9 +245,7 @@ protected:
     //! mutex for pause process
     mutable std::mutex mtx_pause_;
 
-    /**
-     * Check the request frame and pause the tracking module
-     */
+    //! Check the request frame and pause the tracking module
     bool check_and_execute_pause();
 
     //! the tracking module is paused or not
