@@ -231,7 +231,7 @@ void system::abort_loop_BA() {
     global_optimizer_->abort_loop_BA();
 }
 
-Mat44_t system::track_for_monocular(const cv::Mat& img, const double timestamp, const cv::Mat& mask) {
+Mat44_t system::feed_monocular_frame(const cv::Mat& img, const double timestamp, const cv::Mat& mask) {
     assert(camera_->setup_type_ == camera::setup_type_t::Monocular);
 
     check_reset_request();
@@ -246,7 +246,7 @@ Mat44_t system::track_for_monocular(const cv::Mat& img, const double timestamp, 
     return cam_pose_cw;
 }
 
-Mat44_t system::track_for_stereo(const cv::Mat& left_img, const cv::Mat& right_img, const double timestamp, const cv::Mat& mask) {
+Mat44_t system::feed_stereo_frame(const cv::Mat& left_img, const cv::Mat& right_img, const double timestamp, const cv::Mat& mask) {
     assert(camera_->setup_type_ == camera::setup_type_t::Stereo);
 
     check_reset_request();
@@ -261,7 +261,7 @@ Mat44_t system::track_for_stereo(const cv::Mat& left_img, const cv::Mat& right_i
     return cam_pose_cw;
 }
 
-Mat44_t system::track_for_RGBD(const cv::Mat& rgb_img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask) {
+Mat44_t system::feed_RGBD_frame(const cv::Mat& rgb_img, const cv::Mat& depthmap, const double timestamp, const cv::Mat& mask) {
     assert(camera_->setup_type_ == camera::setup_type_t::RGBD);
 
     check_reset_request();

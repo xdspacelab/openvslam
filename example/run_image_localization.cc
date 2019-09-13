@@ -70,7 +70,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
 
             if (!img.empty() && (i % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
-                SLAM.track_for_monocular(img, frame.timestamp_, mask);
+                SLAM.feed_monocular_frame(img, frame.timestamp_, mask);
             }
 
             const auto tp_2 = std::chrono::steady_clock::now();

@@ -61,7 +61,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
             if (!img.empty() && (i % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
-                SLAM.track_for_monocular(img, frame.timestamp_);
+                SLAM.feed_monocular_frame(img, frame.timestamp_);
             }
 
             const auto tp_2 = std::chrono::steady_clock::now();
@@ -200,7 +200,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
             if (i % frame_skip == 0) {
                 // input the current frame and estimate the camera pose
-                SLAM.track_for_stereo(left_img_rect, right_img_rect, frame.timestamp_);
+                SLAM.feed_stereo_frame(left_img_rect, right_img_rect, frame.timestamp_);
             }
 
             const auto tp_2 = std::chrono::steady_clock::now();

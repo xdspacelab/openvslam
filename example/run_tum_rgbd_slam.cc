@@ -61,7 +61,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
             if (!rgb_img.empty() && (i % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
-                SLAM.track_for_monocular(rgb_img, frame.timestamp_);
+                SLAM.feed_monocular_frame(rgb_img, frame.timestamp_);
             }
 
             const auto tp_2 = std::chrono::steady_clock::now();
@@ -173,7 +173,7 @@ void rgbd_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
             if (!rgb_img.empty() && !depth_img.empty() && (i % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
-                SLAM.track_for_RGBD(rgb_img, depth_img, frame.timestamp_);
+                SLAM.feed_RGBD_frame(rgb_img, depth_img, frame.timestamp_);
             }
 
             const auto tp_2 = std::chrono::steady_clock::now();
