@@ -72,22 +72,6 @@ bool perspective::initialize(const data::frame& cur_frm, const std::vector<int>&
     }
 }
 
-Mat33_t perspective::get_camera_matrix(camera::base* camera) {
-    switch (camera->model_type_) {
-        case camera::model_type_t::Perspective: {
-            auto c = static_cast<camera::perspective*>(camera);
-            return c->eigen_cam_matrix_;
-        }
-        case camera::model_type_t::Fisheye: {
-            auto c = static_cast<camera::fisheye*>(camera);
-            return c->eigen_cam_matrix_;
-        }
-        default: {
-            throw std::runtime_error("Cannot get a camera matrix from the camera model");
-        }
-    }
-}
-
 bool perspective::reconstruct_with_H(const Mat33_t& H_ref_to_cur, const std::vector<bool>& is_inlier_match) {
     // found the most plausible pose from the EIGHT hypothesis computed from the H matrix
 
@@ -131,6 +115,22 @@ bool perspective::reconstruct_with_F(const Mat33_t& F_ref_to_cur, const std::vec
 
     spdlog::info("initialization succeeded with F");
     return true;
+}
+
+Mat33_t perspective::get_camera_matrix(camera::base* camera) {
+    switch (camera->model_type_) {
+        case camera::model_type_t::Perspective: {
+            auto c = static_cast<camera::perspective*>(camera);
+            return c->eigen_cam_matrix_;
+        }
+        case camera::model_type_t::Fisheye: {
+            auto c = static_cast<camera::fisheye*>(camera);
+            return c->eigen_cam_matrix_;
+        }
+        default: {
+            throw std::runtime_error("Cannot get a camera matrix from the camera model");
+        }
+    }
 }
 
 } // namespace initialize
