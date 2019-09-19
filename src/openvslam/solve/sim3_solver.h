@@ -14,44 +14,36 @@ class sim3_solver {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    sim3_solver() = delete;
-
+    //! Constructor
     sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
-                const std::vector<data::landmark*>& matched_lms_in_keyfrm_2, const bool fix_scale = true);
+                const std::vector<data::landmark*>& matched_lms_in_keyfrm_2,
+                const bool fix_scale = true, const unsigned int min_num_inliers = 20);
 
+    //! Destructor
     virtual ~sim3_solver() = default;
 
-    void set_ransac_parameters(const float probability = 0.99,
-                               const unsigned int min_num_inliers = 6,
-                               const unsigned int max_num_iterations = 500);
+    //! Find the most reliable Sim3 matrix via RANSAC
+    void find_via_ransac(const unsigned int max_num_iter);
 
-    bool estimate();
-
-    //! get best inlier index pairs of landmarks
-    std::vector<std::pair<unsigned int, unsigned int>> get_inlier_indices() {
-        std::vector<std::pair<unsigned int, unsigned int>> inlier_indices;
-        inlier_indices.reserve(num_common_pts_);
-
-        for (unsigned int i = 0; i < num_common_pts_; ++i) {
-            if (!best_inliers_.at(i)) {
-                continue;
-            }
-            const auto idx1 = matched_indices_1_.at(i);
-            const auto idx2 = matched_indices_2_.at(i);
-            inlier_indices.emplace_back(std::make_pair(idx1, idx2));
-        }
-
-        return inlier_indices;
+    //! Check if the solution is valid or not
+    bool solution_is_valid() const {
+        return solution_is_valid_;
     }
 
-    //! get best rotation from keyframe2 to keyframe1
-    Mat33_t get_best_rotation_12() { return best_rot_12_; }
+    //! Get the most reliable rotation from keyframe 2 to keyframe 1
+    Mat33_t get_best_rotation_12() {
+        return best_rot_12_;
+    }
 
-    //! get best translation from keyframe2 to keyframe1
-    Vec3_t get_best_translation_12() { return best_trans_12_; }
+    //! Get the most reliable translation from keyframe 2 to keyframe 1
+    Vec3_t get_best_translation_12() {
+        return best_trans_12_;
+    }
 
-    //! get best scale from keyframe2 to keyframe1
-    float get_best_scale_12() { return best_scale_12_; }
+    //! Get the most reliable scale from keyframe 2 to keyframe 1
+    float get_best_scale_12() {
+        return best_scale_12_;
+    }
 
 protected:
     //! compute Sim3 from three common points
@@ -97,10 +89,13 @@ protected:
     //! 共通3次元点数
     unsigned int num_common_pts_ = 0;
 
-    //! RANSACで得られたベストモデル
-    std::vector<bool> best_inliers_;
+    //! solution is valid or not
+    bool solution_is_valid_ = false;
+    //! most reliable rotation from keyframe 2 to keyframe 1
     Mat33_t best_rot_12_;
+    //! most reliable translation from keyframe 2 to keyframe 1
     Vec3_t best_trans_12_;
+    //! most reliable scale from keyframe 2 to keyframe 1
     float best_scale_12_;
 
     //! common pointsを再投影した画像座標
@@ -109,9 +104,7 @@ protected:
     std::vector<Vec2_t, Eigen::aligned_allocator<Vec2_t>> reprojected_2_;
 
     //! RANSACのパラメータ
-    float probability_;
     unsigned int min_num_inliers_;
-    unsigned int max_num_iterations_;
 };
 
 } // namespace solve
