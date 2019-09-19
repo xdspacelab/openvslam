@@ -1,27 +1,12 @@
 #include "helper/bearing_vector.h"
 
-#include <Eigen/Core>
-#include <Eigen/LU>
+#include <random>
 
-void create_bearing_vectors(const Mat33_t& rot_1, const Vec3_t& trans_1, const Mat33_t& rot_2, const Vec3_t& trans_2,
-                            const eigen_alloc_vector<Vec3_t>& landmarks, Mat33_t& E_21,
-                            eigen_alloc_vector<Vec3_t>& bearings_1, eigen_alloc_vector<Vec3_t>& bearings_2,
-                            double noise_stddev) {
+void create_bearing_vectors(const Mat33_t& rot_1, const Vec3_t& trans_1, const Mat33_t& rot_2, const Vec3_t& trans_2, const eigen_alloc_vector<Vec3_t>& landmarks,
+                            eigen_alloc_vector<Vec3_t>& bearings_1, eigen_alloc_vector<Vec3_t>& bearings_2, double noise_stddev) {
     const auto num_landmarks = landmarks.size();
 
-    // E行列を求める
-
-    const Mat33_t rot_21 = rot_2 * rot_1.inverse();
-    const Vec3_t trans_21 = trans_2 - rot_21 * trans_1;
-
-    Mat33_t skew_21;
-    skew_21 << 0, -trans_21(2), trans_21(1),
-               trans_21(2), 0, -trans_21(0),
-               -trans_21(1), trans_21(0), 0;
-
-    E_21 = skew_21 * rot_21;
-
-    // bearing vectorsを求める
+    // convert a 3D point to a bearing vector
 
     bearings_1.resize(num_landmarks);
     bearings_2.resize(num_landmarks);
@@ -39,7 +24,7 @@ void create_bearing_vectors(const Mat33_t& rot_1, const Vec3_t& trans_1, const M
         return;
     }
 
-    // ノイズを追加
+    // add Gaussian noise
 
     std::random_device rand_dev;
     std::mt19937 mt(rand_dev());
