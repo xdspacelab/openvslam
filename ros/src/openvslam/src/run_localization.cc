@@ -27,7 +27,6 @@
 #include <gperftools/profiler.h>
 #endif
 
-
 void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path,
                    const std::string& mask_img_path, const std::string& map_db_path, const bool mapping) {
     // load the mask image
@@ -68,7 +67,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
         const auto timestamp = std::chrono::duration_cast<std::chrono::duration<double>>(tp_1 - tp_0).count();
 
         // input the current frame and estimate the camera pose
-        SLAM.track_for_monocular(cv_bridge::toCvShare(msg, "bgr8")->image, timestamp, mask);
+        SLAM.feed_monocular_frame(cv_bridge::toCvShare(msg, "bgr8")->image, timestamp, mask);
 
         const auto tp_2 = std::chrono::steady_clock::now();
 
