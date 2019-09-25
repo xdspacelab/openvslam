@@ -12,83 +12,95 @@ namespace feature {
 
 class orb_extractor {
 public:
+
     orb_extractor() = delete;
 
+    //! Constructor
     orb_extractor(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                   const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
                   const std::vector<std::vector<float>>& mask_rects = {});
 
+    //! Construcltor
     explicit orb_extractor(const orb_params& orb_params);
 
+    //! Destructor
     virtual ~orb_extractor() = default;
 
+    //! Extract keypoints and each descriptor of them
     void extract(const cv::_InputArray& in_image, const cv::_InputArray& in_image_mask,
                  std::vector<cv::KeyPoint>& keypts, const cv::_OutputArray& out_descriptors);
 
+    //! Get the maximum number of keypoints
     unsigned int get_max_num_keypoints() const;
 
+    //! Set the maximum number of keypoints
     void set_max_num_keypoints(const unsigned int max_num_keypts);
 
+    //! Get the scale factor
     float get_scale_factor() const;
 
+    //! Set the scale factor
     void set_scale_factor(const float scale_factor);
 
+    //! Get the number of scale levels
     unsigned int get_num_scale_levels() const;
 
+    //! Set the number of scale levels
     void set_num_scale_levels(const unsigned int num_levels);
 
+    //! Get the initial fast threshold
     unsigned int get_initial_fast_threshold() const;
 
+    //! Set the initial fast threshold
     void set_initial_fast_threshold(const unsigned int initial_fast_threshold);
 
+    //! Get the minimum fast threshold
     unsigned int get_minimum_fast_threshold() const;
 
+    //! Set the minimum fast threshold
     void set_minimum_fast_threshold(const unsigned int minimum_fast_threshold);
 
+    //! Get scale factors
     std::vector<float> get_scale_factors() const;
 
+    //! Set scale factors
     std::vector<float> get_inv_scale_factors() const;
 
+    //! Get sigma square for all levels
     std::vector<float> get_level_sigma_sq() const;
 
+    //! Get inverted sigma square for all levels
     std::vector<float> get_inv_level_sigma_sq() const;
 
+    //! Image pyramid
     std::vector<cv::Mat> image_pyramid_;
 
 private:
+    //! Initialize orb extractor
     void initialize();
 
+    //! Calculate scale factors and sigmas
     void calc_scale_factors();
 
+    //! Create a mask matrix that constracted by rectangles
     void create_rectangle_mask(const unsigned int cols, const unsigned int rows);
 
+    //! Compute image pyramid
     void compute_image_pyramid(const cv::Mat& image);
 
-    /**
-     * 画像上の，スケール・グリッドごとに特徴点を計算
-     * @param all_keypts
-     */
+    //! Compute fast keypoints for cells in each image pyramid
     void compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>>& all_keypts, const cv::Mat& mask) const;
 
-    /**
-     * 大量のFAST特徴点から，FASTのresponseの高いものを画像上からまんべんなく選別する．木構造が選別に用いられる．
-     * 再帰的に木の分岐を行い，nodeの数がnum_keyptsを上回った時点の各leaf nodeの最大responseとなる特徴点がreturnされる
-     * (分岐方法 - nodeを4分割(縦横2分割)し，4つの子nodeに領域を割り当て，その領域に応じて特徴点を分配)
-     * @param keypts_to_distribute
-     * @param min_x
-     * @param max_x
-     * @param min_y
-     * @param max_y
-     * @param num_keypts
-     * @return
-     */
+    //! Pick computed keypoints on the image uniformly
     std::vector<cv::KeyPoint> distribute_keypoints_via_tree(const std::vector<cv::KeyPoint>& keypts_to_distribute,
                                                             const int min_x, const int max_x, const int min_y, const int max_y,
                                                             const unsigned int num_keypts) const;
 
+    //! Initialize nodes that used for keypoint distribution tree
     std::list<orb_extractor_node> initialize_nodes(const std::vector<cv::KeyPoint>& keypts_to_distribute,
                                                    const int min_x, const int max_x, const int min_y, const int max_y) const;
 
+    //! Assign child nodes to the 
     void assign_child_nodes(const std::array<orb_extractor_node, 4>& child_nodes, std::list<orb_extractor_node>& nodes,
                             std::vector<std::pair<int, orb_extractor_node*>>& leaf_nodes) const;
 
