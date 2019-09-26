@@ -295,7 +295,6 @@ void pnp_solver::choose_control_points() {
         cws[0][j] /= num_matches_;
     }
 
-
     // Take C1, C2, and C3 from PCA on the reference points:
     MatX_t PW0(num_matches_, 3);
 
@@ -663,16 +662,7 @@ void pnp_solver::compute_A_and_b_gauss_newton(const MatRC_t<6, 10>& L_6x10, cons
         A(i, 3) = L_6x10(i, 6) * betas[0] + L_6x10(i, 7) * betas[1]
                   + L_6x10(i, 8) * betas[2] + 2 * L_6x10(i, 9) * betas[3];
 
-        b(i, 0) = Rho[i] - (L_6x10(i, 0) * betas[0] * betas[0]
-                            + L_6x10(i, 1) * betas[0] * betas[1]
-                            + L_6x10(i, 2) * betas[1] * betas[1]
-                            + L_6x10(i, 3) * betas[0] * betas[2]
-                            + L_6x10(i, 4) * betas[1] * betas[2]
-                            + L_6x10(i, 5) * betas[2] * betas[2]
-                            + L_6x10(i, 6) * betas[0] * betas[3]
-                            + L_6x10(i, 7) * betas[1] * betas[3]
-                            + L_6x10(i, 8) * betas[2] * betas[3]
-                            + L_6x10(i, 9) * betas[3] * betas[3]);
+        b(i, 0) = Rho[i] - (L_6x10(i, 0) * betas[0] * betas[0] + L_6x10(i, 1) * betas[0] * betas[1] + L_6x10(i, 2) * betas[1] * betas[1] + L_6x10(i, 3) * betas[0] * betas[2] + L_6x10(i, 4) * betas[1] * betas[2] + L_6x10(i, 5) * betas[2] * betas[2] + L_6x10(i, 6) * betas[0] * betas[3] + L_6x10(i, 7) * betas[1] * betas[3] + L_6x10(i, 8) * betas[2] * betas[3] + L_6x10(i, 9) * betas[3] * betas[3]);
     }
 }
 
@@ -697,7 +687,7 @@ void pnp_solver::qr_solve(MatRC_t<6, 4>& A_orig, MatRC_t<6, 1>& b, MatRC_t<4, 1>
     MatRC_t<4, 6> A = A_orig.transpose();
 
     static int max_nr = 0;
-    static double* A1, * A2;
+    static double *A1, *A2;
 
     const int nr = A_orig.rows();
     const int nc = A_orig.cols();
@@ -767,7 +757,7 @@ void pnp_solver::qr_solve(MatRC_t<6, 4>& A_orig, MatRC_t<6, 1>& b, MatRC_t<4, 1>
     double* ppAjj = pA;
     double* pb = b.data();
     for (int j = 0; j < nc; ++j) {
-        double* ppAij = ppAjj, tau = 0;
+        double *ppAij = ppAjj, tau = 0;
         for (int i = j; i < nr; i++) {
             tau += *ppAij * pb[i];
             ppAij += nc;
@@ -785,7 +775,7 @@ void pnp_solver::qr_solve(MatRC_t<6, 4>& A_orig, MatRC_t<6, 1>& b, MatRC_t<4, 1>
     double* pX = X.data();
     pX[nc - 1] = pb[nc - 1] / A2[nc - 1];
     for (int i = nc - 2; i >= 0; --i) {
-        double* ppAij = pA + i * nc + (i + 1), sum = 0;
+        double *ppAij = pA + i * nc + (i + 1), sum = 0;
 
         for (int j = i + 1; j < nc; ++j) {
             sum += *ppAij * pX[j];
@@ -795,5 +785,5 @@ void pnp_solver::qr_solve(MatRC_t<6, 4>& A_orig, MatRC_t<6, 1>& b, MatRC_t<4, 1>
     }
 }
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam

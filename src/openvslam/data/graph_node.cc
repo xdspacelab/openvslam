@@ -6,7 +6,7 @@ namespace openvslam {
 namespace data {
 
 graph_node::graph_node(data::keyframe* keyfrm, const bool spanning_parent_is_not_set)
-        : owner_keyfrm_(keyfrm), spanning_parent_is_not_set_(spanning_parent_is_not_set) {}
+    : owner_keyfrm_(keyfrm), spanning_parent_is_not_set_(spanning_parent_is_not_set) {}
 
 void graph_node::add_connection(keyframe* keyfrm, const unsigned int weight) {
     bool need_update = false;
@@ -337,7 +337,7 @@ bool graph_node::has_loop_edge() const {
     return !loop_edges_.empty();
 }
 
-template <typename T, typename U>
+template<typename T, typename U>
 std::vector<keyframe*> graph_node::extract_intersection(const T& keyfrms_1, const U& keyfrms_2) {
     std::vector<keyframe*> intersection;
     intersection.reserve(std::min(keyfrms_1.size(), keyfrms_2.size()));

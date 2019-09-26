@@ -15,8 +15,8 @@ namespace initialize {
 perspective::perspective(const data::frame& ref_frm,
                          const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
                          const float parallax_deg_thr, const float reproj_err_thr)
-        : base(ref_frm, num_ransac_iters, min_num_triangulated, parallax_deg_thr, reproj_err_thr),
-          ref_cam_matrix_(get_camera_matrix(ref_frm.camera_)) {
+    : base(ref_frm, num_ransac_iters, min_num_triangulated, parallax_deg_thr, reproj_err_thr),
+      ref_cam_matrix_(get_camera_matrix(ref_frm.camera_)) {
     spdlog::debug("CONSTRUCT: initialize::perspective");
 }
 

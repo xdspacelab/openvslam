@@ -74,7 +74,7 @@ protected:
      * @param keyfrms_to_reject
      * @return whether candidates are found or not
      */
-    template <typename T>
+    template<typename T>
     bool set_candidates_sharing_words(const T* const qry_shot, const std::set<keyframe*>& keyfrms_to_reject = {});
 
     /**
@@ -84,7 +84,7 @@ protected:
      * @param min_num_common_words_thr
      * @return whether candidates are found or not
      */
-    template <typename T>
+    template<typename T>
     bool compute_scores(const T* const qry_shot, const unsigned int min_num_common_words_thr);
 
     /**

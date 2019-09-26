@@ -13,7 +13,6 @@ namespace data {
 class landmark;
 } // namespace data
 
-
 namespace optimize {
 namespace g2o {
 

@@ -19,7 +19,7 @@
 namespace openvslam {
 
 system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file_path)
-        : cfg_(cfg), camera_(cfg->camera_) {
+    : cfg_(cfg), camera_(cfg->camera_) {
     spdlog::debug("CONSTRUCT: system");
 
     std::cout << R"(  ___               __   _____ _      _   __  __ )" << std::endl;
@@ -58,7 +58,8 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     bow_vocab_->readFromFile(vocab_file_path);
     if (!bow_vocab_->isValid()) {
         spdlog::critical("wrong path to vocabulary");
-        delete bow_vocab_; bow_vocab_ = nullptr;
+        delete bow_vocab_;
+        bow_vocab_ = nullptr;
         exit(EXIT_FAILURE);
     }
 #endif

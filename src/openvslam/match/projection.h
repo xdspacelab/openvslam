@@ -19,7 +19,7 @@ namespace match {
 class projection final : public base {
 public:
     explicit projection(const float lowe_ratio = 0.6, const bool check_orientation = true)
-            : base(lowe_ratio, check_orientation) {}
+        : base(lowe_ratio, check_orientation) {}
 
     ~projection() final = default;
 
@@ -46,7 +46,7 @@ public:
                                           const float& s_12, const Mat33_t& rot_12, const Vec3_t& trans_12, const float margin) const;
 };
 
-} // match
+} // namespace match
 } // namespace openvslam
 
 #endif // OPENVSLAM_MATCH_PROJECTION_H

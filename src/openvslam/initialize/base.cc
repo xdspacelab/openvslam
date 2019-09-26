@@ -8,9 +8,9 @@ namespace initialize {
 base::base(const data::frame& ref_frm,
            const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
            const float parallax_deg_thr, const float reproj_err_thr)
-        : ref_camera_(ref_frm.camera_), ref_undist_keypts_(ref_frm.undist_keypts_), ref_bearings_(ref_frm.bearings_),
-          num_ransac_iters_(num_ransac_iters), min_num_triangulated_(min_num_triangulated),
-          parallax_deg_thr_(parallax_deg_thr), reproj_err_thr_(reproj_err_thr) {}
+    : ref_camera_(ref_frm.camera_), ref_undist_keypts_(ref_frm.undist_keypts_), ref_bearings_(ref_frm.bearings_),
+      num_ransac_iters_(num_ransac_iters), min_num_triangulated_(min_num_triangulated),
+      parallax_deg_thr_(parallax_deg_thr), reproj_err_thr_(reproj_err_thr) {}
 
 Mat33_t base::get_rotation_ref_to_cur() const {
     return rot_ref_to_cur_;

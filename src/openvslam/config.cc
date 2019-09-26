@@ -10,7 +10,7 @@
 namespace openvslam {
 
 config::config(const std::string& config_file_path)
-        : config_file_path_(config_file_path), yaml_node_(YAML::LoadFile(config_file_path)) {
+    : config_file_path_(config_file_path), yaml_node_(YAML::LoadFile(config_file_path)) {
     spdlog::debug("CONSTRUCT: config");
 
     spdlog::info("config file loaded: {}", config_file_path_);
@@ -41,7 +41,8 @@ config::config(const std::string& config_file_path)
     }
     catch (const std::exception& e) {
         spdlog::debug("failed in loading camera model parameters: {}", e.what());
-        delete camera_; camera_ = nullptr;
+        delete camera_;
+        camera_ = nullptr;
         throw;
     }
 
@@ -55,7 +56,8 @@ config::config(const std::string& config_file_path)
     }
     catch (const std::exception& e) {
         spdlog::debug("failed in loading ORB parameters: {}", e.what());
-        delete camera_; camera_ = nullptr;
+        delete camera_;
+        camera_ = nullptr;
         throw;
     }
 
@@ -94,7 +96,8 @@ config::config(const std::string& config_file_path)
 }
 
 config::~config() {
-    delete camera_; camera_ = nullptr;
+    delete camera_;
+    camera_ = nullptr;
 
     spdlog::debug("DESTRUCT: config");
 }

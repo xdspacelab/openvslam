@@ -44,7 +44,7 @@ struct image_bounds {
     //! Constructor with initialization
     template<typename T, typename U>
     image_bounds(const T min_x, const U max_x, const T min_y, const U max_y)
-            : min_x_(min_x), max_x_(max_x), min_y_(min_y), max_y_(max_y) {}
+        : min_x_(min_x), max_x_(max_x), min_y_(min_y), max_y_(max_y) {}
 
     float min_x_ = 0.0;
     float max_x_ = 0.0;
@@ -93,7 +93,7 @@ public:
     //! Load color order from string
     static color_order_t load_color_order(const std::string& color_order_str);
 
-     //! Show common parameters along camera models
+    //! Show common parameters along camera models
     void show_common_parameters() const;
 
     //---------------------------
@@ -148,13 +148,13 @@ public:
     virtual Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const = 0;
 
     //! Convert undistorted keypoints to bearing vectors
-    virtual void convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector <Vec3_t>& bearings) const = 0;
+    virtual void convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const = 0;
 
     //! Convert bearing vector to undistorted keypoint
     virtual cv::KeyPoint convert_bearing_to_keypoint(const Vec3_t& bearing) const = 0;
 
     //! Convert bearing vectors to undistorted keypoints
-    virtual void convert_bearings_to_keypoints(const eigen_alloc_vector <Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const = 0;
+    virtual void convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const = 0;
 
     //! Reproject the specified 3D point to image using camera pose and projection model
     //! (reprojected to inside of image -> true, to outside of image -> false)

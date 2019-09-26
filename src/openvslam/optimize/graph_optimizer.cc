@@ -19,7 +19,7 @@ namespace openvslam {
 namespace optimize {
 
 graph_optimizer::graph_optimizer(data::map_database* map_db, const bool fix_scale)
-        : map_db_(map_db), fix_scale_(fix_scale) {}
+    : map_db_(map_db), fix_scale_(fix_scale) {}
 
 void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr_keyfrm,
                                const module::keyframe_Sim3_pairs_t& non_corrected_Sim3s,
@@ -93,18 +93,17 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
 
     // constraint edgeを追加する関数
     const auto insert_edge =
-            [&optimizer, &vertices, &inserted_edge_pairs]
-            (unsigned int id1, unsigned int id2, const ::g2o::Sim3& Sim3_21) {
-        auto edge = new g2o::sim3::graph_opt_edge();
-        edge->setVertex(0, vertices.at(id1));
-        edge->setVertex(1, vertices.at(id2));
-        edge->setMeasurement(Sim3_21);
+        [&optimizer, &vertices, &inserted_edge_pairs](unsigned int id1, unsigned int id2, const ::g2o::Sim3& Sim3_21) {
+            auto edge = new g2o::sim3::graph_opt_edge();
+            edge->setVertex(0, vertices.at(id1));
+            edge->setVertex(1, vertices.at(id2));
+            edge->setMeasurement(Sim3_21);
 
-        edge->information() = MatRC_t<7, 7>::Identity();
+            edge->information() = MatRC_t<7, 7>::Identity();
 
-        optimizer.addEdge(edge);
-        inserted_edge_pairs.insert(std::make_pair(std::min(id1, id2), std::max(id1, id2)));
-    };
+            optimizer.addEdge(edge);
+            inserted_edge_pairs.insert(std::make_pair(std::min(id1, id2), std::max(id1, id2)));
+        };
 
     // threshold weight以上のloop edgeを追加する
     for (const auto& loop_connection : loop_connections) {
@@ -267,7 +266,8 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
             }
 
             const auto id = (lm->loop_fusion_identifier_ == curr_keyfrm->id_)
-                            ? lm->ref_keyfrm_id_in_loop_fusion_ : lm->get_ref_keyframe()->id_;
+                                ? lm->ref_keyfrm_id_in_loop_fusion_
+                                : lm->get_ref_keyframe()->id_;
 
             const ::g2o::Sim3& Sim3_cw = Sim3s_cw.at(id);
             const ::g2o::Sim3& corrected_Sim3_wc = corrected_Sim3s_wc.at(id);

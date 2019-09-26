@@ -16,13 +16,13 @@ namespace module {
 initializer::initializer(const camera::setup_type_t setup_type,
                          data::map_database* map_db, data::bow_database* bow_db,
                          const YAML::Node& yaml_node)
-        : setup_type_(setup_type), map_db_(map_db), bow_db_(bow_db),
-          num_ransac_iters_(yaml_node["Initializer.num_ransac_iterations"].as<unsigned int>(100)),
-          min_num_triangulated_(yaml_node["Initializer.num_min_triangulated_pts"].as<unsigned int>(50)),
-          parallax_deg_thr_(yaml_node["Initializer.parallax_deg_threshold"].as<float>(1.0)),
-          reproj_err_thr_(yaml_node["Initializer.reprojection_error_threshold"].as<float>(4.0)),
-          num_ba_iters_(yaml_node["Initializer.num_ba_iterations"].as<unsigned int>(20)),
-          scaling_factor_(yaml_node["Initializer.scaling_factor"].as<float>(1.0)) {
+    : setup_type_(setup_type), map_db_(map_db), bow_db_(bow_db),
+      num_ransac_iters_(yaml_node["Initializer.num_ransac_iterations"].as<unsigned int>(100)),
+      min_num_triangulated_(yaml_node["Initializer.num_min_triangulated_pts"].as<unsigned int>(50)),
+      parallax_deg_thr_(yaml_node["Initializer.parallax_deg_threshold"].as<float>(1.0)),
+      reproj_err_thr_(yaml_node["Initializer.reprojection_error_threshold"].as<float>(4.0)),
+      num_ba_iters_(yaml_node["Initializer.num_ba_iterations"].as<unsigned int>(20)),
+      scaling_factor_(yaml_node["Initializer.scaling_factor"].as<float>(1.0)) {
     spdlog::debug("CONSTRUCT: module::initializer");
 }
 

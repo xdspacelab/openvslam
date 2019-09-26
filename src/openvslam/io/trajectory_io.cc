@@ -11,7 +11,8 @@
 namespace openvslam {
 namespace io {
 
-trajectory_io::trajectory_io(data::map_database* map_db) : map_db_(map_db) {}
+trajectory_io::trajectory_io(data::map_database* map_db)
+    : map_db_(map_db) {}
 
 void trajectory_io::save_frame_trajectory(const std::string& path, const std::string& format) const {
     std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);

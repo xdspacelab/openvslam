@@ -6,7 +6,7 @@ namespace openvslam {
 namespace module {
 
 local_map_cleaner::local_map_cleaner(const bool is_monocular)
-        : is_monocular_(is_monocular) {}
+    : is_monocular_(is_monocular) {}
 
 void local_map_cleaner::reset() {
     fresh_landmarks_.clear();
@@ -18,7 +18,9 @@ unsigned int local_map_cleaner::remove_redundant_landmarks(const unsigned int cu
     const unsigned int num_obs_thr = is_monocular_ ? 2 : 3;
 
     // states of observed landmarks
-    enum class lm_state_t { Valid, Invalid, NotClear };
+    enum class lm_state_t { Valid,
+                            Invalid,
+                            NotClear };
 
     unsigned int num_removed = 0;
     auto iter = fresh_landmarks_.begin();

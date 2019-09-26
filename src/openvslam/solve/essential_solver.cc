@@ -7,7 +7,7 @@ namespace solve {
 
 essential_solver::essential_solver(const eigen_alloc_vector<Vec3_t>& bearings_1, const eigen_alloc_vector<Vec3_t>& bearings_2,
                                    const std::vector<std::pair<int, int>>& matches_12)
-        : bearings_1_(bearings_1), bearings_2_(bearings_2), matches_12_(matches_12) {}
+    : bearings_1_(bearings_1), bearings_2_(bearings_2), matches_12_(matches_12) {}
 
 void essential_solver::find_via_ransac(const unsigned int max_num_iter, const bool recompute) {
     const auto num_matches = static_cast<unsigned int>(matches_12_.size());

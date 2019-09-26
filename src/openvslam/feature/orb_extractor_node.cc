@@ -29,7 +29,7 @@ std::array<orb_extractor_node, 4> orb_extractor_node::divide_node() {
     child_nodes.at(3).pt_end_ = pt_end_;
 
     // 子ノードのkeypts_のメモリ確保
-    for (auto& node: child_nodes) {
+    for (auto& node : child_nodes) {
         node.keypts_.reserve(keypts_.size());
     }
 

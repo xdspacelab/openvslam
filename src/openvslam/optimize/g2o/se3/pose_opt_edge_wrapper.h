@@ -60,7 +60,7 @@ template<typename T>
 pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, const Vec3_t& pos_w,
                                                 const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
                                                 const float inv_sigma_sq, const float sqrt_chi_sq)
-        : camera_(shot->camera_), shot_(shot), idx_(idx), is_monocular_(obs_x_right < 0) {
+    : camera_(shot->camera_), shot_(shot), idx_(idx), is_monocular_(obs_x_right < 0) {
     // 拘束条件を設定
     switch (camera_->model_type_) {
         case camera::model_type_t::Perspective: {
