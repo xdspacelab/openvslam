@@ -100,27 +100,26 @@ private:
     std::list<orb_extractor_node> initialize_nodes(const std::vector<cv::KeyPoint>& keypts_to_distribute,
                                                    const int min_x, const int max_x, const int min_y, const int max_y) const;
 
-    //! Assign child nodes to the 
+    //! Assign child nodes to the all node list
     void assign_child_nodes(const std::array<orb_extractor_node, 4>& child_nodes, std::list<orb_extractor_node>& nodes,
                             std::vector<std::pair<int, orb_extractor_node*>>& leaf_nodes) const;
 
+    //! Find keypoint which has maximum value of responce
     std::vector<cv::KeyPoint> find_keypoints_with_max_response(std::list<orb_extractor_node>& nodes) const;
 
+    //! Compute orientation for each keypoint
     void compute_orientation(const cv::Mat& image, std::vector<cv::KeyPoint>& keypts) const;
 
+    //! Correct keypoint's position to comply with the scale
     void correct_keypoint_scale(std::vector<cv::KeyPoint>& keypts_at_level, const unsigned int level) const;
 
-    /**
-     * 予め決めた円周上のピクセル輝度を正弦関数で近似し，
-     * その位相を計算する
-     * @param image
-     * @param point
-     * @return
-     */
+    //! Compute gradient of pixcel intencity in a circle around point
     float ic_angle(const cv::Mat& image, const cv::Point2f& point) const;
 
+    //! Compute orb descriptors for all keypoint
     void compute_orb_descriptors(const cv::Mat& image, const std::vector<cv::KeyPoint>& keypts, cv::Mat& descriptors) const;
 
+    //! Compute orb descriptor of a keypoint
     void compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::Mat& image, uchar* desc) const;
 
     //! parameters for ORB extraction
@@ -138,12 +137,16 @@ private:
     bool mask_is_initialized_ = false;
     cv::Mat rect_mask_;
 
+    //! A list of scale factor of each pyramid layer
     std::vector<float> scale_factors_;
     std::vector<float> inv_scale_factors_;
+    //! A list of sigma of each pyramid layer
     std::vector<float> level_sigma_sq_;
     std::vector<float> inv_level_sigma_sq_;
 
+    //! Maximum number of keypoint of each level
     std::vector<unsigned int> num_keypts_per_level_;
+    //! Index limitation that used for calculating of keypoint orientation
     std::vector<int> u_max_;
 };
 
