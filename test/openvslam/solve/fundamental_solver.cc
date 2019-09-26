@@ -12,7 +12,7 @@ using namespace openvslam;
 TEST(fundamental_solver, linear_solve) {
     // create 3D points
     const unsigned int num_landmarks = 100;
-    const auto landmarks = create_random_landmarks(num_landmarks);
+    const auto landmarks = create_random_landmarks_in_space(num_landmarks, 100);
 
     // create two-view poses
     const Mat33_t rot_1 = util::converter::to_rot_mat(205.0 * M_PI / 180.0 * Vec3_t{4, -6, 2}.normalized());
@@ -30,7 +30,8 @@ TEST(fundamental_solver, linear_solve) {
     // create keypoints from two-view poses and 3D points
     std::vector<cv::Point2f> keypts_1;
     std::vector<cv::Point2f> keypts_2;
-    create_keypoints(rot_1, trans_1, cam_matrix_1, rot_2, trans_2, cam_matrix_2, landmarks, keypts_1, keypts_2);
+    create_keypoints(rot_1, trans_1, cam_matrix_1, landmarks, keypts_1);
+    create_keypoints(rot_2, trans_2, cam_matrix_2, landmarks, keypts_2);
 
     // create a true fundamental matrix
     Mat33_t true_F_21 = solve::fundamental_solver::create_F_21(rot_1, trans_1, cam_matrix_1, rot_2, trans_2, cam_matrix_2);
@@ -51,7 +52,7 @@ TEST(fundamental_solver, linear_solve) {
 TEST(fundamental_solver, ransac_solve_without_noise) {
     // create 3D points
     const unsigned int num_landmarks = 200;
-    const auto landmarks = create_random_landmarks(num_landmarks);
+    const auto landmarks = create_random_landmarks_in_space(num_landmarks, 100);
 
     // create two-view poses
     const Mat33_t rot_1 = util::converter::to_rot_mat(-105.0 * M_PI / 180.0 * Vec3_t{1, 10, 3}.normalized());
@@ -69,7 +70,8 @@ TEST(fundamental_solver, ransac_solve_without_noise) {
     // create keypoints from two-view poses and 3D points
     std::vector<cv::KeyPoint> keypts_1;
     std::vector<cv::KeyPoint> keypts_2;
-    create_keypoints(rot_1, trans_1, cam_matrix_1, rot_2, trans_2, cam_matrix_2, landmarks, keypts_1, keypts_2);
+    create_keypoints(rot_1, trans_1, cam_matrix_1, landmarks, keypts_1);
+    create_keypoints(rot_2, trans_2, cam_matrix_2, landmarks, keypts_2);
 
     // create a true fundamental matrix
     Mat33_t true_F_21 = solve::fundamental_solver::create_F_21(rot_1, trans_1, cam_matrix_1, rot_2, trans_2, cam_matrix_2);
@@ -107,7 +109,7 @@ TEST(fundamental_solver, ransac_solve_without_noise) {
 TEST(fundamental_solver, ransac_solve_with_noise) {
     // create 3D points
     const unsigned int num_landmarks = 200;
-    const auto landmarks = create_random_landmarks(num_landmarks);
+    const auto landmarks = create_random_landmarks_in_space(num_landmarks, 100);
 
     // create two-view poses
     const Mat33_t rot_1 = util::converter::to_rot_mat(54.0 * M_PI / 180.0 * Vec3_t{5, 3, -2}.normalized());
@@ -125,7 +127,8 @@ TEST(fundamental_solver, ransac_solve_with_noise) {
     // create keypoints from two-view poses and 3D points
     std::vector<cv::KeyPoint> keypts_1;
     std::vector<cv::KeyPoint> keypts_2;
-    create_keypoints(rot_1, trans_1, cam_matrix_1, rot_2, trans_2, cam_matrix_2, landmarks, keypts_1, keypts_2, 1.0);
+    create_keypoints(rot_1, trans_1, cam_matrix_1, landmarks, keypts_1, 1.0);
+    create_keypoints(rot_2, trans_2, cam_matrix_2, landmarks, keypts_2, 1.0);
 
     // create a true fundamental matrix
     Mat33_t true_F_21 = solve::fundamental_solver::create_F_21(rot_1, trans_1, cam_matrix_1, rot_2, trans_2, cam_matrix_2);

@@ -12,7 +12,7 @@ using namespace openvslam;
 TEST(essential_solver, linear_solve) {
     // create 3D points
     const unsigned int num_landmarks = 100;
-    const auto landmarks = create_random_landmarks(num_landmarks);
+    const auto landmarks = create_random_landmarks_in_space(num_landmarks, 100);
 
     // create two-view poses
     const Mat33_t rot_1 = util::converter::to_rot_mat(205.0 * M_PI / 180.0 * Vec3_t{4, -6, 2}.normalized());
@@ -23,7 +23,8 @@ TEST(essential_solver, linear_solve) {
     // create bearing vectors from two-view poses and 3D points
     eigen_alloc_vector<Vec3_t> bearings_1;
     eigen_alloc_vector<Vec3_t> bearings_2;
-    create_bearing_vectors(rot_1, trans_1, rot_2, trans_2, landmarks, bearings_1, bearings_2);
+    create_bearing_vectors(rot_1, trans_1, landmarks, bearings_1);
+    create_bearing_vectors(rot_2, trans_2, landmarks, bearings_2);
 
     // create a true essential matrix
     Mat33_t true_E_21 = solve::essential_solver::create_E_21(rot_1, trans_1, rot_2, trans_2);
@@ -44,7 +45,7 @@ TEST(essential_solver, linear_solve) {
 TEST(essential_solver, ransac_solve_without_noise) {
     // create 3D points
     const unsigned int num_landmarks = 200;
-    const auto landmarks = create_random_landmarks(num_landmarks);
+    const auto landmarks = create_random_landmarks_in_space(num_landmarks, 100);
 
     // create two-view poses
     const Mat33_t rot_1 = util::converter::to_rot_mat(-105.0 * M_PI / 180.0 * Vec3_t{1, 10, 3}.normalized());
@@ -55,7 +56,8 @@ TEST(essential_solver, ransac_solve_without_noise) {
     // create bearing vectors from two-view poses and 3D points
     eigen_alloc_vector<Vec3_t> bearings_1;
     eigen_alloc_vector<Vec3_t> bearings_2;
-    create_bearing_vectors(rot_1, trans_1, rot_2, trans_2, landmarks, bearings_1, bearings_2);
+    create_bearing_vectors(rot_1, trans_1, landmarks, bearings_1);
+    create_bearing_vectors(rot_2, trans_2, landmarks, bearings_2);
 
     // create a true essential matrix
     Mat33_t true_E_21 = solve::essential_solver::create_E_21(rot_1, trans_1, rot_2, trans_2);
@@ -93,7 +95,7 @@ TEST(essential_solver, ransac_solve_without_noise) {
 TEST(essential_solver, ransac_solve_with_noise) {
     // create 3D points
     const unsigned int num_landmarks = 200;
-    const auto landmarks = create_random_landmarks(num_landmarks);
+    const auto landmarks = create_random_landmarks_in_space(num_landmarks, 100);
 
     // create two-view poses
     const Mat33_t rot_1 = util::converter::to_rot_mat(54.0 * M_PI / 180.0 * Vec3_t{5, 3, -2}.normalized());
@@ -104,7 +106,8 @@ TEST(essential_solver, ransac_solve_with_noise) {
     // create bearing vectors from two-view poses and 3D points
     eigen_alloc_vector<Vec3_t> bearings_1;
     eigen_alloc_vector<Vec3_t> bearings_2;
-    create_bearing_vectors(rot_1, trans_1, rot_2, trans_2, landmarks, bearings_1, bearings_2, 0.001);
+    create_bearing_vectors(rot_1, trans_1, landmarks, bearings_1, 0.001);
+    create_bearing_vectors(rot_2, trans_2, landmarks, bearings_2, 0.001);
 
     // create a true essential matrix
     Mat33_t true_E_21 = solve::essential_solver::create_E_21(rot_1, trans_1, rot_2, trans_2);
