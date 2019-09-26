@@ -150,7 +150,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     cv::Mat K_l = (cv::Mat_<double>(3, 3) << 458.654, 0.0, 367.215, 0.0, 457.296, 248.375, 0.0, 0.0, 1.0);
     cv::Mat D_l = (cv::Mat_<double>(1, 5) << -0.28340811, 0.07395907, 0.00019359, 1.76187114e-05, 0.0);
     cv::Mat R_l = (cv::Mat_<double>(3, 3) << 0.999966347530033, -0.001422739138722922, 0.008079580483432283, 0.001365741834644127, 0.9999741760894847, 0.007055629199258132, -0.008089410156878961, -0.007044357138835809, 0.9999424675829176);
-    cv::Mat P_l = (cv::Mat_<double>(3, 4) << 435.2046959714599, 0, 367.4517211914062, 0,  0, 435.2046959714599, 252.2008514404297, 0,  0, 0, 1, 0);
+    cv::Mat P_l = (cv::Mat_<double>(3, 4) << 435.2046959714599, 0, 367.4517211914062, 0, 0, 435.2046959714599, 252.2008514404297, 0, 0, 0, 1, 0);
     cv::Mat K_r = (cv::Mat_<double>(3, 3) << 457.587, 0.0, 379.999, 0.0, 456.134, 255.238, 0.0, 0.0, 1);
     cv::Mat D_r = (cv::Mat_<double>(1, 5) << -0.28368365, 0.07451284, -0.00010473, -3.555907e-05, 0.0);
     cv::Mat R_r = (cv::Mat_<double>(3, 3) << 0.9999633526194376, -0.003625811871560086, 0.007755443660172947, 0.003680398547259526, 0.9999684752771629, -0.007035845251224894, -0.007729688520722713, 0.007064130529506649, 0.999945173484644);
@@ -161,8 +161,8 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     const auto rows_r = cfg->camera_->rows_;
 
     cv::Mat M1_l, M2_l, M1_r, M2_r;
-    cv::initUndistortRectifyMap(K_l, D_l, R_l, P_l.rowRange(0,3).colRange(0,3), cv::Size(cols_l, rows_l), CV_32F, M1_l, M2_l);
-    cv::initUndistortRectifyMap(K_r, D_r, R_r, P_r.rowRange(0,3).colRange(0,3), cv::Size(cols_r, rows_r), CV_32F, M1_r, M2_r);
+    cv::initUndistortRectifyMap(K_l, D_l, R_l, P_l.rowRange(0, 3).colRange(0, 3), cv::Size(cols_l, rows_l), CV_32F, M1_l, M2_l);
+    cv::initUndistortRectifyMap(K_r, D_r, R_r, P_r.rowRange(0, 3).colRange(0, 3), cv::Size(cols_r, rows_r), CV_32F, M1_r, M2_r);
 
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);

@@ -8,7 +8,7 @@ class image_sequence {
 public:
     struct frame {
         frame(const std::string& img_path, const double timestamp)
-                : img_path_(img_path), timestamp_(timestamp) {};
+            : img_path_(img_path), timestamp_(timestamp){};
 
         const std::string img_path_;
         const double timestamp_;

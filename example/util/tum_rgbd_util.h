@@ -8,7 +8,7 @@ class tum_rgbd_sequence {
 public:
     struct frame {
         frame(const std::string& rgb_img_path, const std::string& depth_img_path, const double timestamp)
-                : rgb_img_path_(rgb_img_path), depth_img_path_(depth_img_path), timestamp_(timestamp) {};
+            : rgb_img_path_(rgb_img_path), depth_img_path_(depth_img_path), timestamp_(timestamp){};
 
         const std::string rgb_img_path_;
         const std::string depth_img_path_;
@@ -24,7 +24,7 @@ public:
 private:
     struct img_info {
         img_info(const double timestamp, const std::string& img_file_path)
-                : timestamp_(timestamp), img_file_path_(img_file_path) {};
+            : timestamp_(timestamp), img_file_path_(img_file_path){};
 
         const double timestamp_;
         const std::string img_file_path_;
