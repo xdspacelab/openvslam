@@ -1,0 +1,24 @@
+﻿---
+BasedOnStyle: Chromium
+AccessModifierOffset: '-4'
+AlwaysBreakBeforeMultilineStrings: 'true'
+BinPackArguments: 'true'
+BinPackParameters: 'true'
+BraceWrapping:
+  BeforeCatch: 'true'
+  BeforeElse: 'true'
+BreakBeforeBinaryOperators: All
+BreakBeforeBraces: Custom
+ColumnLimit: '0'
+ConstructorInitializerAllOnOneLineOrOnePerLine: 'false'
+IncludeBlocks: Preserve
+IndentPPDirectives: None
+IndentWidth: '4'
+SortIncludes: 'false'
+SpaceAfterTemplateKeyword: 'false'
+SpacesBeforeTrailingComments: '1'
+Standard: Cpp11
+TabWidth: '4'
+UseTab: Never
+
+...
