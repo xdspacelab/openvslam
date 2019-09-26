@@ -145,9 +145,9 @@ public:
     /**
      * Contains the specified keyframe or not
      */
-     inline bool contain(data::keyframe* keyfrm) const {
-         return 0 != vtx_container_.count(keyfrm->id_);
-     }
+    inline bool contain(data::keyframe* keyfrm) const {
+        return 0 != vtx_container_.count(keyfrm->id_);
+    }
 
     typedef std::unordered_map<unsigned int, shot_vertex*>::iterator iterator;
     typedef std::unordered_map<unsigned int, shot_vertex*>::const_iterator const_iterator;

@@ -4,7 +4,8 @@ namespace openvslam {
 namespace optimize {
 namespace g2o {
 
-landmark_vertex::landmark_vertex() : BaseVertex<3, Vec3_t>() {}
+landmark_vertex::landmark_vertex()
+    : BaseVertex<3, Vec3_t>() {}
 
 bool landmark_vertex::read(std::istream& is) {
     Vec3_t lv;

@@ -8,12 +8,12 @@ stereo::stereo(const std::vector<cv::Mat>& left_image_pyramid, const std::vector
                const cv::Mat& descs_left, const cv::Mat& descs_right,
                const std::vector<float>& scale_factors, const std::vector<float>& inv_scale_factors,
                const float focal_x_baseline, const float true_baseline)
-        : left_image_pyramid_(left_image_pyramid), right_image_pyramid_(right_image_pyramid),
-          num_keypts_(keypts_left.size()), keypts_left_(keypts_left), keypts_right_(keypts_right),
-          descs_left_(descs_left), descs_right_(descs_right),
-          scale_factors_(scale_factors), inv_scale_factors_(inv_scale_factors),
-          focal_x_baseline_(focal_x_baseline), true_baseline_(true_baseline),
-          min_disp_(0.0f), max_disp_(focal_x_baseline_ / true_baseline_) {}
+    : left_image_pyramid_(left_image_pyramid), right_image_pyramid_(right_image_pyramid),
+      num_keypts_(keypts_left.size()), keypts_left_(keypts_left), keypts_right_(keypts_right),
+      descs_left_(descs_left), descs_right_(descs_right),
+      scale_factors_(scale_factors), inv_scale_factors_(inv_scale_factors),
+      focal_x_baseline_(focal_x_baseline), true_baseline_(true_baseline),
+      min_disp_(0.0f), max_disp_(focal_x_baseline_ / true_baseline_) {}
 
 void stereo::compute(std::vector<float>& stereo_x_right, std::vector<float>& depths) const {
     // 画像の行ごとに，ORBで抽出した右画像の特徴点indexを格納しておく
@@ -95,10 +95,9 @@ void stereo::compute(std::vector<float>& stereo_x_right, std::vector<float>& dep
     // 相関の中央値を求める
     std::sort(correlation_and_idx_left.begin(), correlation_and_idx_left.end());
     const auto median_i = correlation_and_idx_left.size() / 2;
-    const float median_correlation =
-        correlation_and_idx_left.empty()
-            ? 0.0f
-            : correlation_and_idx_left.at(median_i).first;
+    const float median_correlation = correlation_and_idx_left.empty()
+                                         ? 0.0f
+                                         : correlation_and_idx_left.at(median_i).first;
     // 相関の中央値x2より相関が弱いものは破棄する
     const float correlation_thr = 2.0 * median_correlation;
 
@@ -143,9 +142,9 @@ std::vector<std::vector<unsigned int>> stereo::get_right_keypoint_indices_in_eac
 }
 
 void stereo::find_closest_keypoints_in_stereo(const unsigned int idx_left, const int scale_level_left,
-                                             const std::vector<unsigned int>& candidate_indices_right,
-                                             const float min_x_right, const float max_x_right,
-                                             unsigned int& best_idx_right, unsigned int& best_hamm_dist) const {
+                                              const std::vector<unsigned int>& candidate_indices_right,
+                                              const float min_x_right, const float max_x_right,
+                                              unsigned int& best_idx_right, unsigned int& best_hamm_dist) const {
     best_idx_right = 0;
     best_hamm_dist = hamm_dist_thr_;
 
@@ -178,7 +177,7 @@ void stereo::find_closest_keypoints_in_stereo(const unsigned int idx_left, const
 }
 
 bool stereo::compute_subpixel_disparity(const cv::KeyPoint& keypt_left, const cv::KeyPoint& keypt_right,
-                                       float& best_x_right, float& best_disp, float& best_correlation) const {
+                                        float& best_x_right, float& best_disp, float& best_correlation) const {
     // 最もハミング距離が近い右画像の特徴点
     const float x_right = keypt_right.pt.x;
     // スケールした画像でパッチの相関を計算するので，座標をスケール倍に変換する
@@ -203,16 +202,16 @@ bool stereo::compute_subpixel_disparity(const cv::KeyPoint& keypt_left, const cv
 
     // 左画像のパッチを抽出する
     auto patch_left = left_image_pyramid_.at(keypt_left.octave)
-            .rowRange(scaled_y_left - win_size, scaled_y_left + win_size + 1)
-            .colRange(scaled_x_left - win_size, scaled_x_left + win_size + 1);
+                          .rowRange(scaled_y_left - win_size, scaled_y_left + win_size + 1)
+                          .colRange(scaled_x_left - win_size, scaled_x_left + win_size + 1);
     patch_left.convertTo(patch_left, CV_32F);
     patch_left -= patch_left.at<float>(win_size, win_size) * cv::Mat::ones(patch_left.rows, patch_left.cols, CV_32F);
 
     for (int offset = -slide_width; offset <= +slide_width; ++offset) {
         // 右画像のパッチを抽出する
         auto patch_right = right_image_pyramid_.at(keypt_left.octave)
-                .rowRange(scaled_y_left - win_size, scaled_y_left + win_size + 1)
-                .colRange(scaled_x_right + offset - win_size, scaled_x_right + offset + win_size + 1);
+                               .rowRange(scaled_y_left - win_size, scaled_y_left + win_size + 1)
+                               .colRange(scaled_x_right + offset - win_size, scaled_x_right + offset + win_size + 1);
         patch_right.convertTo(patch_right, CV_32F);
         patch_right -= patch_right.at<float>(win_size, win_size) * cv::Mat::ones(patch_right.rows, patch_right.cols, CV_32F);
 

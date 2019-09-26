@@ -9,7 +9,7 @@ namespace openvslam {
 namespace publish {
 
 map_publisher::map_publisher(const std::shared_ptr<config>& cfg, data::map_database* map_db)
-        : cfg_(cfg), map_db_(map_db) {
+    : cfg_(cfg), map_db_(map_db) {
     spdlog::debug("CONSTRUCT: publish::map_publisher");
 }
 

@@ -134,7 +134,7 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
 
                 if (check_orientation_) {
                     const auto delta_angle
-                            = keypt_1.angle - keyfrm_2->undist_keypts_.at(best_idx_2).angle;
+                        = keypt_1.angle - keyfrm_2->undist_keypts_.at(best_idx_2).angle;
                     angle_checker.append_delta_angle(delta_angle, idx_1);
                 }
             }
@@ -286,7 +286,7 @@ unsigned int robust::brute_force_match(data::frame& frm, data::keyframe* keyfrm,
 
         if (check_orientation_) {
             const auto delta_angle
-                    = keypts_1.at(best_idx_1).angle - keypts_2.at(idx_2).angle;
+                = keypts_1.at(best_idx_1).angle - keypts_2.at(idx_2).angle;
             angle_checker.append_delta_angle(delta_angle, best_idx_1);
         }
 

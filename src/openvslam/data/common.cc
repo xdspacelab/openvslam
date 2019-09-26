@@ -116,7 +116,7 @@ void assign_keypoints_to_grid(camera::base* camera, const std::vector<cv::KeyPoi
 }
 
 auto assign_keypoints_to_grid(camera::base* camera, const std::vector<cv::KeyPoint>& undist_keypts)
--> std::vector<std::vector<std::vector<unsigned int>>> {
+    -> std::vector<std::vector<std::vector<unsigned int>>> {
     std::vector<std::vector<std::vector<unsigned int>>> keypt_indices_in_cells;
     assign_keypoints_to_grid(camera, undist_keypts, keypt_indices_in_cells);
     return keypt_indices_in_cells;

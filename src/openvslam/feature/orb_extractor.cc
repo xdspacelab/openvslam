@@ -53,12 +53,12 @@ namespace feature {
 orb_extractor::orb_extractor(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                              const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
                              const std::vector<std::vector<float>>& mask_rects)
-        : orb_extractor(orb_params{max_num_keypts, scale_factor, num_levels,
-                                   ini_fast_thr, min_fast_thr,
-                                   mask_rects}) {}
+    : orb_extractor(orb_params{max_num_keypts, scale_factor, num_levels,
+                               ini_fast_thr, min_fast_thr,
+                               mask_rects}) {}
 
 orb_extractor::orb_extractor(const orb_params& orb_params)
-        : orb_params_(orb_params) {
+    : orb_params_(orb_params) {
     // initialize parameters
     initialize();
 }
@@ -91,7 +91,7 @@ void orb_extractor::extract(const cv::_InputArray& in_image, const cv::_InputArr
         assert(image_mask.type() == CV_8UC1);
         compute_fast_keypoints(all_keypts, image_mask);
     }
-    else if (!rect_mask_.empty()){
+    else if (!rect_mask_.empty()) {
         // image_maskが無効かつrectangle maskが有効であればrectangle maskを使う
         assert(rect_mask_.type() == CV_8UC1);
         compute_fast_keypoints(all_keypts, rect_mask_);
@@ -210,8 +210,8 @@ void orb_extractor::initialize() {
 
     // compute the desired number of keypoints per scale
     double desired_num_keypts_per_scale
-            = orb_params_.max_num_keypts_ * (1.0 - 1.0 / orb_params_.scale_factor_)
-              / (1.0 - std::pow(1.0 / orb_params_.scale_factor_, static_cast<double>(orb_params_.num_levels_)));
+        = orb_params_.max_num_keypts_ * (1.0 - 1.0 / orb_params_.scale_factor_)
+          / (1.0 - std::pow(1.0 / orb_params_.scale_factor_, static_cast<double>(orb_params_.num_levels_)));
     unsigned int total_num_keypts = 0;
     for (unsigned int level = 0; level < orb_params_.num_levels_ - 1; ++level) {
         num_keypts_per_level_.at(level) = std::round(desired_num_keypts_per_scale);
@@ -619,7 +619,7 @@ void orb_extractor::compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::
     const auto step = static_cast<int>(image.step);
 
 #ifdef USE_SSE_ORB
-#if !((defined _MSC_VER && defined _M_X64) \
+#if !((defined _MSC_VER && defined _M_X64)                            \
       || (defined __GNUC__ && defined __x86_64__ && defined __SSE3__) \
       || CV_SSE3)
 #error "The processor is not compatible with SSE. Please configure the CMake with -DUSE_SSE_ORB=OFF."
@@ -634,23 +634,23 @@ void orb_extractor::compute_orb_descriptor(const cv::KeyPoint& keypt, const cv::
     __m128i _vi;
     alignas(16) int32_t ii[4];
 
-#define COMPARE_ORB_POINTS(shift) \
-        (_point_pairs = _mm_load_ps(orb_point_pairs + shift), \
-         _mul1 = _mm_mul_ps(_point_pairs, _trig1), \
-         _mul2 = _mm_mul_ps(_point_pairs, _trig2), \
-         _vs = _mm_hadd_ps(_mul1, _mul2), \
-         _vi = _mm_cvtps_epi32(_vs), \
-         _mm_store_si128(reinterpret_cast<__m128i*>(ii), _vi), \
-         center[ii[0] * step + ii[2]] < center[ii[1] * step + ii[3]])
+#define COMPARE_ORB_POINTS(shift)                          \
+    (_point_pairs = _mm_load_ps(orb_point_pairs + shift),  \
+     _mul1 = _mm_mul_ps(_point_pairs, _trig1),             \
+     _mul2 = _mm_mul_ps(_point_pairs, _trig2),             \
+     _vs = _mm_hadd_ps(_mul1, _mul2),                      \
+     _vi = _mm_cvtps_epi32(_vs),                           \
+     _mm_store_si128(reinterpret_cast<__m128i*>(ii), _vi), \
+     center[ii[0] * step + ii[2]] < center[ii[1] * step + ii[3]])
 
 #else
 
-#define GET_VALUE(shift) \
-        (center[cvRound(*(orb_point_pairs + shift) * sin_angle + *(orb_point_pairs + shift + 1) * cos_angle) * step \
-              + cvRound(*(orb_point_pairs + shift) * cos_angle - *(orb_point_pairs + shift + 1) * sin_angle)])
+#define GET_VALUE(shift)                                                                                        \
+    (center[cvRound(*(orb_point_pairs + shift) * sin_angle + *(orb_point_pairs + shift + 1) * cos_angle) * step \
+            + cvRound(*(orb_point_pairs + shift) * cos_angle - *(orb_point_pairs + shift + 1) * sin_angle)])
 
 #define COMPARE_ORB_POINTS(shift) \
-        (GET_VALUE(shift) < GET_VALUE(shift + 2))
+    (GET_VALUE(shift) < GET_VALUE(shift + 2))
 
 #endif
 

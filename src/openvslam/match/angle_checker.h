@@ -59,8 +59,8 @@ private:
 
 template<typename T>
 angle_checker<T>::angle_checker(const unsigned int histogram_length, const unsigned int num_bins_thr)
-        : histogram_length_(histogram_length), inv_histogram_length_(1.0f / histogram_length),
-          num_bins_thr_(num_bins_thr) {
+    : histogram_length_(histogram_length), inv_histogram_length_(1.0f / histogram_length),
+      num_bins_thr_(num_bins_thr) {
     assert(num_bins_thr_ <= histogram_length_);
     angle_histogram_.resize(histogram_length_);
     for (auto& bin : angle_histogram_) {

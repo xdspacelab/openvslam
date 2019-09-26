@@ -5,7 +5,8 @@ namespace optimize {
 namespace g2o {
 namespace sim3 {
 
-shot_vertex::shot_vertex() : ::g2o::BaseVertex<7, ::g2o::Sim3>() {}
+shot_vertex::shot_vertex()
+    : ::g2o::BaseVertex<7, ::g2o::Sim3>() {}
 
 bool shot_vertex::read(std::istream& is) {
     Vec7_t g2o_sim3_wc;

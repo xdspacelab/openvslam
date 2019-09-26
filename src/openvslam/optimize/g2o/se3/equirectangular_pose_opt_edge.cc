@@ -5,7 +5,8 @@ namespace optimize {
 namespace g2o {
 namespace se3 {
 
-equirectangular_pose_opt_edge::equirectangular_pose_opt_edge() : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
+equirectangular_pose_opt_edge::equirectangular_pose_opt_edge()
+    : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
 
 bool equirectangular_pose_opt_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
@@ -57,13 +58,13 @@ void equirectangular_pose_opt_edge::linearizeOplus() {
     // 導関数ベクトル d_pcx_d_x, d_pcy_d_x, d_pcz_d_x を作成
     VecR_t<6> d_pcx_d_x;
     d_pcx_d_x << d_pc_d_rx(0), d_pc_d_ry(0), d_pc_d_rz(0),
-            d_pc_d_tx(0), d_pc_d_ty(0), d_pc_d_tz(0);
+        d_pc_d_tx(0), d_pc_d_ty(0), d_pc_d_tz(0);
     VecR_t<6> d_pcy_d_x;
     d_pcy_d_x << d_pc_d_rx(1), d_pc_d_ry(1), d_pc_d_rz(1),
-            d_pc_d_tx(1), d_pc_d_ty(1), d_pc_d_tz(1);
+        d_pc_d_tx(1), d_pc_d_ty(1), d_pc_d_tz(1);
     VecR_t<6> d_pcz_d_x;
     d_pcz_d_x << d_pc_d_rx(2), d_pc_d_ry(2), d_pc_d_rz(2),
-            d_pc_d_tx(2), d_pc_d_ty(2), d_pc_d_tz(2);
+        d_pc_d_tx(2), d_pc_d_ty(2), d_pc_d_tz(2);
 
     // 導関数ベクトル d_L_d_x を作成
     const Vec6_t d_L_d_x = (1.0 / L) * (pcx * d_pcx_d_x + pcy * d_pcy_d_x + pcz * d_pcz_d_x);

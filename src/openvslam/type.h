@@ -19,7 +19,7 @@ typedef float real_t;
 
 // Eigen matrix types
 
-template <size_t R, size_t C>
+template<size_t R, size_t C>
 using MatRC_t = Eigen::Matrix<double, R, C>;
 
 using Mat22_t = Eigen::Matrix2d;
@@ -40,7 +40,7 @@ using MatX_t = Eigen::MatrixXd;
 
 // Eigen vector types
 
-template <size_t R>
+template<size_t R>
 using VecR_t = Eigen::Matrix<double, R, 1>;
 
 using Vec2_t = Eigen::Vector2d;
@@ -63,39 +63,39 @@ using Quat_t = Eigen::Quaterniond;
 
 // STL with Eigen custom allocator
 
-template <typename T>
+template<typename T>
 using eigen_alloc_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
-template <typename T, typename U>
+template<typename T, typename U>
 using eigen_alloc_map = std::map<T, U, std::less<T>, Eigen::aligned_allocator<std::pair<const T, U>>>;
 
-template <typename T>
+template<typename T>
 using eigen_alloc_set = std::set<T, std::less<T>, Eigen::aligned_allocator<const T>>;
 
-template <typename T, typename U>
+template<typename T, typename U>
 using eigen_alloc_unord_map = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, Eigen::aligned_allocator<std::pair<const T, U>>>;
 
-template <typename T>
+template<typename T>
 using eigen_alloc_unord_set = std::unordered_set<T, std::hash<T>, std::equal_to<T>, Eigen::aligned_allocator<const T>>;
 
 // vector operators
 
-template <typename T>
+template<typename T>
 inline Vec2_t operator+(const Vec2_t& v1, const cv::Point_<T>& v2) {
     return {v1(0) + v2.x, v1(1) + v2.y};
 }
 
-template <typename T>
+template<typename T>
 inline Vec2_t operator+(const cv::Point_<T>& v1, const Vec2_t& v2) {
     return v2 + v1;
 }
 
-template <typename T>
+template<typename T>
 inline Vec2_t operator-(const Vec2_t& v1, const cv::Point_<T>& v2) {
     return v1 + (-v2);
 }
 
-template <typename T>
+template<typename T>
 inline Vec2_t operator-(const cv::Point_<T>& v1, const Vec2_t& v2) {
     return v1 + (-v2);
 }

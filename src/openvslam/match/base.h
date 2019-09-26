@@ -29,7 +29,7 @@ inline unsigned int compute_descriptor_distance_32(const cv::Mat& desc_1, const 
     unsigned int dist = 0;
 
     for (unsigned int i = 0; i < 8; ++i, ++pa, ++pb) {
-        auto v = *pa ^*pb;
+        auto v = *pa ^ *pb;
         v -= ((v >> 1) & mask_1);
         v = (v & mask_2) + ((v >> 2) & mask_2);
         dist += (((v + (v >> 4)) & mask_3) * mask_4) >> 24;
@@ -53,7 +53,7 @@ inline unsigned int compute_descriptor_distance_64(const cv::Mat& desc_1, const 
     unsigned int dist = 0;
 
     for (unsigned int i = 0; i < 4; ++i, ++pa, ++pb) {
-        auto v = *pa ^*pb;
+        auto v = *pa ^ *pb;
         v -= (v >> 1) & mask_1;
         v = (v & mask_2) + ((v >> 2) & mask_2);
         dist += (((v + (v >> 4)) & mask_3) * mask_4) >> 56;
@@ -65,7 +65,7 @@ inline unsigned int compute_descriptor_distance_64(const cv::Mat& desc_1, const 
 class base {
 public:
     base(const float lowe_ratio, const bool check_orientation)
-            : lowe_ratio_(lowe_ratio), check_orientation_(check_orientation) {}
+        : lowe_ratio_(lowe_ratio), check_orientation_(check_orientation) {}
 
     virtual ~base() = default;
 

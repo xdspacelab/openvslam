@@ -9,7 +9,8 @@
 namespace openvslam {
 namespace data {
 
-camera_database::camera_database(camera::base* curr_camera) : curr_camera_(curr_camera) {
+camera_database::camera_database(camera::base* curr_camera)
+    : curr_camera_(curr_camera) {
     spdlog::debug("CONSTRUCT: data::camera_database");
 }
 

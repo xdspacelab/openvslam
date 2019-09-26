@@ -86,7 +86,7 @@ unsigned int area::match_in_consistent_area(data::frame& frm_1, data::frame& frm
 
         if (check_orientation_) {
             const auto delta_angle
-                    = frm_1.undist_keypts_.at(idx_1).angle - frm_2.undist_keypts_.at(best_idx_2).angle;
+                = frm_1.undist_keypts_.at(idx_1).angle - frm_2.undist_keypts_.at(best_idx_2).angle;
             angle_checker.append_delta_angle(delta_angle, idx_1);
         }
     }

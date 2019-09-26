@@ -13,7 +13,7 @@ namespace openvslam {
 namespace module {
 
 loop_bundle_adjuster::loop_bundle_adjuster(data::map_database* map_db, const unsigned int num_iter)
-        : map_db_(map_db), num_iter_(num_iter) {}
+    : map_db_(map_db), num_iter_(num_iter) {}
 
 void loop_bundle_adjuster::set_mapping_module(mapping_module* mapper) {
     mapper_ = mapper;

@@ -13,8 +13,8 @@ namespace openvslam {
 namespace module {
 
 loop_detector::loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale_in_Sim3_estimation)
-        : bow_db_(bow_db), bow_vocab_(bow_vocab), transform_optimizer_(fix_scale_in_Sim3_estimation),
-          fix_scale_in_Sim3_estimation_(fix_scale_in_Sim3_estimation) {}
+    : bow_db_(bow_db), bow_vocab_(bow_vocab), transform_optimizer_(fix_scale_in_Sim3_estimation),
+      fix_scale_in_Sim3_estimation_(fix_scale_in_Sim3_estimation) {}
 
 void loop_detector::enable_loop_detector() {
     loop_detector_is_enabled_ = true;
@@ -66,8 +66,7 @@ bool loop_detector::detect_loop_candidates() {
     //    if the keyframe sets were detected at the previous call, is is contained in `cont_detected_keyfrm_sets_`
     //    (note that "match of two keyframe sets" means the intersection of the two sets is NOT empty)
 
-    const auto curr_cont_detected_keyfrm_sets =
-            find_continuously_detected_keyframe_sets(cont_detected_keyfrm_sets_, init_loop_candidates);
+    const auto curr_cont_detected_keyfrm_sets = find_continuously_detected_keyframe_sets(cont_detected_keyfrm_sets_, init_loop_candidates);
 
     // 3. if the number of the detection is equal of greater than the threshold (`min_continuity_`),
     //    adopt it as one of the loop candidates
@@ -254,7 +253,7 @@ keyframe_sets loop_detector::find_continuously_detected_keyframe_sets(const keyf
             // create the new statistics by incrementing the continuity
             const auto curr_continuity = prev.continuity_ + 1;
             curr_cont_detected_keyfrm_sets.emplace_back(
-                    keyframe_set{keyfrm_set, keyfrm_to_search, curr_continuity});
+                keyframe_set{keyfrm_set, keyfrm_to_search, curr_continuity});
 
             // this keyframe set is already checked
             already_checked.at(prev.keyfrm_set_) = true;
@@ -263,7 +262,7 @@ keyframe_sets loop_detector::find_continuously_detected_keyframe_sets(const keyf
         // if initialization is needed, add the new statistics
         if (initialization_is_needed) {
             curr_cont_detected_keyfrm_sets.emplace_back(
-                    keyframe_set{keyfrm_set, keyfrm_to_search, 0});
+                keyframe_set{keyfrm_set, keyfrm_to_search, 0});
         }
     }
 

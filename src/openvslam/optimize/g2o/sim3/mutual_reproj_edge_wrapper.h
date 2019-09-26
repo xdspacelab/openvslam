@@ -54,16 +54,16 @@ public:
     //! (カメラモデルはkeyfrm_2のものに従う)
     base_backward_reproj_edge* edge_21_;
 
-    T* shot1_, * shot2_;
+    T *shot1_, *shot2_;
     unsigned int idx1_, idx2_;
-    data::landmark* lm1_, * lm2_;
+    data::landmark *lm1_, *lm2_;
 };
 
 template<typename T>
 mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int idx1, data::landmark* lm1,
                                                         T* shot2, unsigned int idx2, data::landmark* lm2,
                                                         g2o::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq)
-        : shot1_(shot1), shot2_(shot2), idx1_(idx1), idx2_(idx2), lm1_(lm1), lm2_(lm2) {
+    : shot1_(shot1), shot2_(shot2), idx1_(idx1), idx2_(idx2), lm1_(lm1), lm2_(lm2) {
     // 1. forward edgeを作成
     {
         camera::base* camera1 = shot1->camera_;

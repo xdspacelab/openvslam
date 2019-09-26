@@ -185,9 +185,9 @@ void sim3_solver::compute_Sim3(const Mat33_t& pts_1, const Mat33_t& pts_2,
     const double& Szz = M(2, 2);
     Eigen::Matrix4d N;
     N << (Sxx + Syy + Szz), (Syz - Szy), (Szx - Sxz), (Sxy - Syx),
-            (Syz - Szy), (Sxx - Syy - Szz), (Sxy + Syx), (Szx + Sxz),
-            (Szx - Sxz), (Sxy + Syx), (-Sxx + Syy - Szz), (Syz + Szy),
-            (Sxy - Syx), (Szx + Sxz), (Syz + Szy), (-Sxx - Syy + Szz);
+        (Syz - Szy), (Sxx - Syy - Szz), (Sxy + Syx), (Szx + Sxz),
+        (Szx - Sxz), (Sxy + Syx), (-Sxx + Syy - Szz), (Syz + Szy),
+        (Sxy - Syx), (Szx + Sxz), (Syz + Szy), (-Sxx - Syy + Szz);
 
     // 4.B Eigenvector Maximizes Matrix Product
 
@@ -307,5 +307,5 @@ void sim3_solver::reproject_to_same_image(const std::vector<Vec3_t, Eigen::align
     }
 }
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam

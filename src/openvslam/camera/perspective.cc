@@ -10,9 +10,9 @@ perspective::perspective(const std::string& name, const setup_type_t& setup_type
                          const double fx, const double fy, const double cx, const double cy,
                          const double k1, const double k2, const double p1, const double p2, const double k3,
                          const double focal_x_baseline)
-        : base(name, setup_type, model_type_t::Perspective, color_order, cols, rows, fps, focal_x_baseline, focal_x_baseline / fx),
-          fx_(fx), fy_(fy), cx_(cx), cy_(cy), fx_inv_(1.0 / fx), fy_inv_(1.0 / fy),
-          k1_(k1), k2_(k2), p1_(p1), p2_(p2), k3_(k3) {
+    : base(name, setup_type, model_type_t::Perspective, color_order, cols, rows, fps, focal_x_baseline, focal_x_baseline / fx),
+      fx_(fx), fy_(fy), cx_(cx), cy_(cy), fx_inv_(1.0 / fx), fy_inv_(1.0 / fy),
+      k1_(k1), k2_(k2), p1_(p1), p2_(p2), k3_(k3) {
     spdlog::debug("CONSTRUCT: camera::perspective");
 
     cv_cam_matrix_ = (cv::Mat_<float>(3, 3) << fx_, 0, cx_, 0, fy_, cy_, 0, 0, 1);
@@ -28,22 +28,22 @@ perspective::perspective(const std::string& name, const setup_type_t& setup_type
 }
 
 perspective::perspective(const YAML::Node& yaml_node)
-        : perspective(yaml_node["Camera.name"].as<std::string>(),
-                      load_setup_type(yaml_node),
-                      load_color_order(yaml_node),
-                      yaml_node["Camera.cols"].as<unsigned int>(),
-                      yaml_node["Camera.rows"].as<unsigned int>(),
-                      yaml_node["Camera.fps"].as<double>(),
-                      yaml_node["Camera.fx"].as<double>(),
-                      yaml_node["Camera.fy"].as<double>(),
-                      yaml_node["Camera.cx"].as<double>(),
-                      yaml_node["Camera.cy"].as<double>(),
-                      yaml_node["Camera.k1"].as<double>(),
-                      yaml_node["Camera.k2"].as<double>(),
-                      yaml_node["Camera.p1"].as<double>(),
-                      yaml_node["Camera.p2"].as<double>(),
-                      yaml_node["Camera.k3"].as<double>(),
-                      yaml_node["Camera.focal_x_baseline"].as<double>(0.0)) {}
+    : perspective(yaml_node["Camera.name"].as<std::string>(),
+                  load_setup_type(yaml_node),
+                  load_color_order(yaml_node),
+                  yaml_node["Camera.cols"].as<unsigned int>(),
+                  yaml_node["Camera.rows"].as<unsigned int>(),
+                  yaml_node["Camera.fps"].as<double>(),
+                  yaml_node["Camera.fx"].as<double>(),
+                  yaml_node["Camera.fy"].as<double>(),
+                  yaml_node["Camera.cx"].as<double>(),
+                  yaml_node["Camera.cy"].as<double>(),
+                  yaml_node["Camera.k1"].as<double>(),
+                  yaml_node["Camera.k2"].as<double>(),
+                  yaml_node["Camera.p1"].as<double>(),
+                  yaml_node["Camera.p2"].as<double>(),
+                  yaml_node["Camera.k3"].as<double>(),
+                  yaml_node["Camera.focal_x_baseline"].as<double>(0.0)) {}
 
 perspective::~perspective() {
     spdlog::debug("DESTRUCT: camera::perspective");
@@ -78,9 +78,9 @@ image_bounds perspective::compute_image_bounds() const {
         // distortion exists
 
         // corner coordinates: (x, y) = (col, row)
-        const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0), // left top
-                                                cv::KeyPoint(cols_, 0.0, 1.0), // right top
-                                                cv::KeyPoint(0.0, rows_, 1.0), // left bottom
+        const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0),      // left top
+                                                cv::KeyPoint(cols_, 0.0, 1.0),    // right top
+                                                cv::KeyPoint(0.0, rows_, 1.0),    // left bottom
                                                 cv::KeyPoint(cols_, rows_, 1.0)}; // right bottom
 
         std::vector<cv::KeyPoint> undist_corners;

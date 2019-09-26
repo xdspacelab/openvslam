@@ -8,7 +8,7 @@ class kitti_sequence {
 public:
     struct frame {
         frame(const std::string& left_img_path, const std::string& right_img_path, const double timestamp)
-                : left_img_path_(left_img_path), right_img_path_(right_img_path), timestamp_(timestamp) {};
+            : left_img_path_(left_img_path), right_img_path_(right_img_path), timestamp_(timestamp){};
 
         const std::string left_img_path_;
         const std::string right_img_path_;

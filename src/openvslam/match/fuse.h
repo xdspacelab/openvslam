@@ -16,7 +16,7 @@ namespace match {
 class fuse final : public base {
 public:
     explicit fuse(const float lowe_ratio = 0.6)
-            : base(lowe_ratio, true) {}
+        : base(lowe_ratio, true) {}
 
     ~fuse() final = default;
 

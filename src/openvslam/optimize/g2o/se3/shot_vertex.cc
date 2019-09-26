@@ -5,7 +5,8 @@ namespace optimize {
 namespace g2o {
 namespace se3 {
 
-shot_vertex::shot_vertex() : BaseVertex<6, ::g2o::SE3Quat>() {}
+shot_vertex::shot_vertex()
+    : BaseVertex<6, ::g2o::SE3Quat>() {}
 
 bool shot_vertex::read(std::istream& is) {
     Vec7_t estimate;

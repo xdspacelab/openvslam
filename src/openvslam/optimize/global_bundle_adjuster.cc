@@ -21,7 +21,7 @@ namespace openvslam {
 namespace optimize {
 
 global_bundle_adjuster::global_bundle_adjuster(data::map_database* map_db, const unsigned int num_iter, const bool use_huber_kernel)
-        : map_db_(map_db), num_iter_(num_iter), use_huber_kernel_(use_huber_kernel) {}
+    : map_db_(map_db), num_iter_(num_iter), use_huber_kernel_(use_huber_kernel) {}
 
 void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_global_BA, bool* const force_stop_flag) const {
     // 1. データを集める
@@ -112,7 +112,8 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
             const float x_right = keyfrm->stereo_x_right_.at(idx);
             const float inv_sigma_sq = keyfrm->inv_level_sigma_sq_.at(undist_keypt.octave);
             const auto sqrt_chi_sq = (keyfrm->camera_->setup_type_ == camera::setup_type_t::Monocular)
-                                     ? sqrt_chi_sq_2D : sqrt_chi_sq_3D;
+                                         ? sqrt_chi_sq_2D
+                                         : sqrt_chi_sq_3D;
             auto reproj_edge_wrap = reproj_edge_wrapper(keyfrm, keyfrm_vtx, lm, lm_vtx,
                                                         idx, undist_keypt.pt.x, undist_keypt.pt.y, x_right,
                                                         inv_sigma_sq, sqrt_chi_sq, use_huber_kernel_);

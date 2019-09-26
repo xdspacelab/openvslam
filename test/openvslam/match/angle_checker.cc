@@ -41,16 +41,14 @@ TEST(angle_checker, check_matches_top_1) {
     EXPECT_TRUE(!valid_matches.empty());
     for (const auto match : valid_matches) {
         EXPECT_TRUE(match == 35);
-        EXPECT_TRUE(match != 324 && match != 127 &&
-                    match != 0 && match != 60 && match != 180 && match != 270);
+        EXPECT_TRUE(match != 324 && match != 127 && match != 0 && match != 60 && match != 180 && match != 270);
     }
 
     // check invalid_matches does not contain 35
     const auto invalid_matches = angle_checker.get_invalid_matches();
     for (const auto match : invalid_matches) {
         EXPECT_TRUE(match != 35);
-        EXPECT_TRUE(match == 324 || match == 127 ||
-                    match == 0 || match == 60 || match == 180 || match == 270);
+        EXPECT_TRUE(match == 324 || match == 127 || match == 0 || match == 60 || match == 180 || match == 270);
     }
 }
 
@@ -86,8 +84,7 @@ TEST(angle_checker, check_matches_top_2) {
     EXPECT_TRUE(!valid_matches.empty());
     for (const auto match : valid_matches) {
         EXPECT_TRUE(match == 35 || match == 324);
-        EXPECT_TRUE(match != 127 &&
-                    match != 0 && match != 60 && match != 180 && match != 270);
+        EXPECT_TRUE(match != 127 && match != 0 && match != 60 && match != 180 && match != 270);
     }
 
     // check invalid_matches does not contain 35 and 324
@@ -95,8 +92,7 @@ TEST(angle_checker, check_matches_top_2) {
     EXPECT_TRUE(!invalid_matches.empty());
     for (const auto match : invalid_matches) {
         EXPECT_TRUE(match != 35 && match != 324);
-        EXPECT_TRUE(match == 127 ||
-                    match == 0 || match == 60 || match == 180 || match == 270);
+        EXPECT_TRUE(match == 127 || match == 0 || match == 60 || match == 180 || match == 270);
     }
 }
 
@@ -175,8 +171,7 @@ TEST(angle_checker, check_matches_all) {
     const auto valid_matches = angle_checker.get_valid_matches();
     EXPECT_TRUE(!valid_matches.empty());
     for (const auto match : valid_matches) {
-        EXPECT_TRUE(match == 35 || match == 324 || match == 127 ||
-                    match == 0 || match == 60 || match == 180 || match == 270);
+        EXPECT_TRUE(match == 35 || match == 324 || match == 127 || match == 0 || match == 60 || match == 180 || match == 270);
     }
 
     // check invalid_matches contains no entries

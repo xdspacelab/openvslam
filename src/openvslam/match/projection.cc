@@ -99,10 +99,12 @@ unsigned int projection::match_current_and_last_frames(data::frame& curr_frm, co
     // monocular以外の場合は，current->lastの並進ベクトルのz成分で前進しているか判断しているかを判定する
     // z成分が正に振れている -> 前進している
     const bool assume_forward = (curr_frm.camera_->setup_type_ == camera::setup_type_t::Monocular)
-                                ? false : trans_lc(2) > curr_frm.camera_->true_baseline_;
+                                    ? false
+                                    : trans_lc(2) > curr_frm.camera_->true_baseline_;
     // z成分が負に振れている -> 後退している
     const bool assume_backward = (curr_frm.camera_->setup_type_ == camera::setup_type_t::Monocular)
-                                 ? false : -trans_lc(2) > curr_frm.camera_->true_baseline_;
+                                     ? false
+                                     : -trans_lc(2) > curr_frm.camera_->true_baseline_;
 
     // last frameの特徴点と対応が取れている3次元点を，current frameに再投影して対応を求める
     for (unsigned int idx_last = 0; idx_last < last_frm.num_keypts_; ++idx_last) {
@@ -190,7 +192,7 @@ unsigned int projection::match_current_and_last_frames(data::frame& curr_frm, co
 
         if (check_orientation_) {
             const auto delta_angle
-                    = last_frm.undist_keypts_.at(idx_last).angle - curr_frm.undist_keypts_.at(best_idx).angle;
+                = last_frm.undist_keypts_.at(idx_last).angle - curr_frm.undist_keypts_.at(best_idx).angle;
             angle_checker.append_delta_angle(delta_angle, best_idx);
         }
     }
@@ -294,7 +296,7 @@ unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::k
 
         if (check_orientation_) {
             const auto delta_angle
-                    = keyfrm->undist_keypts_.at(idx).angle - curr_frm.undist_keypts_.at(best_idx).angle;
+                = keyfrm->undist_keypts_.at(idx).angle - curr_frm.undist_keypts_.at(best_idx).angle;
             angle_checker.append_delta_angle(delta_angle, best_idx);
         }
     }
@@ -310,9 +312,8 @@ unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::k
     return num_matches;
 }
 
-
 unsigned int projection::match_by_Sim3_transform(data::keyframe* keyfrm, const Mat44_t& Sim3_cw, const std::vector<data::landmark*>& landmarks,
-                                                  std::vector<data::landmark*>& matched_lms_in_keyfrm, const float margin) const {
+                                                 std::vector<data::landmark*>& matched_lms_in_keyfrm, const float margin) const {
     unsigned int num_matches = 0;
 
     // Sim3を分解してSE3にする

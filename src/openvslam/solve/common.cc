@@ -46,5 +46,5 @@ void normalize(const std::vector<cv::KeyPoint>& keypts, std::vector<cv::Point2f>
     transform(1, 2) = -mean_y * mean_l1_dev_y_inv;
 }
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam

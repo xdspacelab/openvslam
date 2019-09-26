@@ -46,7 +46,7 @@ void assign_keypoints_to_grid(camera::base* camera, const std::vector<cv::KeyPoi
  * @return
  */
 auto assign_keypoints_to_grid(camera::base* camera, const std::vector<cv::KeyPoint>& undist_keypts)
--> std::vector<std::vector<std::vector<unsigned int>>>;
+    -> std::vector<std::vector<std::vector<unsigned int>>>;
 
 /**
  * Get x-y index of the cell in which the specified keypoint is assigned

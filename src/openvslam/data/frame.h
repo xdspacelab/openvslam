@@ -247,7 +247,8 @@ public:
 
 private:
     //! enumeration to control the behavior of extract_orb()
-    enum class image_side { Left, Right };
+    enum class image_side { Left,
+                            Right };
 
     /**
      * Extract ORB feature according to img_size

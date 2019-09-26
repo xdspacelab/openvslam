@@ -7,7 +7,6 @@ void create_bearing_vectors(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const
     const auto num_landmarks = landmarks.size();
 
     // convert a 3D point to a bearing vector
-
     bearings.resize(num_landmarks);
     for (unsigned int i = 0; i < num_landmarks; ++i) {
         const Vec3_t& lm = landmarks.at(i);

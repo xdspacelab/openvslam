@@ -28,7 +28,7 @@
 #endif
 
 void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path,
-                   const std::string& mask_img_path, const std::string& map_db_path, const bool mapping) {
+                       const std::string& mask_img_path, const std::string& map_db_path, const bool mapping) {
     // load the mask image
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
 

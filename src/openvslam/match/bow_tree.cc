@@ -90,7 +90,7 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
 
                 if (check_orientation_) {
                     const auto delta_angle
-                            = keyfrm->keypts_.at(keyfrm_idx).angle - frm.keypts_.at(best_frm_idx).angle;
+                        = keyfrm->keypts_.at(keyfrm_idx).angle - frm.keypts_.at(best_frm_idx).angle;
                     angle_checker.append_delta_angle(delta_angle, best_frm_idx);
                 }
 
@@ -218,7 +218,7 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
 
                 if (check_orientation_) {
                     const auto delta_angle
-                            = keyfrm_1->keypts_.at(idx_1).angle - keyfrm_2->keypts_.at(best_idx_2).angle;
+                        = keyfrm_1->keypts_.at(idx_1).angle - keyfrm_2->keypts_.at(best_idx_2).angle;
                     angle_checker.append_delta_angle(delta_angle, idx_1);
                 }
             }
