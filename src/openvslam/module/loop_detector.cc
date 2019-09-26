@@ -299,10 +299,10 @@ bool loop_detector::select_loop_candidate_via_Sim3(const std::vector<data::keyfr
         // keyframe1: current keyframe, keyframe2: candidate keyframe
         // estimate Sim3 of 2->1 (candidate->current)
 
-        solve::sim3_solver solver(cur_keyfrm_, candidate, curr_match_lms_observed_in_cand, fix_scale_in_Sim3_estimation_);
-        solver.set_ransac_parameters(0.999, 20, 300);
-        const auto estimated = solver.estimate();
-        if (!estimated) {
+        solve::sim3_solver solver(cur_keyfrm_, candidate, curr_match_lms_observed_in_cand,
+                                  fix_scale_in_Sim3_estimation_, 20);
+        solver.find_via_ransac(200);
+        if (!solver.solution_is_valid()) {
             continue;
         }
 
