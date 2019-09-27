@@ -13,7 +13,7 @@ public:
     //! Constructor
     orb_extractor_node() = default;
 
-    //! Devide node to four child nodes
+    //! Divide node to four child nodes
     std::array<orb_extractor_node, 4> divide_node();
 
     //! Keypoints which distributed into this node
