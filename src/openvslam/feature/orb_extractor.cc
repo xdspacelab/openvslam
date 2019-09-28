@@ -97,7 +97,7 @@ void orb_extractor::extract(const cv::_InputArray& in_image, const cv::_InputArr
         compute_fast_keypoints(all_keypts, rect_mask_);
     }
     else {
-        // Do not use a mask if all masks are unavailable
+        // Do not use any mask if all masks are unavailable
         compute_fast_keypoints(all_keypts, cv::Mat());
     }
 
@@ -326,7 +326,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                     max_x = max_border_x;
                 }
 
-                // Pass FAST computation if one of the corners of a patch is not in the mask
+                // Pass FAST computation if one of the corners of a patch is in the mask
                 if (!mask.empty()) {
                     if (is_in_mask(min_y, min_x, scale_factor) || is_in_mask(max_y, min_x, scale_factor)
                         || is_in_mask(min_y, max_x, scale_factor) || is_in_mask(max_y, max_x, scale_factor)) {
@@ -338,7 +338,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                 cv::FAST(image_pyramid_.at(level).rowRange(min_y, max_y).colRange(min_x, max_x),
                          keypts_in_cell, orb_params_.ini_fast_thr_, true);
 
-                // Re-compute with reduced threshold if enough keypoint was not got
+                // Re-compute FAST keypoint with reduced threshold if enough keypoint was not got
                 if (keypts_in_cell.empty()) {
                     cv::FAST(image_pyramid_.at(level).rowRange(min_y, max_y).colRange(min_x, max_x),
                              keypts_in_cell, orb_params_.min_fast_thr, true);
@@ -348,7 +348,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                     continue;
                 }
 
-                // Correct keypoints for every scale
+                // Collect keypoints for every scale
 #ifdef USE_OPENMP
 #pragma omp critical
 #endif
@@ -422,7 +422,7 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
             // Divide node and assign to the leaf node pool
             const auto child_nodes = iter->divide_node();
             assign_child_nodes(child_nodes, nodes, leaf_nodes_pool);
-            // Remove old node
+            // Remove the old node
             iter = nodes.erase(iter);
         }
 
@@ -432,7 +432,7 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
             break;
         }
 
-        // If all nodes number is more than limit, desice keeping node by next step
+        // If all nodes number is more than limit, keeping nodes are selected by next step
         if (num_keypts < nodes.size() + leaf_nodes_pool.size()) {
             is_filled = false;
             break;
@@ -453,7 +453,7 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
             // Divide node and assign to the leaf node pool
             const auto child_nodes = prev_leaf_node.second->divide_node();
             assign_child_nodes(child_nodes, nodes, leaf_nodes_pool);
-            // Remove old node
+            // Remove the old node
             nodes.erase(prev_leaf_node.second->iter_);
 
             if (num_keypts <= nodes.size()) {
@@ -511,7 +511,7 @@ std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<
             iter = nodes.erase(iter);
             continue;
         }
-        // Set leaf node flag if the node has only one keypoint
+        // Set the leaf node flag if the node has only one keypoint
         iter->is_leaf_node_ = (iter->keypts_.size() == 1);
         iter++;
     }

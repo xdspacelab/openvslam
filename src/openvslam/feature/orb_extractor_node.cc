@@ -4,7 +4,7 @@ namespace openvslam {
 namespace feature {
 
 std::array<orb_extractor_node, 4> orb_extractor_node::divide_node() {
-    // Half width/height of the allocated area
+    // Half width/height of the allocated patch area
     const unsigned int half_x = cvCeil((pt_end_.x - pt_begin_.x) / 2.0);
     const unsigned int half_y = cvCeil((pt_end_.y - pt_begin_.y) / 2.0);
 

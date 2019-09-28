@@ -12,7 +12,6 @@ namespace feature {
 
 class orb_extractor {
 public:
-
     orb_extractor() = delete;
 
     //! Constructor
@@ -113,7 +112,7 @@ private:
     //! Correct keypoint's position to comply with the scale
     void correct_keypoint_scale(std::vector<cv::KeyPoint>& keypts_at_level, const unsigned int level) const;
 
-    //! Compute the gradient of pixel intensity in a circle around the point
+    //! Compute the gradient direction of pixel intensity in a circle around the point
     float ic_angle(const cv::Mat& image, const cv::Point2f& point) const;
 
     //! Compute orb descriptors for all keypoint

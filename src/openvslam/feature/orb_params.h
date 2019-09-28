@@ -9,14 +9,18 @@ namespace feature {
 struct orb_params {
     orb_params() = default;
 
+    //! Constructor
     orb_params(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
                const std::vector<std::vector<float>>& mask_rects = {});
 
+    //! Constructor
     explicit orb_params(const YAML::Node& yaml_node);
 
+    //! Destructor
     virtual ~orb_params() = default;
 
+    //! Dump parameter values to the standard output
     void show_parameters() const;
 
     unsigned int max_num_keypts_ = 2000;
