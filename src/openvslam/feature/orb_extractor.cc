@@ -97,7 +97,7 @@ void orb_extractor::extract(const cv::_InputArray& in_image, const cv::_InputArr
         compute_fast_keypoints(all_keypts, rect_mask_);
     }
     else {
-        // Do not use mask if all masks are unavailable
+        // Do not use a mask if all masks are unavailable
         compute_fast_keypoints(all_keypts, cv::Mat());
     }
 
@@ -326,7 +326,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                     max_x = max_border_x;
                 }
 
-                // Pass FAST computation if one of the corners of patch is not in the mask
+                // Pass FAST computation if one of the corners of a patch is not in the mask
                 if (!mask.empty()) {
                     if (is_in_mask(min_y, min_x, scale_factor) || is_in_mask(max_y, min_x, scale_factor)
                         || is_in_mask(min_y, max_x, scale_factor) || is_in_mask(max_y, max_x, scale_factor)) {
@@ -338,7 +338,7 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                 cv::FAST(image_pyramid_.at(level).rowRange(min_y, max_y).colRange(min_x, max_x),
                          keypts_in_cell, orb_params_.ini_fast_thr_, true);
 
-                // Re-compute with decaded threshold if enough keypoint was not got
+                // Re-compute with reduced threshold if enough keypoint was not got
                 if (keypts_in_cell.empty()) {
                     cv::FAST(image_pyramid_.at(level).rowRange(min_y, max_y).colRange(min_x, max_x),
                              keypts_in_cell, orb_params_.min_fast_thr, true);
@@ -374,14 +374,14 @@ void orb_extractor::compute_fast_keypoints(std::vector<std::vector<cv::KeyPoint>
                                                         min_border_x, max_border_x, min_border_y, max_border_y,
                                                         num_keypts_per_level_.at(level));
 
-        // Keypoint size is patch size modified by scale factor
+        // Keypoint size is patch size modified by the scale factor
         const unsigned int scaled_patch_size = fast_patch_size_ * scale_factors_.at(level);
 
         for (auto& keypt : keypts_at_level) {
-            // Translation correction (scale will be corrected after orb description)
+            // Translation correction (scale will be corrected after ORB description)
             keypt.pt.x += min_border_x;
             keypt.pt.y += min_border_y;
-            // Set the other informations
+            // Set the other information
             keypt.octave = level;
             keypt.size = scaled_patch_size;
         }
@@ -398,12 +398,12 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
                                                                        const unsigned int num_keypts) const {
     auto nodes = initialize_nodes(keypts_to_distribute, min_x, max_x, min_y, max_y);
 
-    // Forkable leafnodes list
-    // The pool is used when a forking makes nodes more than limited number
+    // Forkable leaf nodes list
+    // The pool is used when a forking makes nodes more than a limited number
     std::vector<std::pair<int, orb_extractor_node*>> leaf_nodes_pool;
     leaf_nodes_pool.reserve(nodes.size() * 10);
 
-    // A flag denotes if ehough keypoints have been distributed
+    // A flag denotes if enough keypoints have been distributed
     bool is_filled = false;
 
     while (true) {
@@ -412,21 +412,21 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
         auto iter = nodes.begin();
         leaf_nodes_pool.clear();
 
-        // Fork node and remove old node from nodes
+        // Fork node and remove the old one from nodes
         while (iter != nodes.end()) {
             if (iter->is_leaf_node_) {
                 iter++;
                 continue;
             }
 
-            // Devide node and assign to leaf node pool
+            // Divide node and assign to the leaf node pool
             const auto child_nodes = iter->divide_node();
             assign_child_nodes(child_nodes, nodes, leaf_nodes_pool);
             // Remove old node
             iter = nodes.erase(iter);
         }
 
-        // Stop iteration when number of node is over the designeted size or new node is not generated
+        // Stop iteration when the number of nodes is over the designated size or new node is not generated
         if (num_keypts <= nodes.size() || nodes.size() == prev_size) {
             is_filled = true;
             break;
@@ -446,11 +446,11 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
         auto prev_leaf_nodes_pool = leaf_nodes_pool;
         leaf_nodes_pool.clear();
 
-        // Sort by number of keypoint in patch of each leaf node
+        // Sort by number of keypoints in the patch of each leaf node
         std::sort(prev_leaf_nodes_pool.rbegin(), prev_leaf_nodes_pool.rend());
         // Do processes from the node which has much more keypoints
         for (const auto& prev_leaf_node : prev_leaf_nodes_pool) {
-            // Devide node and asign to the leaf node pool
+            // Divide node and assign to the leaf node pool
             const auto child_nodes = prev_leaf_node.second->divide_node();
             assign_child_nodes(child_nodes, nodes, leaf_nodes_pool);
             // Remove old node
@@ -462,7 +462,7 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
             }
         }
 
-        // Stop deviding if the number of node is reach to the limit or there are no devidable nodes
+        // Stop dividing if the number of nodes is reached to the limit or there are no dividable nodes
         if (is_filled || num_keypts <= nodes.size() || nodes.size() == prev_size) {
             is_filled = true;
             break;
@@ -477,7 +477,7 @@ std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<
 
     // The number of the initial nodes
     const unsigned int num_initial_nodes = std::round(static_cast<double>(max_x - min_x) / (max_y - min_y));
-    // Width of patches allocated to initial node
+    // Width of patches allocated to the initial node
     const auto delta_x = static_cast<double>(max_x - min_x) / num_initial_nodes;
 
     // A list of node
@@ -499,7 +499,7 @@ std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<
         initial_nodes.at(i) = &nodes.back();
     }
 
-    // Assign all keyponits to initial nodes whitch own keypoint's position
+    // Assign all keypoints to initial nodes which own keypoint's position
     for (const auto& keypt : keypts_to_distribute) {
         initial_nodes.at(keypt.pt.x / delta_x)->keypts_.push_back(keypt);
     }
@@ -540,7 +540,7 @@ std::vector<cv::KeyPoint> orb_extractor::find_keypoints_with_max_response(std::l
     std::vector<cv::KeyPoint> result_keypts;
     result_keypts.reserve(nodes.size());
 
-    // Store keypoints which has maximum responce in the node patch
+    // Store keypoints which has maximum response in the node patch
     for (auto& node : nodes) {
         auto& node_keypts = node.keypts_;
         auto& keypt = node_keypts.at(0);

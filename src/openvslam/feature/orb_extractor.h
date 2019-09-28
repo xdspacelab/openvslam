@@ -20,7 +20,7 @@ public:
                   const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
                   const std::vector<std::vector<float>>& mask_rects = {});
 
-    //! Construcltor
+    //! Constructor
     explicit orb_extractor(const orb_params& orb_params);
 
     //! Destructor
@@ -82,7 +82,7 @@ private:
     //! Calculate scale factors and sigmas
     void calc_scale_factors();
 
-    //! Create a mask matrix that constracted by rectangles
+    //! Create a mask matrix that constructed by rectangles
     void create_rectangle_mask(const unsigned int cols, const unsigned int rows);
 
     //! Compute image pyramid
@@ -104,7 +104,7 @@ private:
     void assign_child_nodes(const std::array<orb_extractor_node, 4>& child_nodes, std::list<orb_extractor_node>& nodes,
                             std::vector<std::pair<int, orb_extractor_node*>>& leaf_nodes) const;
 
-    //! Find keypoint which has maximum value of responce
+    //! Find keypoint which has maximum value of response
     std::vector<cv::KeyPoint> find_keypoints_with_max_response(std::list<orb_extractor_node>& nodes) const;
 
     //! Compute orientation for each keypoint
@@ -113,7 +113,7 @@ private:
     //! Correct keypoint's position to comply with the scale
     void correct_keypoint_scale(std::vector<cv::KeyPoint>& keypts_at_level, const unsigned int level) const;
 
-    //! Compute gradient of pixcel intencity in a circle around point
+    //! Compute the gradient of pixel intensity in a circle around the point
     float ic_angle(const cv::Mat& image, const cv::Point2f& point) const;
 
     //! Compute orb descriptors for all keypoint
@@ -137,10 +137,10 @@ private:
     bool mask_is_initialized_ = false;
     cv::Mat rect_mask_;
 
-    //! A list of scale factor of each pyramid layer
+    //! A list of the scale factor of each pyramid layer
     std::vector<float> scale_factors_;
     std::vector<float> inv_scale_factors_;
-    //! A list of sigma of each pyramid layer
+    //! A list of the sigma of each pyramid layer
     std::vector<float> level_sigma_sq_;
     std::vector<float> inv_level_sigma_sq_;
 
