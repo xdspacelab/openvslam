@@ -474,7 +474,6 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
 
 std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<cv::KeyPoint>& keypts_to_distribute,
                                                               const int min_x, const int max_x, const int min_y, const int max_y) const {
-
     // The number of the initial nodes
     const unsigned int num_initial_nodes = std::round(static_cast<double>(max_x - min_x) / (max_y - min_y));
     // Width of patches allocated to the initial node
