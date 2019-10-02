@@ -15,8 +15,8 @@ namespace solve {
 sim3_solver::sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
                          const std::vector<data::landmark*>& matched_lms_in_keyfrm_2,
                          const bool fix_scale, const unsigned int min_num_inliers)
-        : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
-          fix_scale_(fix_scale), min_num_inliers_(min_num_inliers) {
+    : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
+      fix_scale_(fix_scale), min_num_inliers_(min_num_inliers) {
     // keyframe1の3次元点
     const auto keyfrm_1_lms = keyfrm_1_->get_landmarks();
 
