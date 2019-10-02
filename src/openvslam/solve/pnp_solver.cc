@@ -1,19 +1,15 @@
+#include "openvslam/data/landmark.h"
 #include "openvslam/solve/pnp_solver.h"
 #include "openvslam/util/random_array.h"
 #include "openvslam/util/trigonometric.h"
-
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <algorithm>
-
-#include <opencv2/core/core.hpp>
 
 namespace openvslam {
 namespace solve {
 
 pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& bearings, const std::vector<cv::KeyPoint>& keypts,
-                       const std::vector<float>& scale_factors, const std::vector<data::landmark*>& assoc_lms) {
+                       const std::vector<float>& scale_factors, const std::vector<data::landmark*>& assoc_lms,
+                       const unsigned int min_num_inliers)
+    : min_num_inliers_(min_num_inliers) {
     assert(bearings.size() == assoc_lms.size());
 
     // 最小特徴点スケールにおける許容最大誤差角度
@@ -54,7 +50,6 @@ pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& bearings, const std::ve
     assert(valid_indices_.size() == valid_landmarks_.size());
     assert(valid_indices_.size() == valid_bearings_.size());
     assert(valid_indices_.size() == max_cos_errors_.size());
-    num_valid_correspondences_ = valid_indices_.size();
 }
 
 pnp_solver::~pnp_solver() {
@@ -65,90 +60,74 @@ pnp_solver::~pnp_solver() {
     delete[] signs_;
 }
 
-void pnp_solver::set_ransac_parameters(const float probability, const unsigned int min_num_inliers, const unsigned int max_num_iters) {
-    // https://www.slideshare.net/satoshiyoshikawa315/prml-4-48751028
+void pnp_solver::find_via_ransac(const unsigned int max_num_iter, const bool recompute) {
+    const auto num_matches = static_cast<unsigned int>(valid_indices_.size());
 
-    probability_ = probability;
-    min_num_inliers_ = min_num_inliers;
-    max_num_iters_ = max_num_iters;
+    // 1. Prepare for RANSAC
 
-    // probabilityから所要回数を推定する
-    const auto epsilon = static_cast<double>(min_num_inliers_) / num_valid_correspondences_;
-    const unsigned int recom_num_iters = std::ceil(std::log(1 - probability_) / std::log(1 - std::pow(epsilon, min_num_correspondences_)));
-
-    if (num_valid_correspondences_ <= min_num_inliers_) {
-        // 1回で十分
-        max_num_iters_ = 1;
+    // minimum number of samples (= 4)
+    static constexpr unsigned int min_set_size = 4;
+    if (num_matches < min_set_size || num_matches < min_num_inliers_) {
+        solution_is_valid_ = false;
+        return;
     }
-    else {
-        // 与えられた最大回数を超えない範囲で，probabilityを満たすRANSAC繰り返し回数を設定する
-        max_num_iters_ = std::min(recom_num_iters, max_num_iters);
-        // 0にならないようにしておく
-        max_num_iters_ = std::max(1U, max_num_iters_);
-    }
-}
 
-bool pnp_solver::estimate() {
-    // best modelを初期化
+    // RANSAC variables
     unsigned int max_num_inliers = 0;
-    best_is_inlier_ = std::vector<bool>(num_valid_correspondences_, false);
-    best_rot_cw_ = Mat33_t::Identity();
-    best_trans_cw_ = Vec3_t::Zero();
+    is_inlier_match = std::vector<bool>(num_matches, false);
 
-    if (num_valid_correspondences_ < min_num_correspondences_
-        || num_valid_correspondences_ < min_num_inliers_) {
-        return false;
-    }
-
-    // RANSAC loop内で使用する変数
-    std::vector<bool> is_inlier_in_sac;
+    // shared variables in RANSAC loop
+    // rotation from world to camera
     Mat33_t rot_cw_in_sac;
+    // translation from world to camera
     Vec3_t trans_cw_in_sac;
+    // inlier/outlier flags
+    std::vector<bool> is_inlier_match_in_sac;
 
-    // RANSAC loop
-    for (unsigned int iter = 0; iter < max_num_iters_; ++iter) {
-        // ランダムサンプリング
-        const auto random_indices = util::create_random_array(min_num_correspondences_, 0, static_cast<int>(num_valid_correspondences_ - 1));
-        assert(random_indices.size() == min_num_correspondences_);
+    // 2. RANSAC loop
 
-        // 対応情報を追加
+    for (unsigned int iter = 0; iter < max_num_iter; ++iter) {
+        // 2-1. Create a minimum set
+        const auto random_indices = util::create_random_array(min_set_size, 0U, num_matches - 1);
+        assert(random_indices.size() == min_set_size);
         reset_correspondences();
-        set_max_num_correspondences(min_num_correspondences_);
+        set_max_num_correspondences(min_set_size);
         for (const auto i : random_indices) {
             const Vec3_t& bearing = valid_bearings_.at(i);
             const Vec3_t& pos_w = valid_landmarks_.at(i);
             add_correspondence(pos_w, bearing);
         }
 
-        // 姿勢を求める
+        // 2-2. Compute a camera pose
         compute_pose(rot_cw_in_sac, trans_cw_in_sac);
 
-        // インライアを数える
-        const auto num_inliers = count_inliers(rot_cw_in_sac, trans_cw_in_sac, is_inlier_in_sac);
+        // 2-3. Check inliers and compute a score
+        const auto num_inliers = check_inliers(rot_cw_in_sac, trans_cw_in_sac, is_inlier_match_in_sac);
 
-        // ベストモデルを更新
+        // 2-4. Update the best model
         if (max_num_inliers < num_inliers) {
             max_num_inliers = num_inliers;
-            best_is_inlier_ = is_inlier_in_sac;
             best_rot_cw_ = rot_cw_in_sac;
             best_trans_cw_ = trans_cw_in_sac;
+            is_inlier_match = is_inlier_match_in_sac;
         }
     }
 
-    if (max_num_inliers < min_num_inliers_) {
-        // インライア数の最小条件を満たせなかった場合は推定失敗
-        best_is_inlier_ = std::vector<bool>(num_valid_correspondences_, false);
-        best_rot_cw_ = Mat33_t::Identity();
-        best_trans_cw_ = Vec3_t::Zero();
-        return false;
+    if (max_num_inliers > min_num_inliers_) {
+        solution_is_valid_ = true;
     }
 
-    // インライアを全て使って再推定
-    const auto num_inliers = std::count(best_is_inlier_.begin(), best_is_inlier_.end(), true);
+    if (!recompute || !solution_is_valid_) {
+        return;
+    }
+
+    // 3. Recompute a camera pose only with the inlier matches
+
+    const auto num_inliers = std::count(is_inlier_match.begin(), is_inlier_match.end(), true);
     reset_correspondences();
     set_max_num_correspondences(num_inliers);
-    for (unsigned int i = 0; i < num_valid_correspondences_; ++i) {
-        if (!best_is_inlier_.at(i)) {
+    for (unsigned int i = 0; i < num_matches; ++i) {
+        if (!is_inlier_match.at(i)) {
             continue;
         }
         const Vec3_t& bearing = valid_bearings_.at(i);
@@ -157,15 +136,26 @@ bool pnp_solver::estimate() {
     }
 
     compute_pose(best_rot_cw_, best_trans_cw_);
-
-    return true;
 }
 
-unsigned int pnp_solver::count_inliers(const Mat33_t& rot_cw, const Vec3_t& trans_cw, std::vector<bool>& is_inlier) {
+std::vector<unsigned int> pnp_solver::get_inlier_indices() const {
+    std::vector<unsigned int> inlier_indices;
+    inlier_indices.reserve(valid_indices_.size());
+    for (unsigned int i = 0; i < valid_indices_.size(); ++i) {
+        if (is_inlier_match.at(i)) {
+            inlier_indices.push_back(valid_indices_.at(i));
+        }
+    }
+    return inlier_indices;
+}
+
+unsigned int pnp_solver::check_inliers(const Mat33_t& rot_cw, const Vec3_t& trans_cw, std::vector<bool>& is_inlier) {
+    const auto num_matches = static_cast<unsigned int>(valid_indices_.size());
+
     unsigned int num_inliers = 0;
 
-    is_inlier.resize(num_valid_correspondences_);
-    for (unsigned int i = 0; i < num_valid_correspondences_; ++i) {
+    is_inlier.resize(num_matches);
+    for (unsigned int i = 0; i < num_matches; ++i) {
         const Vec3_t& pos_w = valid_landmarks_.at(i);
         const Vec3_t& bearing = valid_bearings_.at(i);
 

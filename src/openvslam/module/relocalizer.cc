@@ -56,7 +56,6 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
 
         pnp_solvers.at(i) = std::unique_ptr<solve::pnp_solver>(new solve::pnp_solver(curr_frm.bearings_, curr_frm.keypts_,
                                                                                      curr_frm.scale_factors_, matched_landmarks.at(i)));
-        pnp_solvers.at(i)->set_ransac_parameters(0.99, 10, 300);
         ++num_valid_candidates;
     }
 
@@ -72,13 +71,12 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
 
         // 1. PnP(+RANSAC)で姿勢を求める
 
-        std::vector<bool> is_inlier;
-
-        if (!pnp_solvers.at(i)->estimate()) {
+        pnp_solvers.at(i)->find_via_ransac(30);
+        if (!pnp_solvers.at(i)->solution_is_valid()) {
             continue;
         }
 
-        curr_frm.cam_pose_cw_ = pnp_solvers.at(i)->get_best_cam_pose_cw();
+        curr_frm.cam_pose_cw_ = pnp_solvers.at(i)->get_best_cam_pose();
         curr_frm.update_pose_params();
 
         // 2. pose optimizerを通す
