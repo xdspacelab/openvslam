@@ -180,8 +180,8 @@ TEST(essential_solver, create) {
     const Vec3_t trans_21 = trans_2 - rot_21 * trans_1;
     Mat33_t skew_21;
     skew_21 << 0, -trans_21(2), trans_21(1),
-               trans_21(2), 0, -trans_21(0),
-               -trans_21(1), trans_21(0), 0;
+        trans_21(2), 0, -trans_21(0),
+        -trans_21(1), trans_21(0), 0;
     Mat33_t true_E_21 = skew_21 * rot_21;
 
     // create an essential matrix from the rotation and the translation
