@@ -14,7 +14,7 @@ fundamental_solver::fundamental_solver(const std::vector<cv::KeyPoint>& undist_k
 void fundamental_solver::find_via_ransac(const unsigned int max_num_iter, const bool recompute) {
     const auto num_matches = static_cast<unsigned int>(matches_12_.size());
 
-    // 1. Normalize keypoint coordinates
+    // 0. Normalize keypoint coordinates
 
     // apply normalization
     std::vector<cv::Point2f> normalized_keypts_1, normalized_keypts_2;
@@ -24,7 +24,7 @@ void fundamental_solver::find_via_ransac(const unsigned int max_num_iter, const 
 
     const Mat33_t transform_2_t = transform_2.transpose();
 
-    // 2. prepare for RANSAC
+    // 1. Prepare for RANSAC
 
     // minimum number of samples (= 8)
     constexpr unsigned int min_set_size = 8;
