@@ -12,10 +12,10 @@ namespace module {
 relocalizer::relocalizer(data::bow_database* bow_db,
                          const double bow_match_lowe_ratio, const double proj_match_lowe_ratio,
                          const unsigned int min_num_bow_matches, const unsigned int min_num_valid_obs)
-        : bow_db_(bow_db),
-          min_num_bow_matches_(min_num_bow_matches), min_num_valid_obs_(min_num_valid_obs),
-          bow_matcher_(bow_match_lowe_ratio, true), proj_matcher_(proj_match_lowe_ratio, true),
-          pose_optimizer_() {
+    : bow_db_(bow_db),
+      min_num_bow_matches_(min_num_bow_matches), min_num_valid_obs_(min_num_valid_obs),
+      bow_matcher_(bow_match_lowe_ratio, true), proj_matcher_(proj_match_lowe_ratio, true),
+      pose_optimizer_() {
     spdlog::debug("CONSTRUCT: module::relocalizer");
 }
 
@@ -55,7 +55,7 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
         }
 
         pnp_solvers.at(i) = std::unique_ptr<solve::pnp_solver>(new solve::pnp_solver(curr_frm.bearings_, curr_frm.keypts_,
-                                                                                       curr_frm.scale_factors_, matched_landmarks.at(i)));
+                                                                                     curr_frm.scale_factors_, matched_landmarks.at(i)));
         pnp_solvers.at(i)->set_ransac_parameters(0.99, 10, 300);
         ++num_valid_candidates;
     }

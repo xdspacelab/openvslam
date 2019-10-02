@@ -15,7 +15,7 @@ namespace openvslam {
 namespace optimize {
 
 transform_optimizer::transform_optimizer(const bool fix_scale, const unsigned int num_iter)
-        : fix_scale_(fix_scale), num_iter_(num_iter) {}
+    : fix_scale_(fix_scale), num_iter_(num_iter) {}
 
 unsigned int transform_optimizer::optimize(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
                                            std::vector<data::landmark*>& matched_lms_in_keyfrm_2,

@@ -5,7 +5,8 @@ namespace optimize {
 namespace g2o {
 namespace se3 {
 
-mono_perspective_pose_opt_edge::mono_perspective_pose_opt_edge() : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
+mono_perspective_pose_opt_edge::mono_perspective_pose_opt_edge()
+    : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
 
 bool mono_perspective_pose_opt_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
@@ -59,7 +60,8 @@ void mono_perspective_pose_opt_edge::linearizeOplus() {
     _jacobianOplusXi(1, 5) = y / z_sq * fy_;
 }
 
-stereo_perspective_pose_opt_edge::stereo_perspective_pose_opt_edge() : ::g2o::BaseUnaryEdge<3, Vec3_t, shot_vertex>() {}
+stereo_perspective_pose_opt_edge::stereo_perspective_pose_opt_edge()
+    : ::g2o::BaseUnaryEdge<3, Vec3_t, shot_vertex>() {}
 
 bool stereo_perspective_pose_opt_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 3; ++i) {

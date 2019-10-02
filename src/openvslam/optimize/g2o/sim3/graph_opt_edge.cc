@@ -5,7 +5,8 @@ namespace optimize {
 namespace g2o {
 namespace sim3 {
 
-graph_opt_edge::graph_opt_edge() : ::g2o::BaseBinaryEdge<7, ::g2o::Sim3, shot_vertex, shot_vertex>() {}
+graph_opt_edge::graph_opt_edge()
+    : ::g2o::BaseBinaryEdge<7, ::g2o::Sim3, shot_vertex, shot_vertex>() {}
 
 bool graph_opt_edge::read(std::istream& is) {
     Vec7_t sim3_wc;

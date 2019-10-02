@@ -13,7 +13,7 @@ public:
     //! Constructor
     explicit config(const std::string& config_file_path);
 
-    //! Destructir
+    //! Destructor
     ~config();
 
     friend std::ostream& operator<<(std::ostream& os, const config& cfg);

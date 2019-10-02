@@ -7,7 +7,7 @@ namespace g2o {
 namespace se3 {
 
 shot_vertex_container::shot_vertex_container(const unsigned int offset, const unsigned int num_reserve)
-        : offset_(offset) {
+    : offset_(offset) {
     vtx_container_.reserve(num_reserve);
 }
 

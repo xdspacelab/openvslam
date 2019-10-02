@@ -7,7 +7,8 @@
 namespace openvslam {
 namespace data {
 
-bow_database::bow_database(bow_vocabulary* bow_vocab) : bow_vocab_(bow_vocab) {
+bow_database::bow_database(bow_vocabulary* bow_vocab)
+    : bow_vocab_(bow_vocab) {
     spdlog::debug("CONSTRUCT: data::bow_database");
 }
 

@@ -17,8 +17,8 @@
 namespace openvslam {
 
 mapping_module::mapping_module(data::map_database* map_db, const bool is_monocular)
-        : local_map_cleaner_(new module::local_map_cleaner(is_monocular)), map_db_(map_db),
-          local_bundle_adjuster_(new optimize::local_bundle_adjuster()), is_monocular_(is_monocular) {
+    : local_map_cleaner_(new module::local_map_cleaner(is_monocular)), map_db_(map_db),
+      local_bundle_adjuster_(new optimize::local_bundle_adjuster()), is_monocular_(is_monocular) {
     spdlog::debug("CONSTRUCT: mapping_module");
 }
 
@@ -245,7 +245,9 @@ void mapping_module::create_new_landmarks() {
         // then reject outliers using Essential matrix computed from the two camera poses
 
         // (cur bearing) * E_ngh_to_cur * (ngh bearing) = 0
-        const Mat33_t E_ngh_to_cur = solve::essential_solver::create_E_21(ngh_keyfrm, cur_keyfrm_);
+        // const Mat33_t E_ngh_to_cur = solve::essential_solver::create_E_21(ngh_keyfrm, cur_keyfrm_);
+        const Mat33_t E_ngh_to_cur = solve::essential_solver::create_E_21(ngh_keyfrm->get_rotation(), ngh_keyfrm->get_translation(),
+                                                                          cur_keyfrm_->get_rotation(), cur_keyfrm_->get_translation());
 
         // vector of matches (idx in the current, idx in the neighbor)
         std::vector<std::pair<unsigned int, unsigned int>> matches;

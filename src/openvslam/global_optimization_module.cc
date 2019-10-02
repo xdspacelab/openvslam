@@ -12,9 +12,9 @@ namespace openvslam {
 
 global_optimization_module::global_optimization_module(data::map_database* map_db, data::bow_database* bow_db,
                                                        data::bow_vocabulary* bow_vocab, const bool fix_scale)
-        : loop_detector_(new module::loop_detector(bow_db, bow_vocab, fix_scale)),
-          loop_bundle_adjuster_(new module::loop_bundle_adjuster(map_db)),
-          graph_optimizer_(new optimize::graph_optimizer(map_db, fix_scale)) {
+    : loop_detector_(new module::loop_detector(bow_db, bow_vocab, fix_scale)),
+      loop_bundle_adjuster_(new module::loop_bundle_adjuster(map_db)),
+      graph_optimizer_(new optimize::graph_optimizer(map_db, fix_scale)) {
     spdlog::debug("CONSTRUCT: global_optimization_module");
 }
 
@@ -368,7 +368,7 @@ void global_optimization_module::replace_duplicated_landmarks(const std::vector<
 }
 
 auto global_optimization_module::extract_new_connections(const std::vector<data::keyframe*>& covisibilities) const
--> std::map<data::keyframe*, std::set<data::keyframe*>> {
+    -> std::map<data::keyframe*, std::set<data::keyframe*>> {
     std::map<data::keyframe*, std::set<data::keyframe*>> new_connections;
 
     for (auto covisibility : covisibilities) {

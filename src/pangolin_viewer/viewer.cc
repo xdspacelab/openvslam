@@ -12,21 +12,21 @@ namespace pangolin_viewer {
 viewer::viewer(const std::shared_ptr<openvslam::config>& cfg, openvslam::system* system,
                const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
                const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher)
-        : system_(system), frame_publisher_(frame_publisher), map_publisher_(map_publisher),
-          interval_ms_(1000.0f / cfg->yaml_node_["PangolinViewer.fps"].as<float>(30.0)),
-          viewpoint_x_(cfg->yaml_node_["PangolinViewer.viewpoint_x"].as<float>(0.0)),
-          viewpoint_y_(cfg->yaml_node_["PangolinViewer.viewpoint_y"].as<float>(-10.0)),
-          viewpoint_z_(cfg->yaml_node_["PangolinViewer.viewpoint_z"].as<float>(-0.1)),
-          viewpoint_f_(cfg->yaml_node_["PangolinViewer.viewpoint_f"].as<float>(2000.0)),
-          keyfrm_size_(cfg->yaml_node_["PangolinViewer.keyframe_size"].as<float>(0.1)),
-          keyfrm_line_width_(cfg->yaml_node_["PangolinViewer.keyframe_line_width"].as<unsigned int>(1)),
-          graph_line_width_(cfg->yaml_node_["PangolinViewer.graph_line_width"].as<unsigned int>(1)),
-          point_size_(cfg->yaml_node_["PangolinViewer.point_size"].as<unsigned int>(2)),
-          camera_size_(cfg->yaml_node_["PangolinViewer.camera_size"].as<float>(0.15)),
-          camera_line_width_(cfg->yaml_node_["PangolinViewer.camera_line_width"].as<unsigned int>(2)),
-          cs_(cfg->yaml_node_["PangolinViewer.color_scheme"].as<std::string>("black")),
-          mapping_mode_(system->mapping_module_is_enabled()),
-          loop_detection_mode_(system->loop_detector_is_enabled()) {}
+    : system_(system), frame_publisher_(frame_publisher), map_publisher_(map_publisher),
+      interval_ms_(1000.0f / cfg->yaml_node_["PangolinViewer.fps"].as<float>(30.0)),
+      viewpoint_x_(cfg->yaml_node_["PangolinViewer.viewpoint_x"].as<float>(0.0)),
+      viewpoint_y_(cfg->yaml_node_["PangolinViewer.viewpoint_y"].as<float>(-10.0)),
+      viewpoint_z_(cfg->yaml_node_["PangolinViewer.viewpoint_z"].as<float>(-0.1)),
+      viewpoint_f_(cfg->yaml_node_["PangolinViewer.viewpoint_f"].as<float>(2000.0)),
+      keyfrm_size_(cfg->yaml_node_["PangolinViewer.keyframe_size"].as<float>(0.1)),
+      keyfrm_line_width_(cfg->yaml_node_["PangolinViewer.keyframe_line_width"].as<unsigned int>(1)),
+      graph_line_width_(cfg->yaml_node_["PangolinViewer.graph_line_width"].as<unsigned int>(1)),
+      point_size_(cfg->yaml_node_["PangolinViewer.point_size"].as<unsigned int>(2)),
+      camera_size_(cfg->yaml_node_["PangolinViewer.camera_size"].as<float>(0.15)),
+      camera_line_width_(cfg->yaml_node_["PangolinViewer.camera_line_width"].as<unsigned int>(2)),
+      cs_(cfg->yaml_node_["PangolinViewer.color_scheme"].as<std::string>("black")),
+      mapping_mode_(system->mapping_module_is_enabled()),
+      loop_detection_mode_(system->loop_detector_is_enabled()) {}
 
 void viewer::run() {
     is_terminated_ = false;
@@ -40,15 +40,14 @@ void viewer::run() {
 
     // setup camera renderer
     s_cam_ = std::unique_ptr<pangolin::OpenGlRenderState>(new pangolin::OpenGlRenderState(
-            pangolin::ProjectionMatrix(map_viewer_width_, map_viewer_height_, viewpoint_f_, viewpoint_f_,
-                                       map_viewer_width_ / 2, map_viewer_height_ / 2, 0.1, 1e6),
-            pangolin::ModelViewLookAt(viewpoint_x_, viewpoint_y_, viewpoint_z_, 0, 0, 0, 0.0, -1.0, 0.0)
-    ));
+        pangolin::ProjectionMatrix(map_viewer_width_, map_viewer_height_, viewpoint_f_, viewpoint_f_,
+                                   map_viewer_width_ / 2, map_viewer_height_ / 2, 0.1, 1e6),
+        pangolin::ModelViewLookAt(viewpoint_x_, viewpoint_y_, viewpoint_z_, 0, 0, 0, 0.0, -1.0, 0.0)));
 
     // create map window
     pangolin::View& d_cam = pangolin::CreateDisplay()
-            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -map_viewer_width_ / map_viewer_height_)
-            .SetHandler(new pangolin::Handler3D(*s_cam_));
+                                .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -map_viewer_width_ / map_viewer_height_)
+                                .SetHandler(new pangolin::Handler3D(*s_cam_));
 
     // create menu panel
     create_menu_panel();
@@ -148,7 +147,6 @@ void viewer::follow_camera(const pangolin::OpenGlMatrix& gl_cam_pose_wc) {
     else if (!*menu_follow_camera_ && follow_camera_) {
         follow_camera_ = false;
     }
-
 }
 
 void viewer::draw_horizontal_grid() {
@@ -408,7 +406,7 @@ void viewer::check_state_transition() {
     if (*menu_pause_ && !system_->tracker_is_paused()) {
         system_->pause_tracker();
     }
-    else if (!*menu_pause_ && system_->tracker_is_paused()){
+    else if (!*menu_pause_ && system_->tracker_is_paused()) {
         system_->resume_tracker();
     }
 

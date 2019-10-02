@@ -23,53 +23,35 @@ public:
 
     base() = delete;
 
-    /**
-     * Constructor
-     */
+    //! Constructor
     base(const data::frame& ref_frm,
          const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
          const float parallax_deg_thr, const float reproj_err_thr);
 
-    /**
-     * Destructor
-     */
+    //! Destructor
     virtual ~base() = default;
 
-    /**
-     * Initialize with the current frame
-     */
+    //! Initialize with the current frame
     virtual bool initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) = 0;
 
-    /**
-     * Get the rotation from the reference to the current
-     */
+    //! Get the rotation from the reference to the current
     Mat33_t get_rotation_ref_to_cur() const;
 
-    /**
-     * Get the translation from the reference to the current
-     */
+    //! Get the translation from the reference to the current
     Vec3_t get_translation_ref_to_cur() const;
 
-    /**
-     * Get the triangulated 3D points
-     */
+    //! Get the triangulated 3D points with the origin of the reference frame
     eigen_alloc_vector<Vec3_t> get_triangulated_pts() const;
 
-    /**
-     * Get the valid/invalid flags of triangulated 3D points
-     */
+    //! Get the valid/invalid flags of triangulated 3D points as keypoint indices in the reference frame
     std::vector<bool> get_triangulated_flags() const;
 
 protected:
-    /**
-     * Find the most plausible pose and set them to the member variables (outputs)
-     */
+    //! Find the most plausible pose and set them to the member variables (outputs)
     bool find_most_plausible_pose(const eigen_alloc_vector<Mat33_t>& init_rots, const eigen_alloc_vector<Vec3_t>& init_transes,
                                   const std::vector<bool>& is_inlier_match, const bool depth_is_positive);
 
-    /**
-     * Check the reconstructed camera poses via triangulation
-     */
+    //! Check the reconstructed camera poses via triangulation-based verification
     unsigned int check_pose(const Mat33_t& rot_ref_to_cur, const Vec3_t& trans_ref_to_cur,
                             const std::vector<bool>& is_inlier_match, const bool depth_is_positive,
                             eigen_alloc_vector<Vec3_t>& triangulated_pts, std::vector<bool>& is_triangulated,
@@ -114,7 +96,7 @@ protected:
     const float reproj_err_thr_;
 
     //-----------------------------------------
-    // outputs
+    // output variables
 
     //! initial rotation from reference to current
     Mat33_t rot_ref_to_cur_ = Mat33_t::Identity();

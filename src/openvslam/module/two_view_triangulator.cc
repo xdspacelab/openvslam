@@ -7,13 +7,13 @@ namespace module {
 
 two_view_triangulator::two_view_triangulator(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
                                              const float rays_parallax_deg_thr)
-        : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
-          rot_1w_(keyfrm_1->get_rotation()), rot_w1_(rot_1w_.transpose()), trans_1w_(keyfrm_1->get_translation()),
-          cam_pose_1w_(keyfrm_1->get_cam_pose()), cam_center_1_(keyfrm_1->get_cam_center()), camera_1_(keyfrm_1->camera_),
-          rot_2w_(keyfrm_2->get_rotation()), rot_w2_(rot_2w_.transpose()), trans_2w_(keyfrm_2->get_translation()),
-          cam_pose_2w_(keyfrm_2->get_cam_pose()), cam_center_2_(keyfrm_2->get_cam_center()), camera_2_(keyfrm_2->camera_),
-          ratio_factor_(2.0f * std::max(keyfrm_1->scale_factor_, keyfrm_2->scale_factor_)),
-          cos_rays_parallax_thr_(std::cos(rays_parallax_deg_thr * M_PI / 180.0)) {}
+    : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
+      rot_1w_(keyfrm_1->get_rotation()), rot_w1_(rot_1w_.transpose()), trans_1w_(keyfrm_1->get_translation()),
+      cam_pose_1w_(keyfrm_1->get_cam_pose()), cam_center_1_(keyfrm_1->get_cam_center()), camera_1_(keyfrm_1->camera_),
+      rot_2w_(keyfrm_2->get_rotation()), rot_w2_(rot_2w_.transpose()), trans_2w_(keyfrm_2->get_translation()),
+      cam_pose_2w_(keyfrm_2->get_cam_pose()), cam_center_2_(keyfrm_2->get_cam_center()), camera_2_(keyfrm_2->camera_),
+      ratio_factor_(2.0f * std::max(keyfrm_1->scale_factor_, keyfrm_2->scale_factor_)),
+      cos_rays_parallax_thr_(std::cos(rays_parallax_deg_thr * M_PI / 180.0)) {}
 
 bool two_view_triangulator::triangulate(const unsigned idx_1, const unsigned int idx_2, Vec3_t& pos_w) const {
     const auto& keypt_1 = keyfrm_1_->undist_keypts_.at(idx_1);
@@ -34,20 +34,20 @@ bool two_view_triangulator::triangulate(const unsigned idx_1, const unsigned int
 
     // compute the stereo parallax if the keypoint is observed as stereo
     const auto cos_stereo_parallax_1 = is_stereo_1
-                                       ? std::cos(2.0 * atan2(camera_1_->true_baseline_ / 2.0, keyfrm_1_->depths_.at(idx_1)))
-                                       : 2.0;
+                                           ? std::cos(2.0 * atan2(camera_1_->true_baseline_ / 2.0, keyfrm_1_->depths_.at(idx_1)))
+                                           : 2.0;
     const auto cos_stereo_parallax_2 = is_stereo_2
-                                       ? std::cos(2.0 * atan2(camera_2_->true_baseline_ / 2.0, keyfrm_2_->depths_.at(idx_2)))
-                                       : 2.0;
+                                           ? std::cos(2.0 * atan2(camera_2_->true_baseline_ / 2.0, keyfrm_2_->depths_.at(idx_2)))
+                                           : 2.0;
     const auto cos_stereo_parallax = std::min(cos_stereo_parallax_1, cos_stereo_parallax_2);
 
     // select to use "linear triangulation" or "stereo triangulation"
     // threshold of minimum angle of the two rays
     const bool triangulate_with_two_cameras =
-            // check if the sufficient parallax is provided
-            ((!is_stereo_1 && !is_stereo_2) && 0.0 < cos_rays_parallax && cos_rays_parallax < cos_rays_parallax_thr_)
-            // check if the parallax between the two cameras is larger than the stereo parallax
-            || ((is_stereo_1 || is_stereo_2) && 0.0 < cos_rays_parallax && cos_rays_parallax < cos_stereo_parallax);
+        // check if the sufficient parallax is provided
+        ((!is_stereo_1 && !is_stereo_2) && 0.0 < cos_rays_parallax && cos_rays_parallax < cos_rays_parallax_thr_)
+        // check if the parallax between the two cameras is larger than the stereo parallax
+        || ((is_stereo_1 || is_stereo_2) && 0.0 < cos_rays_parallax && cos_rays_parallax < cos_stereo_parallax);
 
     // triangulate
     if (triangulate_with_two_cameras) {

@@ -15,27 +15,27 @@ namespace data {
 
 std::atomic<unsigned int> keyframe::next_id_{0};
 
-keyframe::keyframe(const frame& frm, map_database* map_db, bow_database* bow_db) :
-        // meta information
-        id_(next_id_++), src_frm_id_(frm.id_), timestamp_(frm.timestamp_),
-        // camera parameters
-        camera_(frm.camera_), depth_thr_(frm.depth_thr_),
-        // constant observations
-        num_keypts_(frm.num_keypts_), keypts_(frm.keypts_), undist_keypts_(frm.undist_keypts_), bearings_(frm.bearings_),
-        keypt_indices_in_cells_(frm.keypt_indices_in_cells_),
-        stereo_x_right_(frm.stereo_x_right_), depths_(frm.depths_), descriptors_(frm.descriptors_.clone()),
-        // BoW
-        bow_vec_(frm.bow_vec_), bow_feat_vec_(frm.bow_feat_vec_),
-        // covisibility graph node (connections is not assigned yet)
-        graph_node_(std::unique_ptr<graph_node>(new graph_node(this, true))),
-        // ORB scale pyramid
-        num_scale_levels_(frm.num_scale_levels_), scale_factor_(frm.scale_factor_),
-        log_scale_factor_(frm.log_scale_factor_), scale_factors_(frm.scale_factors_),
-        level_sigma_sq_(frm.level_sigma_sq_), inv_level_sigma_sq_(frm.inv_level_sigma_sq_),
-        // observations
-        landmarks_(frm.landmarks_),
-        // databases
-        map_db_(map_db), bow_db_(bow_db), bow_vocab_(frm.bow_vocab_) {
+keyframe::keyframe(const frame& frm, map_database* map_db, bow_database* bow_db)
+    : // meta information
+      id_(next_id_++), src_frm_id_(frm.id_), timestamp_(frm.timestamp_),
+      // camera parameters
+      camera_(frm.camera_), depth_thr_(frm.depth_thr_),
+      // constant observations
+      num_keypts_(frm.num_keypts_), keypts_(frm.keypts_), undist_keypts_(frm.undist_keypts_), bearings_(frm.bearings_),
+      keypt_indices_in_cells_(frm.keypt_indices_in_cells_),
+      stereo_x_right_(frm.stereo_x_right_), depths_(frm.depths_), descriptors_(frm.descriptors_.clone()),
+      // BoW
+      bow_vec_(frm.bow_vec_), bow_feat_vec_(frm.bow_feat_vec_),
+      // covisibility graph node (connections is not assigned yet)
+      graph_node_(std::unique_ptr<graph_node>(new graph_node(this, true))),
+      // ORB scale pyramid
+      num_scale_levels_(frm.num_scale_levels_), scale_factor_(frm.scale_factor_),
+      log_scale_factor_(frm.log_scale_factor_), scale_factors_(frm.scale_factors_),
+      level_sigma_sq_(frm.level_sigma_sq_), inv_level_sigma_sq_(frm.inv_level_sigma_sq_),
+      // observations
+      landmarks_(frm.landmarks_),
+      // databases
+      map_db_(map_db), bow_db_(bow_db), bow_vocab_(frm.bow_vocab_) {
     // set pose parameters (cam_pose_wc_, cam_center_) using frm.cam_pose_cw_
     set_cam_pose(frm.cam_pose_cw_);
 }
@@ -46,26 +46,26 @@ keyframe::keyframe(const unsigned int id, const unsigned int src_frm_id, const d
                    const std::vector<cv::KeyPoint>& undist_keypts, const eigen_alloc_vector<Vec3_t>& bearings,
                    const std::vector<float>& stereo_x_right, const std::vector<float>& depths, const cv::Mat& descriptors,
                    const unsigned int num_scale_levels, const float scale_factor,
-                   bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db) :
-        // meta information
-        id_(id), src_frm_id_(src_frm_id), timestamp_(timestamp),
-        // camera parameters
-        camera_(camera), depth_thr_(depth_thr),
-        // constant observations
-        num_keypts_(num_keypts), keypts_(keypts), undist_keypts_(undist_keypts), bearings_(bearings),
-        keypt_indices_in_cells_(assign_keypoints_to_grid(camera, undist_keypts)),
-        stereo_x_right_(stereo_x_right), depths_(depths), descriptors_(descriptors.clone()),
-        // graph node (connections is not assigned yet)
-        graph_node_(std::unique_ptr<graph_node>(new graph_node(this, false))),
-        // ORB scale pyramid
-        num_scale_levels_(num_scale_levels), scale_factor_(scale_factor), log_scale_factor_(std::log(scale_factor)),
-        scale_factors_(feature::orb_params::calc_scale_factors(num_scale_levels, scale_factor)),
-        level_sigma_sq_(feature::orb_params::calc_level_sigma_sq(num_scale_levels, scale_factor)),
-        inv_level_sigma_sq_(feature::orb_params::calc_inv_level_sigma_sq(num_scale_levels, scale_factor)),
-        // others
-        landmarks_(std::vector<landmark*>(num_keypts, nullptr)),
-        // databases
-        map_db_(map_db), bow_db_(bow_db), bow_vocab_(bow_vocab) {
+                   bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db)
+    : // meta information
+      id_(id), src_frm_id_(src_frm_id), timestamp_(timestamp),
+      // camera parameters
+      camera_(camera), depth_thr_(depth_thr),
+      // constant observations
+      num_keypts_(num_keypts), keypts_(keypts), undist_keypts_(undist_keypts), bearings_(bearings),
+      keypt_indices_in_cells_(assign_keypoints_to_grid(camera, undist_keypts)),
+      stereo_x_right_(stereo_x_right), depths_(depths), descriptors_(descriptors.clone()),
+      // graph node (connections is not assigned yet)
+      graph_node_(std::unique_ptr<graph_node>(new graph_node(this, false))),
+      // ORB scale pyramid
+      num_scale_levels_(num_scale_levels), scale_factor_(scale_factor), log_scale_factor_(std::log(scale_factor)),
+      scale_factors_(feature::orb_params::calc_scale_factors(num_scale_levels, scale_factor)),
+      level_sigma_sq_(feature::orb_params::calc_level_sigma_sq(num_scale_levels, scale_factor)),
+      inv_level_sigma_sq_(feature::orb_params::calc_inv_level_sigma_sq(num_scale_levels, scale_factor)),
+      // others
+      landmarks_(std::vector<landmark*>(num_keypts, nullptr)),
+      // databases
+      map_db_(map_db), bow_db_(bow_db), bow_vocab_(bow_vocab) {
     // compute BoW (bow_vec_, bow_feat_vec_) using descriptors_
     compute_bow();
     // set pose parameters (cam_pose_wc_, cam_center_) using cam_pose_cw_

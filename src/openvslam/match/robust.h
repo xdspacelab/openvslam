@@ -17,7 +17,7 @@ namespace match {
 class robust final : public base {
 public:
     explicit robust(const float lowe_ratio, const bool check_orientation)
-            : base(lowe_ratio, check_orientation) {}
+        : base(lowe_ratio, check_orientation) {}
 
     ~robust() final = default;
 

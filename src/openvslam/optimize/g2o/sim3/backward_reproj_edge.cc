@@ -5,7 +5,8 @@ namespace optimize {
 namespace g2o {
 namespace sim3 {
 
-base_backward_reproj_edge::base_backward_reproj_edge() : ::g2o::BaseUnaryEdge<2, Vec2_t, transform_vertex>() {}
+base_backward_reproj_edge::base_backward_reproj_edge()
+    : ::g2o::BaseUnaryEdge<2, Vec2_t, transform_vertex>() {}
 
 bool base_backward_reproj_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
@@ -34,9 +35,11 @@ bool base_backward_reproj_edge::write(std::ostream& os) const {
     return os.good();
 }
 
-perspective_backward_reproj_edge::perspective_backward_reproj_edge() : base_backward_reproj_edge() {}
+perspective_backward_reproj_edge::perspective_backward_reproj_edge()
+    : base_backward_reproj_edge() {}
 
-equirectangular_backward_reproj_edge::equirectangular_backward_reproj_edge() : base_backward_reproj_edge() {}
+equirectangular_backward_reproj_edge::equirectangular_backward_reproj_edge()
+    : base_backward_reproj_edge() {}
 
 } // namespace sim3
 } // namespace g2o

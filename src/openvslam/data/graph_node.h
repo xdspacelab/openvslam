@@ -143,7 +143,7 @@ private:
     /**
      * Extract intersection from the two lists of keyframes
      */
-    template <typename T, typename U>
+    template<typename T, typename U>
     static std::vector<keyframe*> extract_intersection(const T& keyfrms_1, const U& keyfrms_2);
 
     //! keyframe of this node

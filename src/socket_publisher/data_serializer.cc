@@ -15,10 +15,9 @@ std::string data_serializer::serialized_reset_signal_{};
 data_serializer::data_serializer(const std::shared_ptr<openvslam::publish::frame_publisher>& frame_publisher,
                                  const std::shared_ptr<openvslam::publish::map_publisher>& map_publisher,
                                  const unsigned int image_width, const unsigned int image_height)
-        : frame_publisher_(frame_publisher), map_publisher_(map_publisher),
-          image_width_(image_width), image_height_(image_height),
-          keyframe_hash_map_(new std::unordered_map<unsigned int, double>), point_hash_map_(new std::unordered_map<unsigned int, double>) {
-
+    : frame_publisher_(frame_publisher), map_publisher_(map_publisher),
+      image_width_(image_width), image_height_(image_height),
+      keyframe_hash_map_(new std::unordered_map<unsigned int, double>), point_hash_map_(new std::unordered_map<unsigned int, double>) {
     const auto tags = std::vector<std::string>{"RESET_ALL"};
     const auto messages = std::vector<std::string>{"reset all data"};
     data_serializer::serialized_reset_signal_ = serialize_messages(tags, messages);
@@ -38,12 +37,11 @@ std::string data_serializer::serialize_messages(const std::vector<std::string>& 
     std::string buffer;
     map.SerializeToString(&buffer);
 
-    const auto* cstr = reinterpret_cast<const unsigned char*> (buffer.c_str());
+    const auto* cstr = reinterpret_cast<const unsigned char*>(buffer.c_str());
     return base64_encode(cstr, buffer.length());
 }
 
 std::string data_serializer::serialize_map_diff() {
-
     std::vector<openvslam::data::keyframe*> keyframes;
     map_publisher_->get_keyframes(keyframes);
 
@@ -64,7 +62,6 @@ std::string data_serializer::serialize_map_diff() {
 }
 
 std::string data_serializer::serialize_latest_frame(const unsigned int image_quality) {
-
     const auto image = frame_publisher_->draw_frame();
     std::vector<uchar> buf;
     const std::vector<int> params{static_cast<int>(cv::IMWRITE_JPEG_QUALITY), static_cast<int>(image_quality)};
@@ -78,7 +75,6 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
                                                    const std::vector<openvslam::data::landmark*>& all_landmarks,
                                                    const std::set<openvslam::data::landmark*>& local_landmarks,
                                                    const openvslam::Mat44_t& current_camera_pose) {
-
     map_segment::map map;
     auto message = map.add_messages();
     message->set_tag("0");
@@ -89,14 +85,14 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
     // 1. keyframe registration
 
     std::unordered_map<unsigned int, double> next_keyframe_hash_map;
-    for (const auto keyfrm: keyfrms) {
+    for (const auto keyfrm : keyfrms) {
         if (!keyfrm || keyfrm->will_be_erased()) {
             continue;
         }
 
         const auto id = keyfrm->id_;
         const auto pose = keyfrm->get_cam_pose();
-        const auto pose_hash = get_mat_hash(pose);  // get zipped code (likely hash)
+        const auto pose_hash = get_mat_hash(pose); // get zipped code (likely hash)
 
         next_keyframe_hash_map[id] = pose_hash;
 
@@ -181,7 +177,7 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
     // 3. landmark registration
 
     std::unordered_map<unsigned int, double> next_point_hash_map;
-    for (const auto landmark: all_landmarks) {
+    for (const auto landmark : all_landmarks) {
         if (!landmark || landmark->will_be_erased()) {
             continue;
         }
@@ -224,7 +220,7 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
 
     // 4. local landmark registration
 
-    for (const auto landmark: local_landmarks) {
+    for (const auto landmark : local_landmarks) {
         map.add_local_landmarks(landmark->id_);
     }
 
@@ -240,7 +236,7 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
     std::string buffer;
     map.SerializeToString(&buffer);
 
-    for (const auto keyfrm_obj: allocated_keyframes) {
+    for (const auto keyfrm_obj : allocated_keyframes) {
         keyfrm_obj->clear_pose();
     }
     map.release_current_frame();
@@ -250,7 +246,6 @@ std::string data_serializer::serialize_as_protobuf(const std::vector<openvslam::
 }
 
 std::string data_serializer::base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
-
     static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     std::stringstream ss;

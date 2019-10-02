@@ -9,8 +9,8 @@ namespace publish {
 
 frame_publisher::frame_publisher(const std::shared_ptr<config>& cfg, data::map_database* map_db,
                                  const unsigned int img_width)
-        : cfg_(cfg), map_db_(map_db), img_width_(img_width),
-          img_(cv::Mat(480, img_width_, CV_8UC3, cv::Scalar(0, 0, 0))) {
+    : cfg_(cfg), map_db_(map_db), img_width_(img_width),
+      img_(cv::Mat(480, img_width_, CV_8UC3, cv::Scalar(0, 0, 0))) {
     spdlog::debug("CONSTRUCT: publish::frame_publisher");
 }
 

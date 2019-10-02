@@ -13,8 +13,10 @@ namespace openvslam {
 namespace solve {
 
 sim3_solver::sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
-                         const std::vector<data::landmark*>& matched_lms_in_keyfrm_2, const bool fix_scale)
-        : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2), fix_scale_(fix_scale) {
+                         const std::vector<data::landmark*>& matched_lms_in_keyfrm_2,
+                         const bool fix_scale, const unsigned int min_num_inliers)
+        : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
+          fix_scale_(fix_scale), min_num_inliers_(min_num_inliers) {
     // keyframe1の3次元点
     const auto keyfrm_1_lms = keyfrm_1_->get_landmarks();
 
@@ -83,45 +85,19 @@ sim3_solver::sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
 
     reproject_to_same_image(common_pts_in_keyfrm_1_, reprojected_1_, keyfrm_1_);
     reproject_to_same_image(common_pts_in_keyfrm_2_, reprojected_2_, keyfrm_2_);
-
-    set_ransac_parameters();
 }
 
-void sim3_solver::set_ransac_parameters(const float probability,
-                                        const unsigned int min_num_inliers,
-                                        const unsigned int max_num_iterations) {
-    // https://www.slideshare.net/satoshiyoshikawa315/prml-4-48751028
-
-    probability_ = probability;
-    min_num_inliers_ = min_num_inliers;
-    max_num_iterations_ = max_num_iterations;
-
-    // probabilityから所要回数を推定する
-    const auto epsilon = static_cast<double>(min_num_inliers_) / num_common_pts_;
-    const unsigned int recom_num_iterations = std::ceil(std::log(1 - probability_) / std::log(1 - std::pow(epsilon, 3)));
-
-    if (num_common_pts_ <= min_num_inliers_) {
-        // 1回で十分
-        max_num_iterations_ = 1;
-    }
-    else {
-        // 与えられた最大回数を超えない範囲で，probabilityを満たすRANSAC繰り返し回数を設定する
-        max_num_iterations_ = std::min(recom_num_iterations, max_num_iterations);
-        // 0にならないようにしておく
-        max_num_iterations_ = std::max(1U, max_num_iterations_);
-    }
-}
-
-bool sim3_solver::estimate() {
+void sim3_solver::find_via_ransac(const unsigned int max_num_iter) {
     // best modelを初期化
     unsigned int max_num_inliers = 0;
-    best_inliers_ = std::vector<bool>(num_common_pts_, false);
+    solution_is_valid_ = false;
     best_rot_12_ = Mat33_t::Zero();
     best_trans_12_ = Vec3_t::Zero();
     best_scale_12_ = 0.0;
 
     if (num_common_pts_ < 3 || num_common_pts_ < min_num_inliers_) {
-        return false;
+        solution_is_valid_ = false;
+        return;
     }
 
     // RANSAC loop内で使用する変数
@@ -133,7 +109,7 @@ bool sim3_solver::estimate() {
     float scale_21_in_sac;
 
     // RANSAC loop
-    for (unsigned int iter = 0; iter < max_num_iterations_; ++iter) {
+    for (unsigned int iter = 0; iter < max_num_iter; ++iter) {
         // 3次元点を3つランダムサンプリングして行列にする
         Mat33_t pts_1, pts_2;
         const auto random_indices = util::create_random_array(3, 0, static_cast<int>(num_common_pts_ - 1));
@@ -156,7 +132,6 @@ bool sim3_solver::estimate() {
         // ベストモデルを更新
         if (max_num_inliers < num_inliers) {
             max_num_inliers = num_inliers;
-            best_inliers_ = inliers;
             best_rot_12_ = rot_12_in_sac;
             best_trans_12_ = trans_12_in_sac;
             best_scale_12_ = scale_12_in_sac;
@@ -165,14 +140,15 @@ bool sim3_solver::estimate() {
 
     if (max_num_inliers < min_num_inliers_) {
         // インライア数の最小条件を満たせなかった場合は推定失敗
-        best_inliers_ = std::vector<bool>(num_common_pts_, false);
+        solution_is_valid_ = false;
         best_rot_12_ = Mat33_t::Zero();
         best_trans_12_ = Vec3_t::Zero();
         best_scale_12_ = 0.0;
-        return false;
+        return;
     }
     else {
-        return true;
+        solution_is_valid_ = true;
+        return;
     }
 }
 
@@ -209,9 +185,9 @@ void sim3_solver::compute_Sim3(const Mat33_t& pts_1, const Mat33_t& pts_2,
     const double& Szz = M(2, 2);
     Eigen::Matrix4d N;
     N << (Sxx + Syy + Szz), (Syz - Szy), (Szx - Sxz), (Sxy - Syx),
-            (Syz - Szy), (Sxx - Syy - Szz), (Sxy + Syx), (Szx + Sxz),
-            (Szx - Sxz), (Sxy + Syx), (-Sxx + Syy - Szz), (Syz + Szy),
-            (Sxy - Syx), (Szx + Sxz), (Syz + Szy), (-Sxx - Syy + Szz);
+        (Syz - Szy), (Sxx - Syy - Szz), (Sxy + Syx), (Szx + Sxz),
+        (Szx - Sxz), (Sxy + Syx), (-Sxx + Syy - Szz), (Syz + Szy),
+        (Sxy - Syx), (Szx + Sxz), (Syz + Szy), (-Sxx - Syy + Szz);
 
     // 4.B Eigenvector Maximizes Matrix Product
 
@@ -331,5 +307,5 @@ void sim3_solver::reproject_to_same_image(const std::vector<Vec3_t, Eigen::align
     }
 }
 
-} // namespace solver
+} // namespace solve
 } // namespace openvslam

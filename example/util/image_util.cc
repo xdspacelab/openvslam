@@ -4,7 +4,8 @@
 #include <algorithm>
 #include <stdexcept>
 
-image_sequence::image_sequence(const std::string& img_dir_path, const double fps) : fps_(fps) {
+image_sequence::image_sequence(const std::string& img_dir_path, const double fps)
+    : fps_(fps) {
     DIR* dir;
     if ((dir = opendir(img_dir_path.c_str())) == nullptr) {
         throw std::runtime_error("directory " + img_dir_path + " does not exist");

@@ -14,7 +14,7 @@ namespace io {
 
 map_database_io::map_database_io(data::camera_database* cam_db, data::map_database* map_db,
                                  data::bow_database* bow_db, data::bow_vocabulary* bow_vocab)
-        : cam_db_(cam_db), map_db_(map_db), bow_db_(bow_db), bow_vocab_(bow_vocab) {}
+    : cam_db_(cam_db), map_db_(map_db), bow_db_(bow_db), bow_vocab_(bow_vocab) {}
 
 void map_database_io::save_message_pack(const std::string& path) {
     std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);

@@ -8,9 +8,9 @@ namespace feature {
 orb_params::orb_params(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                        const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
                        const std::vector<std::vector<float>>& mask_rects)
-        : max_num_keypts_(max_num_keypts), scale_factor_(scale_factor), num_levels_(num_levels),
-          ini_fast_thr_(ini_fast_thr), min_fast_thr(min_fast_thr),
-          mask_rects_(mask_rects) {
+    : max_num_keypts_(max_num_keypts), scale_factor_(scale_factor), num_levels_(num_levels),
+      ini_fast_thr_(ini_fast_thr), min_fast_thr(min_fast_thr),
+      mask_rects_(mask_rects) {
     for (const auto& v : mask_rects_) {
         if (v.size() != 4) {
             throw std::runtime_error("mask rectangle must contain four parameters");
@@ -25,12 +25,12 @@ orb_params::orb_params(const unsigned int max_num_keypts, const float scale_fact
 }
 
 orb_params::orb_params(const YAML::Node& yaml_node)
-        : orb_params(yaml_node["Feature.max_num_keypoints"].as<unsigned int>(2000),
-                     yaml_node["Feature.scale_factor"].as<float>(1.2),
-                     yaml_node["Feature.num_levels"].as<unsigned int>(8),
-                     yaml_node["Feature.ini_fast_threshold"].as<unsigned int>(20),
-                     yaml_node["Feature.min_fast_threshold"].as<unsigned int>(7),
-                     yaml_node["Feature.mask_rectangles"].as<std::vector<std::vector<float>>>(std::vector<std::vector<float>>())) {}
+    : orb_params(yaml_node["Feature.max_num_keypoints"].as<unsigned int>(2000),
+                 yaml_node["Feature.scale_factor"].as<float>(1.2),
+                 yaml_node["Feature.num_levels"].as<unsigned int>(8),
+                 yaml_node["Feature.ini_fast_threshold"].as<unsigned int>(20),
+                 yaml_node["Feature.min_fast_threshold"].as<unsigned int>(7),
+                 yaml_node["Feature.mask_rectangles"].as<std::vector<std::vector<float>>>(std::vector<std::vector<float>>())) {}
 
 void orb_params::show_parameters() const {
     std::cout << "- number of keypoints: " << max_num_keypts_ << std::endl;

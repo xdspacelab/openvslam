@@ -14,7 +14,7 @@ namespace match {
 class area final : public base {
 public:
     area(const float lowe_ratio, const bool check_orientation)
-            : base(lowe_ratio, check_orientation) {}
+        : base(lowe_ratio, check_orientation) {}
 
     ~area() final = default;
 

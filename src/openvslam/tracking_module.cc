@@ -20,10 +20,10 @@ namespace openvslam {
 
 tracking_module::tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
                                  data::bow_vocabulary* bow_vocab, data::bow_database* bow_db)
-        : cfg_(cfg), camera_(cfg->camera_), system_(system), map_db_(map_db), bow_vocab_(bow_vocab), bow_db_(bow_db),
-          initializer_(cfg->camera_->setup_type_, map_db, bow_db, cfg->yaml_node_),
-          frame_tracker_(camera_, 10), relocalizer_(bow_db_), pose_optimizer_(),
-          keyfrm_inserter_(cfg_->camera_->setup_type_, cfg_->true_depth_thr_, map_db, bow_db, 0, cfg_->camera_->fps_) {
+    : cfg_(cfg), camera_(cfg->camera_), system_(system), map_db_(map_db), bow_vocab_(bow_vocab), bow_db_(bow_db),
+      initializer_(cfg->camera_->setup_type_, map_db, bow_db, cfg->yaml_node_),
+      frame_tracker_(camera_, 10), relocalizer_(bow_db_), pose_optimizer_(),
+      keyfrm_inserter_(cfg_->camera_->setup_type_, cfg_->true_depth_thr_, map_db, bow_db, 0, cfg_->camera_->fps_) {
     spdlog::debug("CONSTRUCT: tracking_module");
 
     extractor_left_ = new feature::orb_extractor(cfg_->orb_params_);
@@ -582,8 +582,10 @@ void tracking_module::search_local_landmarks() {
     // acquire more 2D-3D matches by projecting the local landmarks to the current frame
     match::projection projection_matcher(0.8);
     const float margin = (curr_frm_.id_ < last_reloc_frm_id_ + 2)
-                         ? 20.0 : ((camera_->setup_type_ == camera::setup_type_t::RGBD)
-                                   ? 10.0 : 5.0);
+                             ? 20.0
+                             : ((camera_->setup_type_ == camera::setup_type_t::RGBD)
+                                    ? 10.0
+                                    : 5.0);
     projection_matcher.match_frame_and_landmarks(curr_frm_, local_landmarks_, margin);
 }
 

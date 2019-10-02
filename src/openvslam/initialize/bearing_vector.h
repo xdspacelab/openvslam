@@ -20,28 +20,20 @@ public:
 
     bearing_vector() = delete;
 
-    /**
-     * Constructor
-     */
+    //! Constructor
     bearing_vector(const data::frame& ref_frm,
                    const unsigned int num_ransac_iters, const unsigned int min_num_triangulated,
                    const float parallax_deg_thr, const float reproj_err_thr);
 
-    /**
-     * Destructor
-     */
+    //! Destructor
     ~bearing_vector() override;
 
-    /**
-     * Initialize with the current frame
-     */
+    //! Initialize with the current frame
     bool initialize(const data::frame& cur_frm, const std::vector<int>& ref_matches_with_cur) override;
 
 private:
-    /**
-     * Reconstruct map with the E matrix
-     * (NOTE: the output variables will be set if succeeded)
-     */
+    //! Reconstruct the initial map with the E matrix
+    //! (NOTE: the output variables will be set if succeeded)
     bool reconstruct_with_E(const Mat33_t& E_ref_to_cur, const std::vector<bool>& is_inlier_match);
 };
 

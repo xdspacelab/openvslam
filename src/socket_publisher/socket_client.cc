@@ -5,8 +5,7 @@
 namespace socket_publisher {
 
 socket_client::socket_client(const std::string& server_uri)
-        : client_(), callback_() {
-
+    : client_(), callback_() {
     // register socket callbacks
     client_.set_open_listener(std::bind(&socket_client::on_open, this));
     client_.set_close_listener(std::bind(&socket_client::on_close, this));

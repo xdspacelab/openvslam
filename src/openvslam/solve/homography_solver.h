@@ -14,113 +14,66 @@ class homography_solver {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    /**
-     * Constructor
-     * @tparam T data::frame or data::keyframe
-     * @param shot_1
-     * @param shot_2
-     * @param matches_12 matching indices between shot_1 and shot_2
-     * @param sigma stddev of symmetric transfer error
-     */
-    template<typename T>
-    homography_solver(T* shot_1, T* shot_2, const std::vector<std::pair<int, int>>& matches_12, const float sigma);
-
-    /**
-     * Constructor
-     * @param undist_keypts_1
-     * @param undist_keypts_2
-     * @param matches_12 matching indices between shot_1 and shot_2
-     * @param sigma stddev of symmetric transfer error
-     */
+    //! Constructor
     homography_solver(const std::vector<cv::KeyPoint>& undist_keypts_1, const std::vector<cv::KeyPoint>& undist_keypts_2,
                       const std::vector<std::pair<int, int>>& matches_12, const float sigma);
 
+    //! Destructor
     virtual ~homography_solver() = default;
 
-    /**
-     * Find homography matrix via RANSAC
-     * @param max_num_iter
-     */
+    //! Find the most reliable homography matrix via RASNAC
     void find_via_ransac(const unsigned int max_num_iter, const bool recompute = true);
 
-    /**
-     * Check inliers and compute scores of the specified homography matrix
-     * @param H_21
-     * @param is_inlier_match
-     * @return
-     */
-    float check_inliers(const Mat33_t& H_21, std::vector<bool>& is_inlier_match);
-
-    /**
-     * Check if the solution is valid or not
-     * @return
-     */
+    //! Check if the solution is valid or not
     bool solution_is_valid() const {
         return solution_is_valid_;
     }
 
-    /**
-     * Get best score during RANSAC
-     * @return
-     */
+    //! Get the best score
     double get_best_score() const {
         return best_score_;
     }
 
-    /**
-     * Get best model of homography transform
-     * @return
-     */
+    //! Get the most reliable essential matrix
     Mat33_t get_best_H_21() const {
         return best_H_21_;
     }
 
-    /**
-     * Get flags representing inlier matches
-     * @return
-     */
+    //! Get the inlier matches
     std::vector<bool> get_inlier_matches() const {
         return is_inlier_match_;
     }
 
-    /**
-     * Compute homography matrix with minimum set
-     * @param keypts_1
-     * @param keypts_2
-     * @return
-     */
+    //! Compute a homography matrix with 4-point algorithm
     static Mat33_t compute_H_21(const std::vector<cv::Point2f>& keypts_1, const std::vector<cv::Point2f>& keypts_2);
 
-    /**
-     * Decompose the specified homography matrix into a rotation, a translation, and a normal
-     * @param H_21
-     * @param cam_matrix
-     * @param init_rots
-     * @param init_transes
-     * @param init_normals
-     * @return
-     */
+    //! Decompose a homography matrix to eight pairs of rotation and translation
     static bool decompose(const Mat33_t& H_21, const Mat33_t& cam_matrix_1, const Mat33_t& cam_matrix_2,
                           eigen_alloc_vector<Mat33_t>& init_rots, eigen_alloc_vector<Vec3_t>& init_transes, eigen_alloc_vector<Vec3_t>& init_normals);
 
 private:
+    //! Check inliers of homography transformation
+    //! (Note: inlier flags are set to_inlier_match and a score is returned)
+    float check_inliers(const Mat33_t& H_21, std::vector<bool>& is_inlier_match);
+
+    //! undistorted keypoints of shot 1
     const std::vector<cv::KeyPoint> undist_keypts_1_;
+    //! undistorted keypoints of shot 2
     const std::vector<cv::KeyPoint> undist_keypts_2_;
+    //! matched indices between shots 1 and 2
     const std::vector<std::pair<int, int>>& matches_12_;
+    //! standard deviation of keypoint detection error
     const float sigma_;
 
+    //! solution is valid or not
     bool solution_is_valid_ = false;
+    //! best score of RANSAC
     double best_score_ = 0.0;
+    //! most reliable homography matrix
     Mat33_t best_H_21_;
+    //! inlier matches computed via RANSAC
     std::vector<bool> is_inlier_match_;
 };
-
-template<typename T>
-homography_solver::homography_solver(T* shot_1, T* shot_2, const std::vector<std::pair<int, int>>& matches_12, const float sigma)
-        : undist_keypts_1_(shot_1->undist_keypts_), undist_keypts_2_(shot_2->undist_keypts_), matches_12_(matches_12), sigma_(sigma) {
-    assert(shot_1->camera_->model_type_ == camera::model_type_t::Perspective);
-    assert(shot_2->camera_->model_type_ == camera::model_type_t::Perspective);
-}
 
 } // namespace solve
 } // namespace openvslam

@@ -5,14 +5,14 @@ namespace optimize {
 namespace g2o {
 
 landmark_vertex_container::landmark_vertex_container(const unsigned int offset, const unsigned int num_reserve)
-        : offset_(offset) {
+    : offset_(offset) {
     vtx_container_.reserve(num_reserve);
 }
 
 landmark_vertex* landmark_vertex_container::create_vertex(const unsigned int id, const Vec3_t& pos_w, const bool is_constant) {
     // vertexを作成
     const auto vtx_id = offset_ + id;
-    auto vtx  = new landmark_vertex();
+    auto vtx = new landmark_vertex();
     vtx->setId(vtx_id);
     vtx->setEstimate(pos_w);
     vtx->setFixed(is_constant);

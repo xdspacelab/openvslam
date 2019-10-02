@@ -56,8 +56,8 @@ Mat33_t converter::to_rot_mat(const Vec3_t& angle_axis) {
 Mat33_t converter::to_skew_symmetric_mat(const Vec3_t& vec) {
     Mat33_t skew;
     skew << 0, -vec(2), vec(1),
-            vec(2), 0, -vec(0),
-            -vec(1), vec(0), 0;
+        vec(2), 0, -vec(0),
+        -vec(1), vec(0), 0;
     return skew;
 }
 
