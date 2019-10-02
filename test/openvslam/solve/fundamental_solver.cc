@@ -21,11 +21,15 @@ TEST(fundamental_solver, linear_solve) {
     const Vec3_t trans_2 = Vec3_t(-30.4, -45.5, -49.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 143.0; cam_matrix_1(0, 2) = 400.0;
-    cam_matrix_1(1, 1) = 140.0; cam_matrix_1(1, 2) = 700.0;
+    cam_matrix_1(0, 0) = 143.0;
+    cam_matrix_1(0, 2) = 400.0;
+    cam_matrix_1(1, 1) = 140.0;
+    cam_matrix_1(1, 2) = 700.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 113.0; cam_matrix_2(0, 2) = 200.0;
-    cam_matrix_2(1, 1) = 108.0; cam_matrix_2(1, 2) = 500.0;
+    cam_matrix_2(0, 0) = 113.0;
+    cam_matrix_2(0, 2) = 200.0;
+    cam_matrix_2(1, 1) = 108.0;
+    cam_matrix_2(1, 2) = 500.0;
 
     // create keypoints from two-view poses and 3D points
     std::vector<cv::Point2f> keypts_1;
@@ -61,11 +65,15 @@ TEST(fundamental_solver, ransac_solve_without_noise) {
     const Vec3_t trans_2 = Vec3_t(20.4, 25.5, 39.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 103.0; cam_matrix_1(0, 2) = 250.0;
-    cam_matrix_1(1, 1) = 101.0; cam_matrix_1(1, 2) = 300.0;
+    cam_matrix_1(0, 0) = 103.0;
+    cam_matrix_1(0, 2) = 250.0;
+    cam_matrix_1(1, 1) = 101.0;
+    cam_matrix_1(1, 2) = 300.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 123.0; cam_matrix_2(0, 2) = 300.0;
-    cam_matrix_2(1, 1) = 118.0; cam_matrix_2(1, 2) = 400.0;
+    cam_matrix_2(0, 0) = 123.0;
+    cam_matrix_2(0, 2) = 300.0;
+    cam_matrix_2(1, 1) = 118.0;
+    cam_matrix_2(1, 2) = 400.0;
 
     // create keypoints from two-view poses and 3D points
     std::vector<cv::KeyPoint> keypts_1;
@@ -118,11 +126,15 @@ TEST(fundamental_solver, ransac_solve_with_noise) {
     const Vec3_t trans_2 = Vec3_t(-45.4, 11.5, -24.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 233.0; cam_matrix_1(0, 2) = 800.0;
-    cam_matrix_1(1, 1) = 220.0; cam_matrix_1(1, 2) = 600.0;
+    cam_matrix_1(0, 0) = 233.0;
+    cam_matrix_1(0, 2) = 800.0;
+    cam_matrix_1(1, 1) = 220.0;
+    cam_matrix_1(1, 2) = 600.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 103.0; cam_matrix_2(0, 2) = 400.0;
-    cam_matrix_2(1, 1) = 108.0; cam_matrix_2(1, 2) = 300.0;
+    cam_matrix_2(0, 0) = 103.0;
+    cam_matrix_2(0, 2) = 400.0;
+    cam_matrix_2(1, 1) = 108.0;
+    cam_matrix_2(1, 2) = 300.0;
 
     // create keypoints from two-view poses and 3D points
     std::vector<cv::KeyPoint> keypts_1;
@@ -166,11 +178,15 @@ TEST(fundamental_solver, decompose) {
     const Vec3_t trans_2 = Vec3_t(-30.4, -45.5, -49.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 231.0; cam_matrix_1(0, 2) = 500.0;
-    cam_matrix_1(1, 1) = 229.0; cam_matrix_1(1, 2) = 1000.0;
+    cam_matrix_1(0, 0) = 231.0;
+    cam_matrix_1(0, 2) = 500.0;
+    cam_matrix_1(1, 1) = 229.0;
+    cam_matrix_1(1, 2) = 1000.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 104.0; cam_matrix_2(0, 2) = 120.0;
-    cam_matrix_2(1, 1) = 101.0; cam_matrix_2(1, 2) = 240.0;
+    cam_matrix_2(0, 0) = 104.0;
+    cam_matrix_2(0, 2) = 120.0;
+    cam_matrix_2(1, 1) = 101.0;
+    cam_matrix_2(1, 2) = 240.0;
 
     // create a true fundamental matrix
     Mat33_t true_F_21 = solve::fundamental_solver::create_F_21(rot_1, trans_1, cam_matrix_1, rot_2, trans_2, cam_matrix_2);
@@ -204,19 +220,23 @@ TEST(fundamental_solver, create) {
     const Vec3_t trans_2 = Vec3_t(-30.4, -45.5, -49.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 263.0; cam_matrix_1(0, 2) = 400.0;
-    cam_matrix_1(1, 1) = 250.0; cam_matrix_1(1, 2) = 600.0;
+    cam_matrix_1(0, 0) = 263.0;
+    cam_matrix_1(0, 2) = 400.0;
+    cam_matrix_1(1, 1) = 250.0;
+    cam_matrix_1(1, 2) = 600.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 143.0; cam_matrix_2(0, 2) = 300.0;
-    cam_matrix_2(1, 1) = 148.0; cam_matrix_2(1, 2) = 300.0;
+    cam_matrix_2(0, 0) = 143.0;
+    cam_matrix_2(0, 2) = 300.0;
+    cam_matrix_2(1, 1) = 148.0;
+    cam_matrix_2(1, 2) = 300.0;
 
     // create a true fundamental matrix
     const Mat33_t rot_21 = rot_2 * rot_1.inverse();
     const Vec3_t trans_21 = trans_2 - rot_21 * trans_1;
     Mat33_t skew_21;
     skew_21 << 0, -trans_21(2), trans_21(1),
-            trans_21(2), 0, -trans_21(0),
-            -trans_21(1), trans_21(0), 0;
+        trans_21(2), 0, -trans_21(0),
+        -trans_21(1), trans_21(0), 0;
     Mat33_t true_F_21 = cam_matrix_2.transpose().inverse() * skew_21 * rot_21 * cam_matrix_1.inverse();
 
     // create a fundamental matrix from the rotation and the translation

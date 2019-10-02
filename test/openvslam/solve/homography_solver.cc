@@ -22,11 +22,15 @@ TEST(homography_solver, linear_solve) {
     const Vec3_t trans_2 = Vec3_t(-30.4, -45.5, -49.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 143.0; cam_matrix_1(0, 2) = 400.0;
-    cam_matrix_1(1, 1) = 140.0; cam_matrix_1(1, 2) = 700.0;
+    cam_matrix_1(0, 0) = 143.0;
+    cam_matrix_1(0, 2) = 400.0;
+    cam_matrix_1(1, 1) = 140.0;
+    cam_matrix_1(1, 2) = 700.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 113.0; cam_matrix_2(0, 2) = 200.0;
-    cam_matrix_2(1, 1) = 108.0; cam_matrix_2(1, 2) = 500.0;
+    cam_matrix_2(0, 0) = 113.0;
+    cam_matrix_2(0, 2) = 200.0;
+    cam_matrix_2(1, 1) = 108.0;
+    cam_matrix_2(1, 2) = 500.0;
 
     // create keypoints from two-view poses and 3D points
     std::vector<cv::Point2f> keypts_1;
@@ -66,11 +70,15 @@ TEST(homography_solver, ransac_solve_without_noise) {
     const Vec3_t trans_2 = Vec3_t(20.4, 25.5, 39.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 103.0; cam_matrix_1(0, 2) = 250.0;
-    cam_matrix_1(1, 1) = 101.0; cam_matrix_1(1, 2) = 300.0;
+    cam_matrix_1(0, 0) = 103.0;
+    cam_matrix_1(0, 2) = 250.0;
+    cam_matrix_1(1, 1) = 101.0;
+    cam_matrix_1(1, 2) = 300.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 123.0; cam_matrix_2(0, 2) = 300.0;
-    cam_matrix_2(1, 1) = 118.0; cam_matrix_2(1, 2) = 400.0;
+    cam_matrix_2(0, 0) = 123.0;
+    cam_matrix_2(0, 2) = 300.0;
+    cam_matrix_2(1, 1) = 118.0;
+    cam_matrix_2(1, 2) = 400.0;
 
     // create keypoints from two-view poses and 3D points
     std::vector<cv::KeyPoint> keypts_1;
@@ -126,11 +134,15 @@ TEST(homography_solver, ransac_solve_with_noise) {
     const Vec3_t trans_2 = Vec3_t(-45.4, 11.5, -24.6);
     // create camera matrices
     Mat33_t cam_matrix_1 = Mat33_t::Identity();
-    cam_matrix_1(0, 0) = 233.0; cam_matrix_1(0, 2) = 800.0;
-    cam_matrix_1(1, 1) = 220.0; cam_matrix_1(1, 2) = 600.0;
+    cam_matrix_1(0, 0) = 233.0;
+    cam_matrix_1(0, 2) = 800.0;
+    cam_matrix_1(1, 1) = 220.0;
+    cam_matrix_1(1, 2) = 600.0;
     Mat33_t cam_matrix_2 = Mat33_t::Identity();
-    cam_matrix_2(0, 0) = 103.0; cam_matrix_2(0, 2) = 400.0;
-    cam_matrix_2(1, 1) = 108.0; cam_matrix_2(1, 2) = 300.0;
+    cam_matrix_2(0, 0) = 103.0;
+    cam_matrix_2(0, 2) = 400.0;
+    cam_matrix_2(1, 1) = 108.0;
+    cam_matrix_2(1, 2) = 300.0;
 
     // create keypoints from two-view poses and 3D points
     std::vector<cv::KeyPoint> keypts_1;
