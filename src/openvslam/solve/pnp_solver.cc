@@ -1,55 +1,33 @@
-#include "openvslam/data/landmark.h"
 #include "openvslam/solve/pnp_solver.h"
+#include "openvslam/util/fancy_index.h"
 #include "openvslam/util/random_array.h"
 #include "openvslam/util/trigonometric.h"
+
+#include <spdlog/spdlog.h>
 
 namespace openvslam {
 namespace solve {
 
-pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& bearings, const std::vector<cv::KeyPoint>& keypts,
-                       const std::vector<float>& scale_factors, const std::vector<data::landmark*>& assoc_lms,
+pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& valid_bearings, const std::vector<cv::KeyPoint>& valid_keypts,
+                       const eigen_alloc_vector<Vec3_t>& valid_landmarks, const std::vector<float>& scale_factors,
                        const unsigned int min_num_inliers)
-    : min_num_inliers_(min_num_inliers) {
-    assert(bearings.size() == assoc_lms.size());
+    : num_matches_(valid_bearings.size()), valid_bearings_(valid_bearings),
+      valid_landmarks_(valid_landmarks), min_num_inliers_(min_num_inliers) {
+    spdlog::debug("CONSTRUCT: solve::pnp_solver");
 
-    // 最小特徴点スケールにおける許容最大誤差角度
-    constexpr double max_rad_error = 1.0 * M_PI / 180.0;
-
-    // 有効な対応情報のみを格納しておく
-
-    valid_indices_.clear();
-    valid_indices_.reserve(assoc_lms.size());
-    valid_bearings_.clear();
-    valid_bearings_.reserve(assoc_lms.size());
-    valid_landmarks_.clear();
-    valid_landmarks_.reserve(assoc_lms.size());
     max_cos_errors_.clear();
-    max_cos_errors_.reserve(assoc_lms.size());
+    max_cos_errors_.resize(num_matches_);
 
-    for (unsigned int idx = 0; idx < assoc_lms.size(); ++idx) {
-        auto lm = assoc_lms.at(idx);
-        if (!lm) {
-            continue;
-        }
-        if (lm->will_be_erased()) {
-            continue;
-        }
-
-        const Vec3_t& bearing = bearings.at(idx);
-        const Vec3_t pos_w = assoc_lms.at(idx)->get_pos_in_world();
-
-        valid_indices_.push_back(idx);
-        valid_bearings_.push_back(bearing);
-        valid_landmarks_.push_back(pos_w);
-
-        // スケールを考慮した許容最大誤差角度
-        const auto max_rad_error_with_scale = scale_factors.at(keypts.at(idx).octave) * max_rad_error;
-        max_cos_errors_.push_back(util::cos(max_rad_error_with_scale));
+    constexpr double max_rad_error = 1.0 * M_PI / 180.0;
+    for (unsigned int i = 0; i < num_matches_; ++i) {
+        const auto max_rad_error_with_scale = scale_factors.at(valid_keypts.at(i).octave) * max_rad_error;
+        max_cos_errors_.at(i) = util::cos(max_rad_error_with_scale);
     }
 
-    assert(valid_indices_.size() == valid_landmarks_.size());
-    assert(valid_indices_.size() == valid_bearings_.size());
-    assert(valid_indices_.size() == max_cos_errors_.size());
+    assert(num_matches_ == valid_bearings_.size());
+    assert(num_matches_ == valid_keypts.size());
+    assert(num_matches_ == valid_landmarks_.size());
+    assert(num_matches_ == max_cos_errors_.size());
 }
 
 pnp_solver::~pnp_solver() {
@@ -58,23 +36,22 @@ pnp_solver::~pnp_solver() {
     delete[] alphas_;
     delete[] pcs_;
     delete[] signs_;
+    spdlog::debug("DESTRUCT: solve::pnp_solver");
 }
 
 void pnp_solver::find_via_ransac(const unsigned int max_num_iter, const bool recompute) {
-    const auto num_matches = static_cast<unsigned int>(valid_indices_.size());
-
     // 1. Prepare for RANSAC
 
     // minimum number of samples (= 4)
     static constexpr unsigned int min_set_size = 4;
-    if (num_matches < min_set_size || num_matches < min_num_inliers_) {
+    if (num_matches_ < min_set_size || num_matches_ < min_num_inliers_) {
         solution_is_valid_ = false;
         return;
     }
 
     // RANSAC variables
     unsigned int max_num_inliers = 0;
-    is_inlier_match = std::vector<bool>(num_matches, false);
+    is_inlier_match = std::vector<bool>(num_matches_, false);
 
     // shared variables in RANSAC loop
     // rotation from world to camera
@@ -88,7 +65,7 @@ void pnp_solver::find_via_ransac(const unsigned int max_num_iter, const bool rec
 
     for (unsigned int iter = 0; iter < max_num_iter; ++iter) {
         // 2-1. Create a minimum set
-        const auto random_indices = util::create_random_array(min_set_size, 0U, num_matches - 1);
+        const auto random_indices = util::create_random_array(min_set_size, 0U, num_matches_ - 1);
         assert(random_indices.size() == min_set_size);
         reset_correspondences();
         set_max_num_correspondences(min_set_size);
@@ -126,7 +103,7 @@ void pnp_solver::find_via_ransac(const unsigned int max_num_iter, const bool rec
     const auto num_inliers = std::count(is_inlier_match.begin(), is_inlier_match.end(), true);
     reset_correspondences();
     set_max_num_correspondences(num_inliers);
-    for (unsigned int i = 0; i < num_matches; ++i) {
+    for (unsigned int i = 0; i < num_matches_; ++i) {
         if (!is_inlier_match.at(i)) {
             continue;
         }
@@ -138,24 +115,11 @@ void pnp_solver::find_via_ransac(const unsigned int max_num_iter, const bool rec
     compute_pose(best_rot_cw_, best_trans_cw_);
 }
 
-std::vector<unsigned int> pnp_solver::get_inlier_indices() const {
-    std::vector<unsigned int> inlier_indices;
-    inlier_indices.reserve(valid_indices_.size());
-    for (unsigned int i = 0; i < valid_indices_.size(); ++i) {
-        if (is_inlier_match.at(i)) {
-            inlier_indices.push_back(valid_indices_.at(i));
-        }
-    }
-    return inlier_indices;
-}
-
 unsigned int pnp_solver::check_inliers(const Mat33_t& rot_cw, const Vec3_t& trans_cw, std::vector<bool>& is_inlier) {
-    const auto num_matches = static_cast<unsigned int>(valid_indices_.size());
-
     unsigned int num_inliers = 0;
 
-    is_inlier.resize(num_matches);
-    for (unsigned int i = 0; i < num_matches; ++i) {
+    is_inlier.resize(num_matches_);
+    for (unsigned int i = 0; i < num_matches_; ++i) {
         const Vec3_t& pos_w = valid_landmarks_.at(i);
         const Vec3_t& bearing = valid_bearings_.at(i);
 
@@ -176,7 +140,7 @@ unsigned int pnp_solver::check_inliers(const Mat33_t& rot_cw, const Vec3_t& tran
 }
 
 void pnp_solver::reset_correspondences() {
-    num_matches_ = 0;
+    num_correspondences_ = 0;
 }
 
 void pnp_solver::set_max_num_correspondences(const unsigned int max_num_correspondences) {
@@ -199,30 +163,30 @@ void pnp_solver::add_correspondence(const Vec3_t& pos_w, const Vec3_t& bearing) 
         return;
     }
 
-    pws_[3 * num_matches_] = pos_w(0);
-    pws_[3 * num_matches_ + 1] = pos_w(1);
-    pws_[3 * num_matches_ + 2] = pos_w(2);
+    pws_[3 * num_correspondences_] = pos_w(0);
+    pws_[3 * num_correspondences_ + 1] = pos_w(1);
+    pws_[3 * num_correspondences_ + 2] = pos_w(2);
 
-    us_[2 * num_matches_] = bearing(0) / bearing(2);
-    us_[2 * num_matches_ + 1] = bearing(1) / bearing(2);
+    us_[2 * num_correspondences_] = bearing(0) / bearing(2);
+    us_[2 * num_correspondences_ + 1] = bearing(1) / bearing(2);
 
     if (0.0 < bearing(2)) {
-        signs_[num_matches_] = 1;
+        signs_[num_correspondences_] = 1;
     }
     else {
-        signs_[num_matches_] = -1;
+        signs_[num_correspondences_] = -1;
     }
 
-    ++num_matches_;
+    ++num_correspondences_;
 }
 
 double pnp_solver::compute_pose(Mat33_t& rot_cw, Vec3_t& trans_cw) {
     choose_control_points();
     compute_barycentric_coordinates();
 
-    MatX_t M(2 * num_matches_, 12);
+    MatX_t M(2 * num_correspondences_, 12);
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         fill_M(M, 2 * i, alphas_ + 4 * i, us_[2 * i], us_[2 * i + 1]);
     }
 
@@ -275,20 +239,20 @@ double pnp_solver::compute_pose(Mat33_t& rot_cw, Vec3_t& trans_cw) {
 void pnp_solver::choose_control_points() {
     // Take C0 as the reference points centroid:
     cws[0][0] = cws[0][1] = cws[0][2] = 0;
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         for (unsigned int j = 0; j < 3; ++j) {
             cws[0][j] += pws_[3 * i + j];
         }
     }
 
     for (unsigned int j = 0; j < 3; ++j) {
-        cws[0][j] /= num_matches_;
+        cws[0][j] /= num_correspondences_;
     }
 
     // Take C1, C2, and C3 from PCA on the reference points:
-    MatX_t PW0(num_matches_, 3);
+    MatX_t PW0(num_correspondences_, 3);
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         for (unsigned int j = 0; j < 3; ++j) {
             PW0(i, j) = pws_[3 * i + j] - cws[0][j];
         }
@@ -300,7 +264,7 @@ void pnp_solver::choose_control_points() {
     const MatX_t Ut = SVD.matrixU().transpose();
 
     for (unsigned int i = 1; i < 4; ++i) {
-        const double k = sqrt(D(i - 1, 0) / num_matches_);
+        const double k = sqrt(D(i - 1, 0) / num_correspondences_);
         for (unsigned int j = 0; j < 3; ++j) {
             cws[i][j] = cws[0][j] + k * Ut((i - 1), j);
         }
@@ -318,7 +282,7 @@ void pnp_solver::compute_barycentric_coordinates() {
 
     const Mat33_t CC_inv = CC.inverse();
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         double* pi = pws_ + 3 * i;
         double* a = alphas_ + 4 * i;
 
@@ -359,7 +323,7 @@ void pnp_solver::compute_ccs(const double* betas, const MatX_t& ut) {
 }
 
 void pnp_solver::compute_pcs() {
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         double* a = alphas_ + 4 * i;
         double* pc = pcs_ + 3 * i;
 
@@ -385,7 +349,7 @@ double pnp_solver::dot(const double* v1, const double* v2) {
 double pnp_solver::reprojection_error(const double R[3][3], const double t[3]) {
     double sum2 = 0.0;
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         double* pw = pws_ + 3 * i;
         double Xc = dot(R[0], pw) + t[0];
         double Yc = dot(R[1], pw) + t[1];
@@ -397,7 +361,7 @@ double pnp_solver::reprojection_error(const double R[3][3], const double t[3]) {
         sum2 += sqrt((u - ue) * (u - ue) + (v - ve) * (v - ve));
     }
 
-    return sum2 / num_matches_;
+    return sum2 / num_correspondences_;
 }
 
 void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
@@ -406,7 +370,7 @@ void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
     pc0[0] = pc0[1] = pc0[2] = 0.0;
     pw0[0] = pw0[1] = pw0[2] = 0.0;
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         const double* pc = pcs_ + 3 * i;
         const double* pw = pws_ + 3 * i;
 
@@ -416,8 +380,8 @@ void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
         }
     }
     for (unsigned int j = 0; j < 3; ++j) {
-        pc0[j] /= num_matches_;
-        pw0[j] /= num_matches_;
+        pc0[j] /= num_correspondences_;
+        pw0[j] /= num_correspondences_;
     }
 
     MatX_t Abt(3, 3);
@@ -428,7 +392,7 @@ void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
         }
     }
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         const double* pc = pcs_ + 3 * i;
         const double* pw = pws_ + 3 * i;
 
@@ -482,7 +446,7 @@ void pnp_solver::solve_for_sign() {
             }
         }
 
-        for (unsigned int i = 0; i < num_matches_; ++i) {
+        for (unsigned int i = 0; i < num_correspondences_; ++i) {
             pcs_[3 * i] = -pcs_[3 * i];
             pcs_[3 * i + 1] = -pcs_[3 * i + 1];
             pcs_[3 * i + 2] = -pcs_[3 * i + 2];

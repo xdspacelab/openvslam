@@ -1,8 +1,9 @@
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
+#include "openvslam/data/landmark.h"
 #include "openvslam/data/bow_database.h"
 #include "openvslam/module/relocalizer.h"
-#include "openvslam/solve/pnp_solver.h"
+#include "openvslam/util/fancy_index.h"
 
 #include <spdlog/spdlog.h>
 
@@ -26,67 +27,50 @@ relocalizer::~relocalizer() {
 bool relocalizer::relocalize(data::frame& curr_frm) {
     curr_frm.compute_bow();
 
-    // relocalizationの候補を持ってくる
+    // acquire relocalization candidates
     const auto reloc_candidates = bow_db_->acquire_relocalization_candidates(&curr_frm);
     if (reloc_candidates.empty()) {
         return false;
     }
     const auto num_candidates = reloc_candidates.size();
 
-    std::vector<std::unique_ptr<solve::pnp_solver>> pnp_solvers(num_candidates);
     std::vector<std::vector<data::landmark*>> matched_landmarks(num_candidates);
-    std::vector<bool> is_discarded(num_candidates, false);
 
-    // 有効なrelocalize候補数
-    unsigned int num_valid_candidates = 0;
     // 各候補について，BoW tree matcherで対応点を求める
     for (unsigned int i = 0; i < num_candidates; ++i) {
-        auto* keyfrm = reloc_candidates.at(i);
+        auto keyfrm = reloc_candidates.at(i);
         if (keyfrm->will_be_erased()) {
-            is_discarded.at(i) = true;
             continue;
         }
 
-        // マッチングが閾値未満しか得られなければ破棄
         const auto num_matches = bow_matcher_.match_frame_and_keyframe(keyfrm, curr_frm, matched_landmarks.at(i));
+        // discard the candidate if the number of 2D-3D matches is less than the threshold
         if (num_matches < min_num_bow_matches_) {
-            is_discarded.at(i) = true;
             continue;
         }
 
-        pnp_solvers.at(i) = std::unique_ptr<solve::pnp_solver>(new solve::pnp_solver(curr_frm.bearings_, curr_frm.keypts_,
-                                                                                     curr_frm.scale_factors_, matched_landmarks.at(i)));
-        ++num_valid_candidates;
-    }
+        // setup PnP solver with the current 2D-3D matches
+        const auto valid_indices = extract_valid_indices(matched_landmarks.at(i));
+        auto pnp_solver = setup_pnp_solver(valid_indices, curr_frm.bearings_, curr_frm.keypts_,
+                                           matched_landmarks.at(i), curr_frm.scale_factors_);
 
-    // 各候補について，
-    // 1. PnP(+RANSAC)で姿勢を求める
-    // 2. pose optimizerを通す
-    // 3. projection matchで対応点を増やす
-    // 4. もう一度pose optimizerを通す
-    for (unsigned int i = 0; i < num_candidates; ++i) {
-        if (is_discarded.at(i)) {
+        // 1. Estimate the camera pose with EPnP(+RANSAC)
+
+        pnp_solver->find_via_ransac(30);
+        if (!pnp_solver->solution_is_valid()) {
             continue;
         }
 
-        // 1. PnP(+RANSAC)で姿勢を求める
-
-        pnp_solvers.at(i)->find_via_ransac(30);
-        if (!pnp_solvers.at(i)->solution_is_valid()) {
-            continue;
-        }
-
-        curr_frm.cam_pose_cw_ = pnp_solvers.at(i)->get_best_cam_pose();
+        curr_frm.cam_pose_cw_ = pnp_solver->get_best_cam_pose();
         curr_frm.update_pose_params();
 
-        // 2. pose optimizerを通す
+        // 2. Apply pose optimizer
 
-        // EPnPでinlierになった対応のindicesを取得する
-        const auto inlier_indices = pnp_solvers.at(i)->get_inlier_indices();
-        // 3次元点との対応を再初期化
+        // get the inlier indices after EPnP+RANSAC
+        const auto inlier_indices = util::resample_by_indices(valid_indices, pnp_solver->get_inlier_flags());
+
+        // set 2D-3D matches for the pose optimization
         curr_frm.landmarks_ = std::vector<data::landmark*>(curr_frm.num_keypts_, nullptr);
-
-        // pose optimizationのために2D-3D対応をセットする
         std::set<data::landmark*> already_found_landmarks;
         for (const auto idx : inlier_indices) {
             // 有効な3次元点のみをcurrent frameにセット
@@ -97,12 +81,12 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
 
         // pose optimization
         auto num_valid_obs = pose_optimizer_.optimize(curr_frm);
-        // インライアが閾値未満だったら破棄
+        // discard the candidate if the number of the inliers is less than the threshold
         if (num_valid_obs < min_num_bow_matches_ / 2) {
             continue;
         }
 
-        // pose optimizationの際のoutlierを適用する
+        // reject outliers
         for (unsigned int idx = 0; idx < curr_frm.num_keypts_; idx++) {
             if (!curr_frm.outlier_flags_.at(idx)) {
                 continue;
@@ -110,18 +94,17 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
             curr_frm.landmarks_.at(idx) = nullptr;
         }
 
-        // 3. projection matchで対応点を増やす
+        // 3. Apply projection match to increase 2D-3D matches
 
-        // optimizeした姿勢をもとに，projection matchを行う -> 2D-3D対応を設定
+        // projection match based on the pre-optimized camera pose
         auto num_found = proj_matcher_.match_frame_and_keyframe(curr_frm, reloc_candidates.at(i), already_found_landmarks, 10, 100);
-        // BoW matchとprojection matchで合わせてインライアが閾値未満だったら破棄
+        // discard the candidate if the number of the inliers is less than the threshold
         if (num_valid_obs + num_found < min_num_valid_obs_) {
             continue;
         }
 
-        // 4. もう一度pose optimizerを通す
+        // 4. Re-apply the pose optimizer
 
-        // projection matchをもとに，もう一度最適化する
         num_valid_obs = pose_optimizer_.optimize(curr_frm);
 
         // 閾値未満になったら，もう一度projection matchを行う
@@ -154,8 +137,9 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
         // relocalize成功
         spdlog::info("relocalization succeeded");
         // TODO: current frameのreference keyframeをセットする
+
+        // reject outliers
         for (unsigned int idx = 0; idx < curr_frm.num_keypts_; ++idx) {
-            // アウトライア情報を適用
             if (!curr_frm.outlier_flags_.at(idx)) {
                 continue;
             }
@@ -167,6 +151,39 @@ bool relocalizer::relocalize(data::frame& curr_frm) {
 
     curr_frm.cam_pose_cw_is_valid_ = false;
     return false;
+}
+
+std::vector<unsigned int> relocalizer::extract_valid_indices(const std::vector<data::landmark*>& landmarks) const {
+    std::vector<unsigned int> valid_indices;
+    valid_indices.reserve(landmarks.size());
+    for (unsigned int idx = 0; idx < landmarks.size(); ++idx) {
+        auto lm = landmarks.at(idx);
+        if (!lm) {
+            continue;
+        }
+        if (lm->will_be_erased()) {
+            continue;
+        }
+        valid_indices.push_back(idx);
+    }
+    return valid_indices;
+}
+
+std::unique_ptr<solve::pnp_solver> relocalizer::setup_pnp_solver(const std::vector<unsigned int>& valid_indices,
+                                                                 const eigen_alloc_vector<Vec3_t>& bearings,
+                                                                 const std::vector<cv::KeyPoint>& keypts,
+                                                                 const std::vector<data::landmark*>& matched_landmarks,
+                                                                 const std::vector<float>& scale_factors) const {
+    // resample valid elements
+    const auto valid_bearings = util::resample_by_indices(bearings, valid_indices);
+    const auto valid_keypts = util::resample_by_indices(keypts, valid_indices);
+    const auto valid_assoc_lms = util::resample_by_indices(matched_landmarks, valid_indices);
+    eigen_alloc_vector<Vec3_t> valid_landmarks(valid_indices.size());
+    for (unsigned int i = 0; i < valid_indices.size(); ++i) {
+        valid_landmarks.at(i) = valid_assoc_lms.at(i)->get_pos_in_world();
+    }
+    // setup PnP solver
+    return std::unique_ptr<solve::pnp_solver>(new solve::pnp_solver(valid_bearings, valid_keypts, valid_landmarks, scale_factors));
 }
 
 } // namespace module
