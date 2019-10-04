@@ -1,11 +1,9 @@
 #ifndef OPENVSLAM_SOLVE_PNP_SOLVER_H
 #define OPENVSLAM_SOLVE_PNP_SOLVER_H
 
-#include "openvslam/data/landmark.h"
-#include "openvslam/data/frame.h"
 #include "openvslam/util/converter.h"
 
-#include <opencv2/core/core.hpp>
+#include <vector>
 
 namespace openvslam {
 namespace solve {
@@ -14,42 +12,72 @@ class pnp_solver {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    pnp_solver(const eigen_alloc_vector<Vec3_t>& bearings, const std::vector<cv::KeyPoint>& keypts,
-               const std::vector<float>& scale_factors, const std::vector<data::landmark*>& assoc_lms);
+    //! Constructor
+    pnp_solver(const eigen_alloc_vector<Vec3_t>& valid_bearings, const std::vector<cv::KeyPoint>& valid_keypts,
+               const eigen_alloc_vector<Vec3_t>& valid_landmarks, const std::vector<float>& scale_factors,
+               const unsigned int min_num_inliers = 10);
 
-    ~pnp_solver();
+    //! Destructor
+    virtual ~pnp_solver();
 
-    void set_ransac_parameters(const float probability = 0.99, const unsigned int min_num_inliers = 10, const unsigned int max_num_iters = 500);
+    //! Find the most reliable camera pose via RANSAC
+    void find_via_ransac(const unsigned int max_num_iter, const bool recompute = true);
 
-    bool estimate();
-
-    std::vector<unsigned int> get_inlier_indices() const {
-        std::vector<unsigned int> inlier_indices;
-        inlier_indices.reserve(valid_indices_.size());
-        for (unsigned int i = 0; i < valid_indices_.size(); ++i) {
-            if (best_is_inlier_.at(i)) {
-                inlier_indices.push_back(valid_indices_.at(i));
-            }
-        }
-        return inlier_indices;
+    //! Check if the solution is valid or not
+    bool solution_is_valid() const {
+        return solution_is_valid_;
     }
 
-    Mat33_t get_best_rot_cw() const {
+    //! Get the most reliable rotation (as the world reference)
+    Mat33_t get_best_rotation() const {
         return best_rot_cw_;
     }
 
-    Vec3_t get_best_trans_cw() const {
+    //! Get the most reliable translation (as the world reference)
+    Vec3_t get_best_translation() const {
         return best_trans_cw_;
     }
 
-    Mat44_t get_best_cam_pose_cw() const {
+    //! Get the most reliable camera pose (as the world reference)
+    Mat44_t get_best_cam_pose() const {
         return util::converter::to_eigen_cam_pose(best_rot_cw_, best_trans_cw_);
     }
 
-    static constexpr unsigned int min_num_correspondences_ = 4;
+    //! Get the inlier flags estimated via RANSAC
+    std::vector<bool> get_inlier_flags() const {
+        return is_inlier_match;
+    }
 
 private:
-    unsigned int count_inliers(const Mat33_t& rot_cw, const Vec3_t& trans_cw, std::vector<bool>& is_inlier);
+    //! Check inliers of 2D-3D matches
+    //! (Note: inlier flags are set to_inlier_match and the number of inliers is returned)
+    unsigned int check_inliers(const Mat33_t& rot_cw, const Vec3_t& trans_cw, std::vector<bool>& is_inlier);
+
+    //! the number of 2D-3D matches
+    const unsigned int num_matches_;
+    // the following vectors are corresponded as element-wise
+    //! bearing vector
+    eigen_alloc_vector<Vec3_t> valid_bearings_;
+    //! 3D point
+    eigen_alloc_vector<Vec3_t> valid_landmarks_;
+    //! acceptable maximum error
+    std::vector<float> max_cos_errors_;
+
+    //! minimum number of inliers
+    //! (Note: if the number of inliers is less than this, solution is regarded as invalid)
+    const unsigned int min_num_inliers_;
+
+    //! solution is valid or not
+    bool solution_is_valid_ = false;
+    //! most reliable rotation
+    Mat33_t best_rot_cw_;
+    //! most reliable translation
+    Vec3_t best_trans_cw_;
+    //! inlier matches computed via RANSAC
+    std::vector<bool> is_inlier_match;
+
+    //-----------------------------------------
+    // quoted from EPnP implementation
 
     void reset_correspondences();
 
@@ -108,32 +136,8 @@ private:
 
     double cws[4][3], ccs[4][3];
 
-    unsigned int num_matches_ = 0;
+    unsigned int num_correspondences_ = 0;
     unsigned int max_num_correspondences_ = 0;
-
-    // 対応する2D-3D点の情報
-    //! 有効な対応数
-    unsigned int num_valid_correspondences_;
-
-    // 以下のvectorは要素ごとに対応している
-    //! 有効な対応の特徴点index
-    std::vector<unsigned int> valid_indices_;
-    //! bearing vector
-    eigen_alloc_vector<Vec3_t> valid_bearings_;
-    //! 3次元点
-    eigen_alloc_vector<Vec3_t> valid_landmarks_;
-    //! 許容する最大誤差
-    std::vector<float> max_cos_errors_;
-
-    //! RANSACのベストモデル
-    Mat33_t best_rot_cw_;
-    Vec3_t best_trans_cw_;
-    std::vector<bool> best_is_inlier_;
-
-    //! RANSACのパラメータ
-    float probability_;
-    unsigned int min_num_inliers_;
-    unsigned int max_num_iters_;
 };
 
 } // namespace solve

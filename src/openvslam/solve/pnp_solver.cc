@@ -1,60 +1,33 @@
 #include "openvslam/solve/pnp_solver.h"
+#include "openvslam/util/fancy_index.h"
 #include "openvslam/util/random_array.h"
 #include "openvslam/util/trigonometric.h"
 
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <algorithm>
-
-#include <opencv2/core/core.hpp>
+#include <spdlog/spdlog.h>
 
 namespace openvslam {
 namespace solve {
 
-pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& bearings, const std::vector<cv::KeyPoint>& keypts,
-                       const std::vector<float>& scale_factors, const std::vector<data::landmark*>& assoc_lms) {
-    assert(bearings.size() == assoc_lms.size());
+pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& valid_bearings, const std::vector<cv::KeyPoint>& valid_keypts,
+                       const eigen_alloc_vector<Vec3_t>& valid_landmarks, const std::vector<float>& scale_factors,
+                       const unsigned int min_num_inliers)
+    : num_matches_(valid_bearings.size()), valid_bearings_(valid_bearings),
+      valid_landmarks_(valid_landmarks), min_num_inliers_(min_num_inliers) {
+    spdlog::debug("CONSTRUCT: solve::pnp_solver");
 
-    // 最小特徴点スケールにおける許容最大誤差角度
-    constexpr double max_rad_error = 1.0 * M_PI / 180.0;
-
-    // 有効な対応情報のみを格納しておく
-
-    valid_indices_.clear();
-    valid_indices_.reserve(assoc_lms.size());
-    valid_bearings_.clear();
-    valid_bearings_.reserve(assoc_lms.size());
-    valid_landmarks_.clear();
-    valid_landmarks_.reserve(assoc_lms.size());
     max_cos_errors_.clear();
-    max_cos_errors_.reserve(assoc_lms.size());
+    max_cos_errors_.resize(num_matches_);
 
-    for (unsigned int idx = 0; idx < assoc_lms.size(); ++idx) {
-        auto lm = assoc_lms.at(idx);
-        if (!lm) {
-            continue;
-        }
-        if (lm->will_be_erased()) {
-            continue;
-        }
-
-        const Vec3_t& bearing = bearings.at(idx);
-        const Vec3_t pos_w = assoc_lms.at(idx)->get_pos_in_world();
-
-        valid_indices_.push_back(idx);
-        valid_bearings_.push_back(bearing);
-        valid_landmarks_.push_back(pos_w);
-
-        // スケールを考慮した許容最大誤差角度
-        const auto max_rad_error_with_scale = scale_factors.at(keypts.at(idx).octave) * max_rad_error;
-        max_cos_errors_.push_back(util::cos(max_rad_error_with_scale));
+    constexpr double max_rad_error = 1.0 * M_PI / 180.0;
+    for (unsigned int i = 0; i < num_matches_; ++i) {
+        const auto max_rad_error_with_scale = scale_factors.at(valid_keypts.at(i).octave) * max_rad_error;
+        max_cos_errors_.at(i) = util::cos(max_rad_error_with_scale);
     }
 
-    assert(valid_indices_.size() == valid_landmarks_.size());
-    assert(valid_indices_.size() == valid_bearings_.size());
-    assert(valid_indices_.size() == max_cos_errors_.size());
-    num_valid_correspondences_ = valid_indices_.size();
+    assert(num_matches_ == valid_bearings_.size());
+    assert(num_matches_ == valid_keypts.size());
+    assert(num_matches_ == valid_landmarks_.size());
+    assert(num_matches_ == max_cos_errors_.size());
 }
 
 pnp_solver::~pnp_solver() {
@@ -63,92 +36,75 @@ pnp_solver::~pnp_solver() {
     delete[] alphas_;
     delete[] pcs_;
     delete[] signs_;
+    spdlog::debug("DESTRUCT: solve::pnp_solver");
 }
 
-void pnp_solver::set_ransac_parameters(const float probability, const unsigned int min_num_inliers, const unsigned int max_num_iters) {
-    // https://www.slideshare.net/satoshiyoshikawa315/prml-4-48751028
+void pnp_solver::find_via_ransac(const unsigned int max_num_iter, const bool recompute) {
+    // 1. Prepare for RANSAC
 
-    probability_ = probability;
-    min_num_inliers_ = min_num_inliers;
-    max_num_iters_ = max_num_iters;
-
-    // probabilityから所要回数を推定する
-    const auto epsilon = static_cast<double>(min_num_inliers_) / num_valid_correspondences_;
-    const unsigned int recom_num_iters = std::ceil(std::log(1 - probability_) / std::log(1 - std::pow(epsilon, min_num_correspondences_)));
-
-    if (num_valid_correspondences_ <= min_num_inliers_) {
-        // 1回で十分
-        max_num_iters_ = 1;
+    // minimum number of samples (= 4)
+    static constexpr unsigned int min_set_size = 4;
+    if (num_matches_ < min_set_size || num_matches_ < min_num_inliers_) {
+        solution_is_valid_ = false;
+        return;
     }
-    else {
-        // 与えられた最大回数を超えない範囲で，probabilityを満たすRANSAC繰り返し回数を設定する
-        max_num_iters_ = std::min(recom_num_iters, max_num_iters);
-        // 0にならないようにしておく
-        max_num_iters_ = std::max(1U, max_num_iters_);
-    }
-}
 
-bool pnp_solver::estimate() {
-    // best modelを初期化
+    // RANSAC variables
     unsigned int max_num_inliers = 0;
-    best_is_inlier_ = std::vector<bool>(num_valid_correspondences_, false);
-    best_rot_cw_ = Mat33_t::Identity();
-    best_trans_cw_ = Vec3_t::Zero();
+    is_inlier_match = std::vector<bool>(num_matches_, false);
 
-    if (num_valid_correspondences_ < min_num_correspondences_
-        || num_valid_correspondences_ < min_num_inliers_) {
-        return false;
-    }
-
-    // RANSAC loop内で使用する変数
-    std::vector<bool> is_inlier_in_sac;
+    // shared variables in RANSAC loop
+    // rotation from world to camera
     Mat33_t rot_cw_in_sac;
+    // translation from world to camera
     Vec3_t trans_cw_in_sac;
+    // inlier/outlier flags
+    std::vector<bool> is_inlier_match_in_sac;
 
-    // RANSAC loop
-    for (unsigned int iter = 0; iter < max_num_iters_; ++iter) {
-        // ランダムサンプリング
-        const auto random_indices = util::create_random_array(min_num_correspondences_, 0, static_cast<int>(num_valid_correspondences_ - 1));
-        assert(random_indices.size() == min_num_correspondences_);
+    // 2. RANSAC loop
 
-        // 対応情報を追加
+    for (unsigned int iter = 0; iter < max_num_iter; ++iter) {
+        // 2-1. Create a minimum set
+        const auto random_indices = util::create_random_array(min_set_size, 0U, num_matches_ - 1);
+        assert(random_indices.size() == min_set_size);
         reset_correspondences();
-        set_max_num_correspondences(min_num_correspondences_);
+        set_max_num_correspondences(min_set_size);
         for (const auto i : random_indices) {
             const Vec3_t& bearing = valid_bearings_.at(i);
             const Vec3_t& pos_w = valid_landmarks_.at(i);
             add_correspondence(pos_w, bearing);
         }
 
-        // 姿勢を求める
+        // 2-2. Compute a camera pose
         compute_pose(rot_cw_in_sac, trans_cw_in_sac);
 
-        // インライアを数える
-        const auto num_inliers = count_inliers(rot_cw_in_sac, trans_cw_in_sac, is_inlier_in_sac);
+        // 2-3. Check inliers and compute a score
+        const auto num_inliers = check_inliers(rot_cw_in_sac, trans_cw_in_sac, is_inlier_match_in_sac);
 
-        // ベストモデルを更新
+        // 2-4. Update the best model
         if (max_num_inliers < num_inliers) {
             max_num_inliers = num_inliers;
-            best_is_inlier_ = is_inlier_in_sac;
             best_rot_cw_ = rot_cw_in_sac;
             best_trans_cw_ = trans_cw_in_sac;
+            is_inlier_match = is_inlier_match_in_sac;
         }
     }
 
-    if (max_num_inliers < min_num_inliers_) {
-        // インライア数の最小条件を満たせなかった場合は推定失敗
-        best_is_inlier_ = std::vector<bool>(num_valid_correspondences_, false);
-        best_rot_cw_ = Mat33_t::Identity();
-        best_trans_cw_ = Vec3_t::Zero();
-        return false;
+    if (max_num_inliers > min_num_inliers_) {
+        solution_is_valid_ = true;
     }
 
-    // インライアを全て使って再推定
-    const auto num_inliers = std::count(best_is_inlier_.begin(), best_is_inlier_.end(), true);
+    if (!recompute || !solution_is_valid_) {
+        return;
+    }
+
+    // 3. Recompute a camera pose only with the inlier matches
+
+    const auto num_inliers = std::count(is_inlier_match.begin(), is_inlier_match.end(), true);
     reset_correspondences();
     set_max_num_correspondences(num_inliers);
-    for (unsigned int i = 0; i < num_valid_correspondences_; ++i) {
-        if (!best_is_inlier_.at(i)) {
+    for (unsigned int i = 0; i < num_matches_; ++i) {
+        if (!is_inlier_match.at(i)) {
             continue;
         }
         const Vec3_t& bearing = valid_bearings_.at(i);
@@ -157,15 +113,13 @@ bool pnp_solver::estimate() {
     }
 
     compute_pose(best_rot_cw_, best_trans_cw_);
-
-    return true;
 }
 
-unsigned int pnp_solver::count_inliers(const Mat33_t& rot_cw, const Vec3_t& trans_cw, std::vector<bool>& is_inlier) {
+unsigned int pnp_solver::check_inliers(const Mat33_t& rot_cw, const Vec3_t& trans_cw, std::vector<bool>& is_inlier) {
     unsigned int num_inliers = 0;
 
-    is_inlier.resize(num_valid_correspondences_);
-    for (unsigned int i = 0; i < num_valid_correspondences_; ++i) {
+    is_inlier.resize(num_matches_);
+    for (unsigned int i = 0; i < num_matches_; ++i) {
         const Vec3_t& pos_w = valid_landmarks_.at(i);
         const Vec3_t& bearing = valid_bearings_.at(i);
 
@@ -186,7 +140,7 @@ unsigned int pnp_solver::count_inliers(const Mat33_t& rot_cw, const Vec3_t& tran
 }
 
 void pnp_solver::reset_correspondences() {
-    num_matches_ = 0;
+    num_correspondences_ = 0;
 }
 
 void pnp_solver::set_max_num_correspondences(const unsigned int max_num_correspondences) {
@@ -209,30 +163,30 @@ void pnp_solver::add_correspondence(const Vec3_t& pos_w, const Vec3_t& bearing) 
         return;
     }
 
-    pws_[3 * num_matches_] = pos_w(0);
-    pws_[3 * num_matches_ + 1] = pos_w(1);
-    pws_[3 * num_matches_ + 2] = pos_w(2);
+    pws_[3 * num_correspondences_] = pos_w(0);
+    pws_[3 * num_correspondences_ + 1] = pos_w(1);
+    pws_[3 * num_correspondences_ + 2] = pos_w(2);
 
-    us_[2 * num_matches_] = bearing(0) / bearing(2);
-    us_[2 * num_matches_ + 1] = bearing(1) / bearing(2);
+    us_[2 * num_correspondences_] = bearing(0) / bearing(2);
+    us_[2 * num_correspondences_ + 1] = bearing(1) / bearing(2);
 
     if (0.0 < bearing(2)) {
-        signs_[num_matches_] = 1;
+        signs_[num_correspondences_] = 1;
     }
     else {
-        signs_[num_matches_] = -1;
+        signs_[num_correspondences_] = -1;
     }
 
-    ++num_matches_;
+    ++num_correspondences_;
 }
 
 double pnp_solver::compute_pose(Mat33_t& rot_cw, Vec3_t& trans_cw) {
     choose_control_points();
     compute_barycentric_coordinates();
 
-    MatX_t M(2 * num_matches_, 12);
+    MatX_t M(2 * num_correspondences_, 12);
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         fill_M(M, 2 * i, alphas_ + 4 * i, us_[2 * i], us_[2 * i + 1]);
     }
 
@@ -285,20 +239,20 @@ double pnp_solver::compute_pose(Mat33_t& rot_cw, Vec3_t& trans_cw) {
 void pnp_solver::choose_control_points() {
     // Take C0 as the reference points centroid:
     cws[0][0] = cws[0][1] = cws[0][2] = 0;
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         for (unsigned int j = 0; j < 3; ++j) {
             cws[0][j] += pws_[3 * i + j];
         }
     }
 
     for (unsigned int j = 0; j < 3; ++j) {
-        cws[0][j] /= num_matches_;
+        cws[0][j] /= num_correspondences_;
     }
 
     // Take C1, C2, and C3 from PCA on the reference points:
-    MatX_t PW0(num_matches_, 3);
+    MatX_t PW0(num_correspondences_, 3);
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         for (unsigned int j = 0; j < 3; ++j) {
             PW0(i, j) = pws_[3 * i + j] - cws[0][j];
         }
@@ -310,7 +264,7 @@ void pnp_solver::choose_control_points() {
     const MatX_t Ut = SVD.matrixU().transpose();
 
     for (unsigned int i = 1; i < 4; ++i) {
-        const double k = sqrt(D(i - 1, 0) / num_matches_);
+        const double k = sqrt(D(i - 1, 0) / num_correspondences_);
         for (unsigned int j = 0; j < 3; ++j) {
             cws[i][j] = cws[0][j] + k * Ut((i - 1), j);
         }
@@ -328,7 +282,7 @@ void pnp_solver::compute_barycentric_coordinates() {
 
     const Mat33_t CC_inv = CC.inverse();
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         double* pi = pws_ + 3 * i;
         double* a = alphas_ + 4 * i;
 
@@ -369,7 +323,7 @@ void pnp_solver::compute_ccs(const double* betas, const MatX_t& ut) {
 }
 
 void pnp_solver::compute_pcs() {
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         double* a = alphas_ + 4 * i;
         double* pc = pcs_ + 3 * i;
 
@@ -395,7 +349,7 @@ double pnp_solver::dot(const double* v1, const double* v2) {
 double pnp_solver::reprojection_error(const double R[3][3], const double t[3]) {
     double sum2 = 0.0;
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         double* pw = pws_ + 3 * i;
         double Xc = dot(R[0], pw) + t[0];
         double Yc = dot(R[1], pw) + t[1];
@@ -407,7 +361,7 @@ double pnp_solver::reprojection_error(const double R[3][3], const double t[3]) {
         sum2 += sqrt((u - ue) * (u - ue) + (v - ve) * (v - ve));
     }
 
-    return sum2 / num_matches_;
+    return sum2 / num_correspondences_;
 }
 
 void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
@@ -416,7 +370,7 @@ void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
     pc0[0] = pc0[1] = pc0[2] = 0.0;
     pw0[0] = pw0[1] = pw0[2] = 0.0;
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         const double* pc = pcs_ + 3 * i;
         const double* pw = pws_ + 3 * i;
 
@@ -426,8 +380,8 @@ void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
         }
     }
     for (unsigned int j = 0; j < 3; ++j) {
-        pc0[j] /= num_matches_;
-        pw0[j] /= num_matches_;
+        pc0[j] /= num_correspondences_;
+        pw0[j] /= num_correspondences_;
     }
 
     MatX_t Abt(3, 3);
@@ -438,7 +392,7 @@ void pnp_solver::estimate_R_and_t(double R[3][3], double t[3]) {
         }
     }
 
-    for (unsigned int i = 0; i < num_matches_; ++i) {
+    for (unsigned int i = 0; i < num_correspondences_; ++i) {
         const double* pc = pcs_ + 3 * i;
         const double* pw = pws_ + 3 * i;
 
@@ -492,7 +446,7 @@ void pnp_solver::solve_for_sign() {
             }
         }
 
-        for (unsigned int i = 0; i < num_matches_; ++i) {
+        for (unsigned int i = 0; i < num_correspondences_; ++i) {
             pcs_[3 * i] = -pcs_[3 * i];
             pcs_[3 * i + 1] = -pcs_[3 * i + 1];
             pcs_[3 * i + 2] = -pcs_[3 * i + 2];
