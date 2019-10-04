@@ -13,7 +13,7 @@ homography_solver::homography_solver(const std::vector<cv::KeyPoint>& undist_key
 void homography_solver::find_via_ransac(const unsigned int max_num_iter, const bool recompute) {
     const auto num_matches = static_cast<unsigned int>(matches_12_.size());
 
-    // 1. Normalize keypoint coordinates
+    // 0. Normalize keypoint coordinates
 
     // apply normalization
     std::vector<cv::Point2f> normalized_keypts_1, normalized_keypts_2;
@@ -23,7 +23,7 @@ void homography_solver::find_via_ransac(const unsigned int max_num_iter, const b
 
     const Mat33_t transform_2_inv = transform_2.inverse();
 
-    // 2. prepare for RANSAC
+    // 1. Prepare for RANSAC
 
     // minimum number of samples (= 8)
     constexpr unsigned int min_set_size = 8;

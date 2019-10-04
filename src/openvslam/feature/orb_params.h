@@ -9,14 +9,18 @@ namespace feature {
 struct orb_params {
     orb_params() = default;
 
+    //! Constructor
     orb_params(const unsigned int max_num_keypts, const float scale_factor, const unsigned int num_levels,
                const unsigned int ini_fast_thr, const unsigned int min_fast_thr,
                const std::vector<std::vector<float>>& mask_rects = {});
 
+    //! Constructor
     explicit orb_params(const YAML::Node& yaml_node);
 
+    //! Destructor
     virtual ~orb_params() = default;
 
+    //! Dump parameter values to the standard output
     void show_parameters() const;
 
     unsigned int max_num_keypts_ = 2000;
@@ -25,40 +29,20 @@ struct orb_params {
     unsigned int ini_fast_thr_ = 20;
     unsigned int min_fast_thr = 7;
 
-    //! mask領域を表す特徴点領域のvector
-    //! 各領域は[x_min / cols, x_max / cols, y_min / rows, y_max / rows]で表現
+    //! A vector of keypoint area represents mask area
+    //! Each areas are denoted as form of [x_min / cols, x_max / cols, y_min / rows, y_max / rows]
     std::vector<std::vector<float>> mask_rects_;
 
-    /**
-     * Calculate scale factors
-     * @param num_scale_levels
-     * @param scale_factor
-     * @return
-     */
+    //! Calculate scale factors
     static std::vector<float> calc_scale_factors(const unsigned int num_scale_levels, const float scale_factor);
 
-    /**
-     * Calculate inverses of scale factors
-     * @param num_scale_levels
-     * @param scale_factor
-     * @return
-     */
+    //! Calculate inverses of scale factors
     static std::vector<float> calc_inv_scale_factors(const unsigned int num_scale_levels, const float scale_factor);
 
-    /**
-     * Calculate squared sigmas at all levels
-     * @param num_scale_levels
-     * @param scale_factor
-     * @return
-     */
+    //! Calculate squared sigmas at all levels
     static std::vector<float> calc_level_sigma_sq(const unsigned int num_scale_levels, const float scale_factor);
 
-    /**
-     * Calculate inverses of squared sigmas at all levels
-     * @param num_scale_levels
-     * @param scale_factor
-     * @return
-     */
+    //! Calculate inverses of squared sigmas at all levels
     static std::vector<float> calc_inv_level_sigma_sq(const unsigned int num_scale_levels, const float scale_factor);
 };
 
