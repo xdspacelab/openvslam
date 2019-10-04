@@ -10,9 +10,11 @@
 
 ## Overview
 
-<img src="https://raw.githubusercontent.com/xdspacelab/openvslam/master/docs/img/teaser.png" width="640px">
+[<img src="https://raw.githubusercontent.com/xdspacelab/openvslam/master/docs/img/teaser.png" width="640px">](https://arxiv.org/abs/1910.01122)
 
-<img src="https://raw.githubusercontent.com/wiki/xdspacelab/openvslam/media/tracking.gif" width="640px">
+[<img src="https://raw.githubusercontent.com/wiki/xdspacelab/openvslam/media/tracking.gif" width="640px">](https://www.youtube.com/watch?v=Ro_s3Lbx5ms)
+
+[**[PrePrint]**](https://arxiv.org/abs/1910.01122) [**[YouTube]**](https://www.youtube.com/watch?v=Ro_s3Lbx5ms)
 
 OpenVSLAM is a monocular, stereo, and RGBD visual SLAM system.
 The notable features are:
@@ -117,7 +119,7 @@ If OpenVSLAM helps your research, please cite the preprint paper for OpenVSLAM. 
 }
 ```
 
-The preprint can be found [here](https://drive.google.com/open?id=1IJJbaiyYcmPPJ33C4HQS-k9KS3c6cqgo).
+The preprint can be found [here](https://arxiv.org/abs/1910.01122).
 
 ## Reference
 
