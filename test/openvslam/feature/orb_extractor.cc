@@ -326,3 +326,74 @@ TEST(orb_extractor, extract_with_rectangle_mask_3) {
         cv::waitKey(0);
     }
 }
+
+TEST(orb_extractor, extract_toy_sample_3) {
+    const auto params = feature::orb_params();
+    auto extractor = feature::orb_extractor(params);
+
+    // image
+    auto img = cv::Mat(1200, 600, CV_8UC1);
+    img = 255;
+    cv::rectangle(img, cv::Point2i(300, 600), cv::Point2i(600, 1200), cv::Scalar(0), -1, cv::LINE_AA);
+    // mask (無効)
+    const auto mask = cv::Mat();
+
+    std::vector<cv::KeyPoint> keypts;
+    cv::Mat desc;
+    extractor.extract(img, mask, keypts, desc);
+
+    EXPECT_GT(keypts.size(), 0);
+    EXPECT_GT(desc.rows, 0);
+    EXPECT_EQ(keypts.size(), desc.rows);
+    EXPECT_EQ(desc.type(), CV_8U);
+
+    // スケールを考慮して誤差を測定
+    for (const auto& keypt : keypts) {
+        EXPECT_NEAR(keypt.pt.x, 300, 2.0 * extractor.get_scale_factors().at(keypt.octave));
+        EXPECT_NEAR(keypt.pt.y, 600, 2.0 * extractor.get_scale_factors().at(keypt.octave));
+    }
+}
+
+TEST(orb_extractor, extract_without_mask_3) {
+    const auto params = feature::orb_params();
+    auto extractor = feature::orb_extractor(params);
+
+    // image
+    const auto img_land = cv::imread(std::string(TEST_DATA_DIR) + "./equirectangular_image_001.jpg", cv::IMREAD_GRAYSCALE);
+    // Rotate the landscape image to make it portrait one
+    cv::Mat img;
+    cv::rotate(img_land, img, cv::ROTATE_90_CLOCKWISE);
+    // mask (無効)
+    const auto mask = cv::Mat();
+
+    std::vector<cv::KeyPoint> keypts;
+    cv::Mat desc;
+    extractor.extract(img, mask, keypts, desc);
+
+    EXPECT_GT(keypts.size(), 0);
+    EXPECT_GT(desc.rows, 0);
+    EXPECT_EQ(keypts.size(), desc.rows);
+    EXPECT_EQ(desc.type(), CV_8U);
+}
+
+TEST(orb_extractor, extract_without_mask_4) {
+    const auto params = feature::orb_params();
+    auto extractor = feature::orb_extractor(params);
+
+    // image
+    const auto img_land = cv::imread(std::string(TEST_DATA_DIR) + "./equirectangular_image_002.jpg", cv::IMREAD_GRAYSCALE);
+    // Rotate the landscape image to make it portrait one
+    cv::Mat img;
+    cv::rotate(img_land, img, cv::ROTATE_90_CLOCKWISE);
+    // mask (無効)
+    const auto mask = cv::Mat();
+
+    std::vector<cv::KeyPoint> keypts;
+    cv::Mat desc;
+    extractor.extract(img, mask, keypts, desc);
+
+    EXPECT_GT(keypts.size(), 0);
+    EXPECT_GT(desc.rows, 0);
+    EXPECT_EQ(keypts.size(), desc.rows);
+    EXPECT_EQ(desc.type(), CV_8U);
+}
