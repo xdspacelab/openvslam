@@ -474,7 +474,6 @@ std::vector<cv::KeyPoint> orb_extractor::distribute_keypoints_via_tree(const std
 
 std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<cv::KeyPoint>& keypts_to_distribute,
                                                               const int min_x, const int max_x, const int min_y, const int max_y) const {
-
     // The aspect ratio of the target area for keypoint detection
     const auto ratio = static_cast<double>(max_x - min_x) / (max_y - min_y);
     // The width and height of the patches allocated to the initial node
@@ -482,17 +481,17 @@ std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<
     // The number of columns or rows
     unsigned int num_x_grid, num_y_grid;
 
-    if (ratio > 1){
+    if (ratio > 1) {
         // If the aspect ratio is greater than 1, the patches are made in a horizontal direction
         num_x_grid = std::round(ratio);
         num_y_grid = 1;
         delta_x = static_cast<double>(max_x - min_x) / num_x_grid;
         delta_y = max_y - min_y;
     }
-    else{
+    else {
         // If the aspect ratio is less than 1, the patches are made in a vertical direction
         num_x_grid = 1;
-        num_y_grid = std::round(1/ratio);
+        num_y_grid = std::round(1 / ratio);
         delta_x = max_x - min_y;
         delta_y = static_cast<double>(max_y - min_y) / num_y_grid;
     }
@@ -516,7 +515,7 @@ std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<
         const unsigned int iy = i / num_x_grid;
 
         node.pt_begin_ = cv::Point2i(delta_x * ix, delta_y * iy);
-        node.pt_end_ = cv::Point2i(delta_x * (ix+1), delta_y * (iy+1));
+        node.pt_end_ = cv::Point2i(delta_x * (ix + 1), delta_y * (iy + 1));
         node.keypts_.reserve(keypts_to_distribute.size());
 
         nodes.push_back(node);
