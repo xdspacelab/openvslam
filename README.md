@@ -100,7 +100,7 @@ Please use `g2o` as the dynamic link library because `csparse_extension` module 
 
 ## Citation
 
-If OpenVSLAM helps your research, please cite the preprint paper for OpenVSLAM. Here is a BibTeX entry:
+If OpenVSLAM helps your research, please cite the paper for OpenVSLAM. Here is a BibTeX entry:
 
 ```
 @inproceedings{openvslam2019,
