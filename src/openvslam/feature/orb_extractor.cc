@@ -489,7 +489,7 @@ std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<
         delta_y = max_y - min_y;
     }
     else {
-        // If the aspect ratio is less than 1, the patches are made in a vertical direction
+        // If the aspect ratio is equal to or less than 1, the patches are made in a vertical direction
         num_x_grid = 1;
         num_y_grid = std::round(1 / ratio);
         delta_x = max_x - min_y;
@@ -524,7 +524,7 @@ std::list<orb_extractor_node> orb_extractor::initialize_nodes(const std::vector<
 
     // Assign all keypoints to initial nodes which own keypoint's position
     for (const auto& keypt : keypts_to_distribute) {
-        // x / y index of the patch where the keypt place
+        // x / y index of the patch where the keypt is placed
         const unsigned int ix = keypt.pt.x / delta_x;
         const unsigned int iy = keypt.pt.y / delta_y;
 
