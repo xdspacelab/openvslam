@@ -49,10 +49,6 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
         return;
     }
     
-    cv::Size imageSize = cv::Size(cfg->camera_->rows_, cfg->camera_->cols_);
-	video.set(CV_CAP_PROP_FRAME_WIDTH, imageSize.width);
-	video.set(CV_CAP_PROP_FRAME_HEIGHT, imageSize.height);
-    
     cv::Mat frame;
     double timestamp = 0.0;
     std::vector<double> track_times;
@@ -138,7 +134,6 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
 #endif
 
     cv::VideoCapture videos [2];
-    cv::Size imageSize = cv::Size(cfg->camera_->rows_, cfg->camera_->cols_);
     for(int i = 0; i < 2; i++) {
         videos[i] = cv::VideoCapture(cam_num + i);
         if (!videos[i].isOpened()) {
@@ -146,8 +141,6 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
             SLAM.shutdown();
             return;
         }
-        videos[i].set(CV_CAP_PROP_FRAME_WIDTH, imageSize.width);
-        videos[i].set(CV_CAP_PROP_FRAME_HEIGHT, imageSize.height);
     }
 
     cv::Mat frames [2];
