@@ -6,6 +6,7 @@
 
 #include "openvslam/system.h"
 #include "openvslam/config.h"
+#include "openvslam/util/stereo_rectifier.h"
 
 #include <iostream>
 #include <chrono>
@@ -143,7 +144,10 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
         }
     }
 
+    const openvslam::util::stereo_rectifier rectifier(cfg);
+
     cv::Mat frames [2];
+    cv::Mat frames_rectified [2];
     double timestamp = 0.0;
     std::vector<double> track_times;
     unsigned int num_frame = 0;
@@ -166,11 +170,12 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
                     cv::resize(frames[i], frames[i], cv::Size(), scale, scale, cv::INTER_LINEAR);
                 }
             }
+            rectifier.rectify(frames[0], frames[1], frames_rectified[0], frames_rectified[1]);
 
             const auto tp_1 = std::chrono::steady_clock::now();
 
             // input the current frame and estimate the camera pose
-            SLAM.feed_stereo_frame(frames[0], frames[1], timestamp, mask);
+            SLAM.feed_stereo_frame(frames_rectified[0], frames_rectified[1], timestamp, mask);
 
             const auto tp_2 = std::chrono::steady_clock::now();
 
