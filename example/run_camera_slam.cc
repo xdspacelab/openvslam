@@ -4,6 +4,7 @@
 #include "socket_publisher/publisher.h"
 #endif
 
+
 #include "openvslam/system.h"
 #include "openvslam/config.h"
 #include "openvslam/util/stereo_rectifier.h"
@@ -134,7 +135,8 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
 #endif
 
     cv::VideoCapture videos[2];
-    for (int i = 0; i < 2; i++) {
+    cv::Size imageSize = cv::Size(cfg->camera_->cols_, cfg->camera_->rows_);
+    for(int i = 0; i < 2; i++) {
         videos[i] = cv::VideoCapture(cam_num + i);
         if (!videos[i].isOpened()) {
             spdlog::critical("cannot open a camera {}", cam_num + i);
@@ -174,7 +176,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
             const auto tp_1 = std::chrono::steady_clock::now();
 
             // input the current frame and estimate the camera pose
-            SLAM.feed_stereo_frame(frames_rectified[0], frames_rectified[1], timestamp, mask);
+            SLAM.feed_stereo_frame(frames_rectified[1], frames_rectified[0], timestamp, mask);
 
             const auto tp_2 = std::chrono::steady_clock::now();
 
