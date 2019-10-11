@@ -4,14 +4,22 @@
 # Camera Model #
 #==============#
 
+# intrinsic parameters after stereo-rectification are written
+
 Camera.name: "EuRoC stereo"
 Camera.setup: "stereo"
 Camera.model: "perspective"
+
+# new "rectified" matrices is the first three cols of the projection matrix which is calculated with cv::stereoRectify()
+# e.g. fx = P1[0][0] or P2[0][0], cx = P1[0][2] or P2[0][2]
+#      fy = P1[1][1] or P2[1][1], cy = P1[1][2] or P2[1][2]
 
 Camera.fx: 435.2046959714599
 Camera.fy: 435.2046959714599
 Camera.cx: 367.4517211914062
 Camera.cy: 252.2008514404297
+
+# there is no distortion after stereo rectification
 
 Camera.k1: 0.0
 Camera.k2: 0.0
@@ -19,12 +27,28 @@ Camera.p1: 0.0
 Camera.p2: 0.0
 Camera.k3: 0.0
 
+# focal_x_baseline is -P2[0][3] which is calculated with cv::stereoRectify()
+
 Camera.fps: 20.0
 Camera.cols: 752
 Camera.rows: 480
 Camera.focal_x_baseline: 47.90639384423901
 
 Camera.color_order: "Gray"
+
+#======================#
+# Stereo Rectification #
+#======================#
+
+# original intrinsic parameters (K, D) and stereo-recitification parameters (R)
+# matrices (K, R) are written in row-major order
+
+StereoRectifier.K_left: [458.654, 0.0, 367.215, 0.0, 457.296, 248.375, 0.0, 0.0, 1.0]
+StereoRectifier.D_left: [-0.28340811, 0.07395907, 0.00019359, 1.76187114e-05, 0.0]
+StereoRectifier.R_left: [0.999966347530033, -0.001422739138722922, 0.008079580483432283, 0.001365741834644127, 0.9999741760894847, 0.007055629199258132, -0.008089410156878961, -0.007044357138835809, 0.9999424675829176]
+StereoRectifier.K_right: [457.587, 0.0, 379.999, 0.0, 456.134, 255.238, 0.0, 0.0, 1]
+StereoRectifier.D_right: [-0.28368365, 0.07451284, -0.00010473, -3.555907e-05, 0.0]
+StereoRectifier.R_right: [0.9999633526194376, -0.003625811871560086, 0.007755443660172947, 0.003680398547259526, 0.9999684752771629, -0.007035845251224894, -0.007729688520722713, 0.007064130529506649, 0.999945173484644]
 
 #================#
 # ORB Parameters #
