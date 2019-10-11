@@ -196,7 +196,9 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
         }
 
         // construct a landmark
-        auto lm = new data::landmark(init_triangulated_pts.at(init_idx), curr_keyfrm, map_db_);
+        cv::Point2f pt = curr_frm.keypts_[init_idx].pt;
+        cv::Vec<uchar, 3> color = curr_frm.img_gray_->at<cv::Vec<uchar, 3>>(pt.y, pt.x);
+        auto lm = new data::landmark(init_triangulated_pts.at(init_idx), curr_keyfrm, map_db_, color);
 
         // set the assocications to the new keyframes
         init_keyfrm->add_landmark(lm, init_idx);
@@ -294,7 +296,9 @@ bool initializer::create_map_for_stereo(data::frame& curr_frm) {
 
         // build a landmark
         const Vec3_t pos_w = curr_frm.triangulate_stereo(idx);
-        auto lm = new data::landmark(pos_w, curr_keyfrm, map_db_);
+        cv::Point2f pt = curr_frm.keypts_[idx].pt;
+        cv::Vec<uchar, 3> color = curr_frm.img_gray_->at<cv::Vec<uchar, 3>>(pt.y, pt.x);
+        auto lm = new data::landmark(pos_w, curr_keyfrm, map_db_, color);
 
         // set the associations to the new keyframe
         lm->add_observation(curr_keyfrm, idx);

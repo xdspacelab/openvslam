@@ -1,4 +1,5 @@
 #include "openvslam/match/stereo.h"
+#include "openvslam/util/image_converter.h"  
 
 namespace openvslam {
 namespace match {
@@ -204,6 +205,8 @@ bool stereo::compute_subpixel_disparity(const cv::KeyPoint& keypt_left, const cv
     auto patch_left = left_image_pyramid_.at(keypt_left.octave)
                           .rowRange(scaled_y_left - win_size, scaled_y_left + win_size + 1)
                           .colRange(scaled_x_left - win_size, scaled_x_left + win_size + 1);
+    cv::Mat left_backup = patch_left.clone();
+    util::convert_to_grayscale(patch_left, camera::color_order_t::RGB);
     patch_left.convertTo(patch_left, CV_32F);
     patch_left -= patch_left.at<float>(win_size, win_size) * cv::Mat::ones(patch_left.rows, patch_left.cols, CV_32F);
 
@@ -212,6 +215,8 @@ bool stereo::compute_subpixel_disparity(const cv::KeyPoint& keypt_left, const cv
         auto patch_right = right_image_pyramid_.at(keypt_left.octave)
                                .rowRange(scaled_y_left - win_size, scaled_y_left + win_size + 1)
                                .colRange(scaled_x_right + offset - win_size, scaled_x_right + offset + win_size + 1);
+        cv::Mat right_backup = patch_right.clone();
+        util::convert_to_grayscale(patch_right, camera::color_order_t::RGB);
         patch_right.convertTo(patch_right, CV_32F);
         patch_right -= patch_right.at<float>(win_size, win_size) * cv::Mat::ones(patch_right.rows, patch_right.cols, CV_32F);
 
@@ -223,8 +228,10 @@ bool stereo::compute_subpixel_disparity(const cv::KeyPoint& keypt_left, const cv
         }
 
         correlations.at(slide_width + offset) = correlation;
+        patch_right = right_backup.clone();
     }
 
+    patch_left = left_backup.clone();
     if (best_offset == -slide_width || best_offset == slide_width) {
         return false;
     }

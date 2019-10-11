@@ -211,6 +211,9 @@ public:
     //-----------------------------------------
     // meta information
 
+    //! frame
+    const frame* frm_;
+
     //! keyframe ID
     unsigned int id_;
     //! next keyframe ID

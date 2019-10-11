@@ -276,13 +276,14 @@ void map_database::register_keyframe(camera_database* cam_db, bow_vocabulary* bo
 void map_database::register_landmark(const unsigned int id, const nlohmann::json& json_landmark) {
     const auto first_keyfrm_id = json_landmark.at("1st_keyfrm").get<int>();
     const auto pos_w = Vec3_t(json_landmark.at("pos_w").get<std::vector<Vec3_t::value_type>>().data());
+    const auto color = cv::Vec<uchar, 3>(json_landmark.at("color").get<std::vector<uchar>>().data());
     const auto ref_keyfrm_id = json_landmark.at("ref_keyfrm").get<int>();
     const auto ref_keyfrm = keyframes_.at(ref_keyfrm_id);
     const auto num_visible = json_landmark.at("n_vis").get<unsigned int>();
     const auto num_found = json_landmark.at("n_fnd").get<unsigned int>();
 
     auto lm = new data::landmark(id, first_keyfrm_id, pos_w, ref_keyfrm,
-                                 num_visible, num_found, this);
+                                 num_visible, num_found, this, color);
     assert(!landmarks_.count(id));
     landmarks_[lm->id_] = lm;
 }

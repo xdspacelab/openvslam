@@ -17,7 +17,7 @@ std::atomic<unsigned int> keyframe::next_id_{0};
 
 keyframe::keyframe(const frame& frm, map_database* map_db, bow_database* bow_db)
     : // meta information
-      id_(next_id_++), src_frm_id_(frm.id_), timestamp_(frm.timestamp_),
+      frm_(&frm), id_(next_id_++), src_frm_id_(frm.id_), timestamp_(frm.timestamp_),
       // camera parameters
       camera_(frm.camera_), depth_thr_(frm.depth_thr_),
       // constant observations
@@ -48,7 +48,7 @@ keyframe::keyframe(const unsigned int id, const unsigned int src_frm_id, const d
                    const unsigned int num_scale_levels, const float scale_factor,
                    bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db)
     : // meta information
-      id_(id), src_frm_id_(src_frm_id), timestamp_(timestamp),
+      frm_(nullptr), id_(id), src_frm_id_(src_frm_id), timestamp_(timestamp),
       // camera parameters
       camera_(camera), depth_thr_(depth_thr),
       // constant observations

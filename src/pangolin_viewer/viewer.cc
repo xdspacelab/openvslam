@@ -1,5 +1,4 @@
 #include "pangolin_viewer/viewer.h"
-
 #include "openvslam/config.h"
 #include "openvslam/system.h"
 #include "openvslam/data/keyframe.h"
@@ -286,11 +285,12 @@ void viewer::draw_landmarks() {
     }
 
     glPointSize(point_size_ * *menu_lm_size_);
-    glColor3fv(cs_.lm_.data());
 
     glBegin(GL_POINTS);
 
     for (const auto lm : landmarks) {
+        glColor3ub(lm->color_[0],lm->color_[1], lm->color_[2]);
+
         if (!lm || lm->will_be_erased()) {
             continue;
         }
@@ -308,11 +308,11 @@ void viewer::draw_landmarks() {
     }
 
     glPointSize(point_size_ * *menu_lm_size_);
-    glColor3fv(cs_.local_lm_.data());
 
     glBegin(GL_POINTS);
 
     for (const auto local_lm : local_landmarks) {
+        glColor3ub(local_lm->color_[0],local_lm->color_[1], local_lm->color_[2]);
         if (local_lm->will_be_erased()) {
             continue;
         }

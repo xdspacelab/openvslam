@@ -1,6 +1,7 @@
 #include "openvslam/type.h"
 #include "openvslam/mapping_module.h"
 #include "openvslam/global_optimization_module.h"
+#include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
@@ -278,7 +279,9 @@ void mapping_module::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, da
         // succeeded
 
         // create a landmark object
-        auto lm = new data::landmark(pos_w, keyfrm_1, map_db_);
+        cv::Point2f pt = keyfrm_1->keypts_[idx_1].pt;
+        cv::Vec<uchar, 3> color = keyfrm_1->frm_->img_gray_->at<cv::Vec<uchar, 3>>(pt.x, pt.y);
+        auto lm = new data::landmark(pos_w, keyfrm_1, map_db_, color);
 
         lm->add_observation(keyfrm_1, idx_1);
         lm->add_observation(keyfrm_2, idx_2);

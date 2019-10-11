@@ -17,6 +17,7 @@ class frame;
 
 class keyframe;
 
+
 class map_database;
 
 class landmark {
@@ -24,13 +25,13 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     //! constructor
-    landmark(const Vec3_t& pos_w, keyframe* ref_keyfrm, map_database* map_db);
+    landmark(const Vec3_t& pos_w, keyframe* ref_keyfrm, map_database* map_db, cv::Vec<uchar, 3> color);
 
     //! constructor for map loading with computing parameters which can be recomputed
     landmark(const unsigned int id, const unsigned int first_keyfrm_id,
              const Vec3_t& pos_w, keyframe* ref_keyfrm,
              const unsigned int num_visible, const unsigned int num_found,
-             map_database* map_db);
+             map_database* map_db, cv::Vec<uchar, 3> color);
 
     //! set world coordinates of this landmark
     void set_pos_in_world(const Vec3_t& pos_w);
@@ -106,6 +107,7 @@ public:
 
 public:
     unsigned int id_;
+    cv::Vec<uchar, 3> color_;
     static std::atomic<unsigned int> next_id_;
     unsigned int first_keyfrm_id_ = 0;
     unsigned int num_observations_ = 0;

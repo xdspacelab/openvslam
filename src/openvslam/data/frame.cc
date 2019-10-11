@@ -21,7 +21,7 @@ frame::frame(const cv::Mat& img_gray, const double timestamp,
              feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
              camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
+    : img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();
@@ -55,7 +55,7 @@ frame::frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const 
              feature::orb_extractor* extractor_left, feature::orb_extractor* extractor_right,
              bow_vocabulary* bow_vocab, camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor_left), extractor_right_(extractor_right),
+    : img_gray_(&left_img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor_left), extractor_right_(extractor_right),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();
@@ -95,7 +95,7 @@ frame::frame(const cv::Mat& img_gray, const cv::Mat& img_depth, const double tim
              feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
              camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
+    : img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();

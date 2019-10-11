@@ -9,16 +9,16 @@ namespace data {
 
 std::atomic<unsigned int> landmark::next_id_{0};
 
-landmark::landmark(const Vec3_t& pos_w, keyframe* ref_keyfrm, map_database* map_db)
+landmark::landmark(const Vec3_t& pos_w, keyframe* ref_keyfrm, map_database* map_db, cv::Vec<uchar, 3> color)
     : id_(next_id_++), first_keyfrm_id_(ref_keyfrm->id_), pos_w_(pos_w),
-      ref_keyfrm_(ref_keyfrm), map_db_(map_db) {}
+      ref_keyfrm_(ref_keyfrm), map_db_(map_db), color_(color) {}
 
 landmark::landmark(const unsigned int id, const unsigned int first_keyfrm_id,
                    const Vec3_t& pos_w, keyframe* ref_keyfrm,
                    const unsigned int num_visible, const unsigned int num_found,
-                   map_database* map_db)
+                   map_database* map_db, cv::Vec<uchar, 3> color)
     : id_(id), first_keyfrm_id_(first_keyfrm_id), pos_w_(pos_w), ref_keyfrm_(ref_keyfrm),
-      num_observable_(num_visible), num_observed_(num_found), map_db_(map_db) {}
+      num_observable_(num_visible), num_observed_(num_found), map_db_(map_db), color_(color) {}
 
 void landmark::set_pos_in_world(const Vec3_t& pos_w) {
     std::lock_guard<std::mutex> lock(mtx_position_);
@@ -359,6 +359,7 @@ nlohmann::json landmark::to_json() const {
             {"pos_w", {pos_w_(0), pos_w_(1), pos_w_(2)}},
             {"ref_keyfrm", ref_keyfrm_->id_},
             {"n_vis", num_observable_},
+            {"color", {color_(0), color_(1), color_(2)}},
             {"n_fnd", num_observed_}};
 }
 
