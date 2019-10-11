@@ -11,7 +11,7 @@
 #include <chrono>
 #include <numeric>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 
@@ -58,11 +58,12 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
     const auto tp_0 = std::chrono::steady_clock::now();
 
     // initialize this node
-    const ros::NodeHandle nh;
-    image_transport::ImageTransport it(nh);
+    auto node = std::make_shared<rclcpp::Node>("run_localization");
+    rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
+    custom_qos.depth = 1;
 
     // run the SLAM as subscriber
-    image_transport::Subscriber sub = it.subscribe("camera/image_raw", 1, [&](const sensor_msgs::ImageConstPtr& msg) {
+    image_transport::Subscriber sub = image_transport::create_subscription(node.get(), "camera/image_raw", [&](const sensor_msgs::msg::Image::ConstSharedPtr& msg) {
         const auto tp_1 = std::chrono::steady_clock::now();
         const auto timestamp = std::chrono::duration_cast<std::chrono::duration<double>>(tp_1 - tp_0).count();
 
@@ -73,7 +74,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
 
         const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
         track_times.push_back(track_time);
-    });
+    }, "raw", custom_qos);
 
     // run the viewer in another thread
 #ifdef USE_PANGOLIN_VIEWER
@@ -84,7 +85,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
             while (SLAM.loop_BA_is_running()) {
                 std::this_thread::sleep_for(std::chrono::microseconds(5000));
             }
-            ros::shutdown();
+            rclcpp::shutdown();
         }
     });
 #elif USE_SOCKET_PUBLISHER
@@ -95,12 +96,14 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
             while (SLAM.loop_BA_is_running()) {
                 std::this_thread::sleep_for(std::chrono::microseconds(5000));
             }
-            ros::shutdown();
+            rclcpp::shutdown();
         }
     });
 #endif
-
-    ros::spin();
+    
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(node);
+    exec.spin();
 
     // automatically close the viewer
 #ifdef USE_PANGOLIN_VIEWER
@@ -127,7 +130,7 @@ int main(int argc, char* argv[]) {
     google::InitGoogleLogging(argv[0]);
     google::InstallFailureSignalHandler();
 #endif
-    ros::init(argc, argv, "run_localization");
+    rclcpp::init(argc, argv);
 
     // create options
     popl::OptionParser op("Allowed options");

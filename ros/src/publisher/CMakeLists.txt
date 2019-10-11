@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 project(publisher LANGUAGES CXX C)
 
 if(POLICY CMP0042)
@@ -97,10 +97,18 @@ endif()
 # Find packages #
 #################
 
-# Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-        cv_bridge
-        image_transport)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+
+set(dependencies
+  rclcpp
+  cv_bridge
+  image_transport
+  rcutils
+  OpenCV
+)
 
 # OpenCV
 find_package(OpenCV 3.3.1 QUIET)
@@ -117,23 +125,19 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set(popl_INCLUDE_DIR ${OpenVSLAM_ROOT}/3rd/popl/include)
 include_directories(${popl_INCLUDE_DIR})
 
-#################################
-# catkin specific configuration #
-#################################
-
-catkin_package(CATKIN_DEPENDS
-        cv_bridge image_transport)
-
 #########
 # Build #
 #########
 
 include_directories(
-        ${catkin_INCLUDE_DIRS}
+        ${rclcpp_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS})
 
 link_libraries(
-        ${catkin_LIBRARIES}
+        ${rclcpp_LIBRARIES}
         ${OpenCV_LIBRARIES})
 
 add_subdirectory(src)
+
+
+ament_package()

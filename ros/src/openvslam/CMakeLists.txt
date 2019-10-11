@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 project(openvslam LANGUAGES CXX C)
 
 if(POLICY CMP0042)
@@ -126,9 +126,18 @@ endif()
 # Find packages #
 #################
 
-find_package(catkin REQUIRED COMPONENTS
-        cv_bridge
-        image_transport)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+
+set(dependencies
+  rclcpp
+  cv_bridge
+  image_transport
+  rcutils
+  OpenCV
+)
 
 # thread library
 find_package(Threads REQUIRED)
@@ -183,14 +192,6 @@ if(USE_SOCKET_PUBLISHER)
     include_directories(${SIOCLIENT_INCLUDE_DIR} ${PROTOBUF_INCLUDE_DIRS})
 endif()
 
-#################################
-# catkin specific configuration #
-#################################
-
-catkin_package(CATKIN_DEPENDS
-        cv_bridge
-        image_transport)
-
 #################
 # BoW framework #
 #################
@@ -218,11 +219,19 @@ message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 #########
 
 include_directories(
-        ${catkin_INCLUDE_DIRS}
+        ${rclcpp_INCLUDE_DIRS}
         ${OpenVSLAM_SRC_DIR})
 
 link_libraries(
-        ${catkin_LIBRARIES}
+        ${rclcpp_LIBRARIES}
         ${OpenVSLAM_LIB})
 
 add_subdirectory(src)
+
+install(TARGETS
+  run_slam
+  run_localization
+DESTINATION lib/${PROJECT_NAME})
+
+
+ament_package()

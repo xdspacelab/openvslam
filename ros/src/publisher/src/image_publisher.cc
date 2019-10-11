@@ -1,4 +1,4 @@
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <util/image_util.h>
 
@@ -11,7 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 int main(int argc, char* argv[]) {
-    ros::init(argc, argv, "image_publisher");
+    rclcpp::init(argc, argv);
 
     // create options
     popl::OptionParser op("Allowed options");
@@ -42,26 +42,31 @@ int main(int argc, char* argv[]) {
     }
 
     // initialize this node
-    const ros::NodeHandle nh;
-    image_transport::ImageTransport it(nh);
-    image_transport::Publisher publisher = it.advertise("/video/image_raw", 1);
+    auto node = std::make_shared<rclcpp::Node>("image_publisher");
+    rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
+    custom_qos.depth = 1;
 
-    sensor_msgs::ImagePtr msg;
+    auto publisher = image_transport::create_publisher(node.get(), "/video/image_raw", custom_qos);
+
+    sensor_msgs::msg::Image::SharedPtr msg;
 
     // load video file
     image_sequence sequence(img_dir_path->value(), img_fps->value());
     const auto frames = sequence.get_frames();
 
-    ros::Rate pub_rate(img_fps->value());
+    rclcpp::WallRate pub_rate(img_fps->value());
+    rclcpp::executors::SingleThreadedExecutor exec;
+    
+    exec.add_node(node);
 
     for (unsigned int i = 0; i < frames.size(); ++i) {
         const auto& frame = frames.at(i);
-        while (nh.ok()) {
+        while (rclcpp::ok()) {
             std::cout << "next img: " << frame.img_path_ << std::endl;
             const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
-            msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+            msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", img).toImageMsg();
             publisher.publish(msg);
-            ros::spinOnce();
+            exec.spin_once();
             pub_rate.sleep();
             break;
         }

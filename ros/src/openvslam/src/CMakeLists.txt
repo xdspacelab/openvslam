@@ -15,7 +15,7 @@ add_executable(run_localization run_localization.cc)
 list(APPEND EXECUTABLE_TARGETS run_localization)
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
-    add_dependencies(${EXECUTABLE_TARGET} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+    #add_dependencies(${EXECUTABLE_TARGET} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
     # pangolin_viewer is used on a priority basis
     if(USE_PANGOLIN_VIEWER)
@@ -49,5 +49,16 @@ foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
         target_link_libraries(${EXECUTABLE_TARGET} PRIVATE
                 ${GPERFTOOLS_LIBRARIES})
     endif()
+
+
+    # build
+    ament_target_dependencies(${EXECUTABLE_TARGET} PUBLIC
+        ${dependencies}
+    )
+
+    install(TARGETS
+      ${EXECUTABLE_TARGET}
+      DESTINATION lib/${PROJECT_NAME}
+    )
 
 endforeach()

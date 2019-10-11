@@ -1,4 +1,4 @@
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <iostream>
 #include <popl.hpp>
@@ -9,7 +9,8 @@
 #include <opencv2/highgui/highgui.hpp>
 
 int main(int argc, char* argv[]) {
-    ros::init(argc, argv, "video_publisher");
+    rclcpp::init(argc, argv);
+
 
     // create options
     popl::OptionParser op("Allowed options");
@@ -38,13 +39,15 @@ int main(int argc, char* argv[]) {
     }
 
     // initialize this node
-    const ros::NodeHandle nh;
-    image_transport::ImageTransport it(nh);
-    const image_transport::Publisher publisher = it.advertise("/video/image_raw", 1);
+    auto node = std::make_shared<rclcpp::Node>("video_publisher");
+    rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
+    custom_qos.depth = 1;
+    
+    const image_transport::Publisher publisher = image_transport::create_publisher(node.get(), "/video/image_raw", custom_qos);
 
     cv::Mat frame;
     cv::VideoCapture video;
-    sensor_msgs::ImagePtr msg;
+    sensor_msgs::msg::Image::SharedPtr msg;
 
     // load video file
     if (!video.open(video_file_path->value(), cv::CAP_FFMPEG)) {
@@ -53,13 +56,17 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    ros::Rate pub_rate(video.get(cv::CAP_PROP_FPS));
 
-    while (nh.ok() && video.read(frame)) {
+    rclcpp::WallRate pub_rate(video.get(cv::CAP_PROP_FPS));
+    rclcpp::executors::SingleThreadedExecutor exec;
+    
+    exec.add_node(node);
+
+    while (rclcpp::ok() && video.read(frame)) {
         // send message
-        msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
+        msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
         publisher.publish(msg);
-        ros::spinOnce();
+        exec.spin_once();
         pub_rate.sleep();
     }
     return EXIT_SUCCESS;
