@@ -3,6 +3,39 @@ box:
 
 no-response-timeout: 20
 
+clang_format:
+  steps:
+    - script:
+      name: apply clang-format
+      code: |
+        DIRS_TO_EXCLUDE=".git 3rd cmake docs build .idea cmake-build-debug cmake-build-release"
+        for DIR in ${DIRS_TO_EXCLUDE}; do
+          EXCLUDE_CMD="${EXCLUDE_CMD} -type d -name ${DIR} -prune -o"
+        done
+        FILES=$(find . ${EXCLUDE_CMD} -type f -regex ".*\.\(c\|h\|cc\|hh\|cpp\|hpp\)" -print)
+        for FILE in ${FILES}; do
+          RET=$(diff ${FILE} <(clang-format-6.0 -style=file ${FILE}) 2>&1 || true)
+          if [ -n "${RET}" ]; then
+            FILES_TO_FORMAT="${FILES_TO_FORMAT} ${FILE}"
+          fi
+        done
+    - script:
+      name: check clang-format necessity
+      code: |
+        if [ -n "${FILES_TO_FORMAT}" ]; then
+          echo "Please apply clang-format to following files:"
+          for FILE in ${FILES_TO_FORMAT}; do echo "* ${FILE}"; done
+          exit 1
+        fi
+        echo "There is no file which needs clang-format"
+  after-steps:
+    - install-packages:
+      packages: ruby
+    - wantedly/pretty-slack-notify:
+      webhook_url: $SLACK_WEBHOOK_URL
+      passed_message: "there are no files which clang-format should applied to :smile:"
+      failed_message: "there are some files which clang-format should applied to :dizzy_face:"
+
 build_with_gui:
   steps:
     - script:
