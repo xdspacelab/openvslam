@@ -43,6 +43,7 @@ addons:
       - gflags
       - glew
       - protobuf
+      - clang-format
 
 before_install:
   - ccache -s
@@ -132,6 +133,26 @@ before_install:
     make install
 
 install:
+  - |
+    cd ${TRAVIS_BUILD_DIR}
+    DIRS_TO_EXCLUDE=".git 3rd cmake docs build .idea cmake-build-debug cmake-build-release"
+    for DIR in ${DIRS_TO_EXCLUDE}; do
+      EXCLUDE_CMD="${EXCLUDE_CMD} -type d -name ${DIR} -prune -o"
+    done
+    FILES=$(find -E . ${EXCLUDE_CMD} -type f -regex ".*\.(c|h|cc|hh|cpp|hpp)" -print)
+    for FILE in ${FILES}; do
+      RET=$(diff ${FILE} <(clang-format -style=file ${FILE}) 2>&1 || true)
+      if [ -n "${RET}" ]; then
+        FILES_TO_FORMAT="${FILES_TO_FORMAT} ${FILE}"
+      fi
+    done
+  - |
+    if [ -n "${FILES_TO_FORMAT}" ]; then
+      echo "Please apply clang-format to following files:"
+      for FILE in ${FILES_TO_FORMAT}; do echo "* ${FILE}"; done
+      travis_terminate 1
+    fi
+    echo "There is no file which needs clang-format"
   - |
     cd ${TRAVIS_BUILD_DIR}
     mkdir -p build && cd build
