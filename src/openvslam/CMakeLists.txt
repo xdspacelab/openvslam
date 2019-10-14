@@ -100,7 +100,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include/openvslam/3rd/json/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
   $<INSTALL_INTERFACE:include/>
-  PRIVATE
   $<BUILD_INTERFACE:${popl_INCLUDE_DIR}>
   $<BUILD_INTERFACE:${spdlog_INCLUDE_DIR}>
   $<BUILD_INTERFACE:${BOW_INCLUDE_DIRS}>
@@ -124,9 +123,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         g2o::types_sim3
         ${CXSPARSE_LIBRARIES}
         ${SUITESPARSE_LIBRARIES}
+        ${BOW_LIBS}
         PRIVATE
         ${LAPACK_LIBRARIES}
-        ${BOW_LIBS}
         )
 
 ###########
@@ -145,8 +144,8 @@ install(TARGETS ${PROJECT_NAME}
 # Install OpenVSlam headers
 
 file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-install(FILES ${headers} DESTINATION ${INCLUDES_INSTALL_DIR})
+install(FILES ${headers} DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR})
 
 # Install public 3rd party headers
 
-install(FILES "${json_INCLUDE_DIR}/nlohmann/json.hpp" DESTINATION ${INCLUDES_INSTALL_DIR}/3rd/json/include/nlohmann/)
+install(FILES "${json_INCLUDE_DIR}/nlohmann/json.hpp" DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/json/include/nlohmann/)
