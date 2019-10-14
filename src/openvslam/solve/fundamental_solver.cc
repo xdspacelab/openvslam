@@ -15,7 +15,7 @@ void fundamental_solver::find_via_ransac(const unsigned int max_num_iter, const 
     const auto num_matches = static_cast<unsigned int>(matches_12_.size());
 
     // 0. Normalize keypoint coordinates
-
+    solution_is_valid_ = false;
     // apply normalization
     std::vector<cv::Point2f> normalized_keypts_1, normalized_keypts_2;
     Mat33_t transform_1, transform_2;
@@ -189,10 +189,6 @@ float fundamental_solver::check_inliers(const Mat33_t& F_21, std::vector<bool>& 
             is_inlier_match.at(i) = false;
             continue;
         }
-        else {
-            is_inlier_match.at(i) = true;
-            score += score_thr - chi_sq_2;
-        }
 
         // 2. Transform a point in shot 2 to the epipolar line in shot 1,
         //    then compute a transfer error (= dot product)
@@ -212,7 +208,10 @@ float fundamental_solver::check_inliers(const Mat33_t& F_21, std::vector<bool>& 
         }
         else {
             is_inlier_match.at(i) = true;
+            //Only compute the score for valid inliers
             score += score_thr - chi_sq_1;
+            score += score_thr - chi_sq_2;
+
         }
     }
 
