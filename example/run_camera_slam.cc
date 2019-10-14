@@ -49,7 +49,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
         SLAM.shutdown();
         return;
     }
-    
+
     cv::Mat frame;
     double timestamp = 0.0;
     std::vector<double> track_times;
@@ -116,10 +116,9 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     std::cout << "mean tracking time: " << total_track_time / track_times.size() << "[s]" << std::endl;
 }
 
-
 void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
-                   const std::string& vocab_file_path, const unsigned int cam_num, const std::string& mask_img_path,
-                   const float scale, const std::string& map_db_path) {
+                     const std::string& vocab_file_path, const unsigned int cam_num, const std::string& mask_img_path,
+                     const float scale, const std::string& map_db_path) {
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
@@ -134,8 +133,8 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     socket_publisher::publisher publisher(cfg, &SLAM, SLAM.get_frame_publisher(), SLAM.get_map_publisher());
 #endif
 
-    cv::VideoCapture videos [2];
-    for(int i = 0; i < 2; i++) {
+    cv::VideoCapture videos[2];
+    for (int i = 0; i < 2; i++) {
         videos[i] = cv::VideoCapture(cam_num + i);
         if (!videos[i].isOpened()) {
             spdlog::critical("cannot open a camera {}", cam_num + i);
@@ -146,8 +145,8 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
 
     const openvslam::util::stereo_rectifier rectifier(cfg);
 
-    cv::Mat frames [2];
-    cv::Mat frames_rectified [2];
+    cv::Mat frames[2];
+    cv::Mat frames_rectified[2];
     double timestamp = 0.0;
     std::vector<double> track_times;
     unsigned int num_frame = 0;
@@ -165,7 +164,7 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
             if (frames[0].empty() || frames[1].empty()) {
                 continue;
             }
-            for(int i = 0; i < 2; i++) {
+            for (int i = 0; i < 2; i++) {
                 if (scale != 1.0) {
                     cv::resize(frames[i], frames[i], cv::Size(), scale, scale, cv::INTER_LINEAR);
                 }
@@ -284,7 +283,7 @@ int main(int argc, char* argv[]) {
     }
     else if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Stereo) {
         stereo_tracking(cfg, vocab_file_path->value(), cam_num->value(), mask_img_path->value(),
-                      scale->value(), map_db_path->value());
+                        scale->value(), map_db_path->value());
     }
     else {
         throw std::runtime_error("Invalid setup type: " + cfg->camera_->get_setup_type_string());
