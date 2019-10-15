@@ -35,7 +35,7 @@ void map_database::erase_keyframe(keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
     keyframes_.erase(keyfrm->id_);
 
-    // TODO: 実体を削除
+    // TODO: delete object
 }
 
 void map_database::add_landmark(landmark* lm) {
@@ -47,7 +47,7 @@ void map_database::erase_landmark(landmark* lm) {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
     landmarks_.erase(lm->id_);
 
-    // TODO: 実体を削除
+    // TODO: delete object
 }
 
 void map_database::set_local_landmarks(const std::vector<landmark*>& local_lms) {
@@ -123,8 +123,7 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
                              const nlohmann::json& json_keyfrms, const nlohmann::json& json_landmarks) {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
 
-    // 1. データベースを全削除する
-
+    // Step 1. delete all the data in map database
     for (auto& lm : landmarks_) {
         delete lm.second;
         lm.second = nullptr;
@@ -141,8 +140,8 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
     local_landmarks_.clear();
     origin_keyfrm_ = nullptr;
 
-    // 2. キーフレームを登録，ただしこの時点でオブジェクトが存在しないポインタはnullptrにしておく
-
+    // Step 2. Register keyframes
+    // If the object does not exist at this step, the corresponding pointer is set as nullptr.
     spdlog::info("decoding {} keyframes to load", json_keyfrms.size());
     for (const auto& json_id_keyfrm : json_keyfrms.items()) {
         const auto id = std::stoi(json_id_keyfrm.key());
@@ -152,8 +151,8 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
         register_keyframe(cam_db, bow_vocab, bow_db, id, json_keyfrm);
     }
 
-    // 3. 3次元点を登録，ただしこの時点でオブジェクトが存在しないポインタはnullptrにしておく
-
+    // Step 3. Register 3D landmark point
+    // If the object does not exist at this step, the corresponding pointer is set as nullptr.
     spdlog::info("decoding {} landmarks to load", json_landmarks.size());
     for (const auto& json_id_landmark : json_landmarks.items()) {
         const auto id = std::stoi(json_id_landmark.key());
@@ -163,8 +162,7 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
         register_landmark(id, json_landmark);
     }
 
-    // 4. グラフ情報を登録
-
+    // Step 4. Register graph information
     spdlog::info("registering essential graph");
     for (const auto& json_id_keyfrm : json_keyfrms.items()) {
         const auto id = std::stoi(json_id_keyfrm.key());
@@ -174,8 +172,7 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
         register_graph(id, json_keyfrm);
     }
 
-    // 5. キーフレームと3次元点の対応を登録
-
+    // Step 5. Register association between keyframs and 3D points
     spdlog::info("registering keyframe-landmark association");
     for (const auto& json_id_keyfrm : json_keyfrms.items()) {
         const auto id = std::stoi(json_id_keyfrm.key());
@@ -185,8 +182,7 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
         register_association(id, json_keyfrm);
     }
 
-    // 6. グラフを更新
-
+    // Step 6. Update graph
     spdlog::info("updating covisibility graph");
     for (const auto& json_id_keyfrm : json_keyfrms.items()) {
         const auto id = std::stoi(json_id_keyfrm.key());
@@ -199,8 +195,7 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
         keyfrm->graph_node_->update_covisibility_orders();
     }
 
-    // 7. ジオメトリを更新
-
+    // Step 7. Update geometry
     spdlog::info("updating landmark geometry");
     for (const auto& json_id_landmark : json_landmarks.items()) {
         const auto id = std::stoi(json_id_landmark.key());
@@ -216,19 +211,19 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
 
 void map_database::register_keyframe(camera_database* cam_db, bow_vocabulary* bow_vocab, bow_database* bow_db,
                                      const unsigned int id, const nlohmann::json& json_keyfrm) {
-    // 2-0. メタ情報
+    // Metadata
     const auto src_frm_id = json_keyfrm.at("n_keypts").get<unsigned int>();
     const auto timestamp = json_keyfrm.at("ts").get<double>();
     const auto camera_name = json_keyfrm.at("cam").get<std::string>();
     const auto camera = cam_db->get_camera(camera_name);
     const auto depth_thr = json_keyfrm.at("depth_thr").get<float>();
 
-    // 2-1. 姿勢情報
+    // Pose information
     const Mat33_t rot_cw = convert_json_to_rotation(json_keyfrm.at("rot_cw"));
     const Vec3_t trans_cw = convert_json_to_translation(json_keyfrm.at("trans_cw"));
     const auto cam_pose_cw = util::converter::to_eigen_cam_pose(rot_cw, trans_cw);
 
-    // 2-2. 特徴点情報
+    // Keypoints information
     const auto num_keypts = json_keyfrm.at("n_keypts").get<unsigned int>();
     // keypts
     const auto json_keypts = json_keyfrm.at("keypts");
@@ -253,16 +248,16 @@ void map_database::register_keyframe(camera_database* cam_db, bow_vocabulary* bo
     const auto descriptors = convert_json_to_descriptors(json_descriptors);
     assert(descriptors.rows == static_cast<int>(num_keypts));
 
-    // 2-3. ORBスケール情報
+    // Scale information in ORB
     const auto num_scale_levels = json_keyfrm.at("n_scale_levels").get<unsigned int>();
     const auto scale_factor = json_keyfrm.at("scale_factor").get<float>();
 
-    // 2-4. オブジェクト構築
+    // Construct a new object
     auto keyfrm = new data::keyframe(id, src_frm_id, timestamp, cam_pose_cw, camera, depth_thr,
                                      num_keypts, keypts, undist_keypts, bearings, stereo_x_right, depths, descriptors,
                                      num_scale_levels, scale_factor, bow_vocab, bow_db, this);
 
-    // 2-5. データベースに追加
+    // Append to map database
     assert(!keyframes_.count(id));
     keyframes_[keyfrm->id_] = keyfrm;
     if (keyfrm->id_ > max_keyfrm_id_) {
@@ -288,7 +283,7 @@ void map_database::register_landmark(const unsigned int id, const nlohmann::json
 }
 
 void map_database::register_graph(const unsigned int id, const nlohmann::json& json_keyfrm) {
-    // グラフ情報
+    // Graph information
     const auto spanning_parent_id = json_keyfrm.at("span_parent").get<int>();
     const auto spanning_children_ids = json_keyfrm.at("span_children").get<std::vector<int>>();
     const auto loop_edge_ids = json_keyfrm.at("loop_edges").get<std::vector<int>>();
@@ -307,7 +302,7 @@ void map_database::register_graph(const unsigned int id, const nlohmann::json& j
 }
 
 void map_database::register_association(const unsigned int keyfrm_id, const nlohmann::json& json_keyfrm) {
-    // 特徴点情報
+    // Key points information
     const auto num_keypts = json_keyfrm.at("n_keypts").get<unsigned int>();
     const auto landmark_ids = json_keyfrm.at("lm_ids").get<std::vector<int>>();
     assert(landmark_ids.size() == num_keypts);
@@ -333,7 +328,7 @@ void map_database::register_association(const unsigned int keyfrm_id, const nloh
 void map_database::to_json(nlohmann::json& json_keyfrms, nlohmann::json& json_landmarks) {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
 
-    // 各キーフレームをJSONに変換して保存する
+    // Save each keyframe as json
     spdlog::info("encoding {} keyframes to store", keyframes_.size());
     std::map<std::string, nlohmann::json> keyfrms;
     for (const auto id_keyfrm : keyframes_) {
@@ -348,7 +343,7 @@ void map_database::to_json(nlohmann::json& json_keyfrms, nlohmann::json& json_la
     }
     json_keyfrms = keyfrms;
 
-    // 各3次元点をJSONに変換して保存する
+    // Save each 3D point as json
     spdlog::info("encoding {} landmarks to store", landmarks_.size());
     std::map<std::string, nlohmann::json> landmarks;
     for (const auto id_lm : landmarks_) {

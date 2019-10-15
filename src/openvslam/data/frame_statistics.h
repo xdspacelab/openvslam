@@ -80,19 +80,20 @@ public:
     void clear();
 
 private:
-    //! reference keyframeと，そのkeyframeを参照しているframeのID
+    //! Reference keyframe, frame ID associated with the keyframe
     std::unordered_map<data::keyframe*, std::vector<unsigned int>> frm_ids_of_ref_keyfrms_;
 
-    //! フレーム数
+    //! Number of valid frames
     unsigned int num_valid_frms_ = 0;
-    // 以下のvectorは処理フレーム数だけ要素が存在
-    //! 各frameのreference keyframe
+
+    // Size of all the following variables is the number of frames
+    //! Reference keyframes for each frame
     std::unordered_map<unsigned int, data::keyframe*> ref_keyfrms_;
-    //! 各frameのreference keyframeに対する相対姿勢
+    //! Relative pose against reference keyframe for each frame
     eigen_alloc_unord_map<unsigned int, Mat44_t> rel_cam_poses_from_ref_keyfrms_;
-    //! 各frameのtimestamp
+    //! Timestamp for each frame
     std::unordered_map<unsigned int, double> timestamps_;
-    //! 各frameがロストしたかどうか
+    //! Flag whether each frame is lost or not
     std::unordered_map<unsigned int, bool> is_lost_frms_;
 };
 

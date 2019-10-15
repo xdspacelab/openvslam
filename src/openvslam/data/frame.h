@@ -264,7 +264,7 @@ private:
      */
     void compute_stereo_from_depth(const cv::Mat& right_img_depth);
 
-    // カメラ姿勢
+    //! Camera pose
     //! rotation: world -> camera
     Mat33_t rot_cw_;
     //! translation: world -> camera

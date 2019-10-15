@@ -23,31 +23,31 @@ frame::frame(const cv::Mat& img_gray, const double timestamp,
              const cv::Mat& mask)
     : id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
-    // ORBのスケール情報を取得
+    // Get ORB scale
     update_orb_info();
 
-    // ORB特徴量を抽出
+    // Extract ORB feature
     extract_orb(img_gray, mask);
     num_keypts_ = keypts_.size();
     if (keypts_.empty()) {
         spdlog::warn("frame {}: cannot extract any keypoints", id_);
     }
 
-    // keypointsをundistortionする
+    // Undistort keypoints
     camera_->undistort_keypoints(keypts_, undist_keypts_);
 
-    // ステレオパラメータは全て無効にする
+    // Ignore stereo parameters
     stereo_x_right_ = std::vector<float>(num_keypts_, -1);
     depths_ = std::vector<float>(num_keypts_, -1);
 
-    // bearing vectorに変換する
+    // Convert to bearing vector
     camera->convert_keypoints_to_bearings(undist_keypts_, bearings_);
 
-    // 3次元点との対応を初期化
+    // Initialize association with 3D points
     landmarks_ = std::vector<landmark*>(num_keypts_, nullptr);
     outlier_flags_ = std::vector<bool>(num_keypts_, false);
 
-    // 全特徴点をグリッドに割り当てる
+    // Assign all the keypoints into grid
     assign_keypoints_to_grid(camera_, undist_keypts_, keypt_indices_in_cells_);
 }
 
@@ -57,10 +57,10 @@ frame::frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const 
              const cv::Mat& mask)
     : id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor_left), extractor_right_(extractor_right),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
-    // ORBのスケール情報を取得
+    // Get ORB scale
     update_orb_info();
 
-    // ORB特徴量を抽出
+    // Extract ORB feature
     std::thread thread_left(&frame::extract_orb, this, left_img_gray, mask, image_side::Left);
     std::thread thread_right(&frame::extract_orb, this, right_img_gray, mask, image_side::Right);
     thread_left.join();
@@ -70,24 +70,24 @@ frame::frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const 
         spdlog::warn("frame {}: cannot extract any keypoints", id_);
     }
 
-    // keypointsをundistortionする
+    // Undistort keypoints
     camera_->undistort_keypoints(keypts_, undist_keypts_);
 
-    // stereo matchしてdepthを求める
+    // Estimate depth with stereo match
     match::stereo stereo_matcher(extractor_left->image_pyramid_, extractor_right_->image_pyramid_,
                                  keypts_, keypts_right_, descriptors_, descriptors_right_,
                                  scale_factors_, inv_scale_factors_,
                                  camera->focal_x_baseline_, camera_->true_baseline_);
     stereo_matcher.compute(stereo_x_right_, depths_);
 
-    // bearing vectorに変換する
+    // Convert to bearing vector
     camera->convert_keypoints_to_bearings(undist_keypts_, bearings_);
 
-    // 3次元点との対応を初期化
+    // Initialize association with 3D points
     landmarks_ = std::vector<landmark*>(num_keypts_, nullptr);
     outlier_flags_ = std::vector<bool>(num_keypts_, false);
 
-    // 全特徴点をグリッドに割り当てる
+    // Assign all the keypoints into grid
     assign_keypoints_to_grid(camera_, undist_keypts_, keypt_indices_in_cells_);
 }
 
@@ -97,30 +97,30 @@ frame::frame(const cv::Mat& img_gray, const cv::Mat& img_depth, const double tim
              const cv::Mat& mask)
     : id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
-    // ORBのスケール情報を取得
+    // Get ORB scale
     update_orb_info();
 
-    // ORB特徴量を抽出
+    // Extract ORB feature
     extract_orb(img_gray, mask);
     num_keypts_ = keypts_.size();
     if (keypts_.empty()) {
         spdlog::warn("frame {}: cannot extract any keypoints", id_);
     }
 
-    // keypointsをundistortionする
+    // Undistort keypoints
     camera_->undistort_keypoints(keypts_, undist_keypts_);
 
-    // depthからdisparityを求める
+    // Calculate disparity from depth
     compute_stereo_from_depth(img_depth);
 
-    // bearing vectorに変換する
+    // Convert to bearing vector
     camera->convert_keypoints_to_bearings(undist_keypts_, bearings_);
 
-    // 3次元点との対応を初期化
+    // Initialize association with 3D points
     landmarks_ = std::vector<landmark*>(num_keypts_, nullptr);
     outlier_flags_ = std::vector<bool>(num_keypts_, false);
 
-    // 全特徴点をグリッドに割り当てる
+    // Assign all the keypoints into grid
     assign_keypoints_to_grid(camera_, undist_keypts_, keypt_indices_in_cells_);
 }
 
@@ -213,7 +213,7 @@ Vec3_t frame::triangulate_stereo(const unsigned int idx) const {
                 const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
                 const Vec3_t pos_c{unproj_x, unproj_y, depth};
 
-                // camera座標 -> world座標
+                // Convert from camera coordinates to world coordinates
                 return rot_wc_ * pos_c + cam_center_;
             }
             else {
@@ -231,7 +231,7 @@ Vec3_t frame::triangulate_stereo(const unsigned int idx) const {
                 const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
                 const Vec3_t pos_c{unproj_x, unproj_y, depth};
 
-                // camera座標 -> world座標
+                // Convert from camera coordinates to world coordinates
                 return rot_wc_ * pos_c + cam_center_;
             }
             else {
@@ -262,7 +262,7 @@ void frame::extract_orb(const cv::Mat& img, const cv::Mat& mask, const image_sid
 void frame::compute_stereo_from_depth(const cv::Mat& right_img_depth) {
     assert(camera_->setup_type_ == camera::setup_type_t::RGBD);
 
-    // 無効値で初期化
+    // Initialize with invalid value
     stereo_x_right_ = std::vector<float>(num_keypts_, -1);
     depths_ = std::vector<float>(num_keypts_, -1);
 
