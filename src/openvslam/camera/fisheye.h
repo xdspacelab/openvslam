@@ -3,6 +3,8 @@
 
 #include "openvslam/camera/base.h"
 
+#include <opencv2/calib3d.hpp>
+
 namespace openvslam {
 namespace camera {
 

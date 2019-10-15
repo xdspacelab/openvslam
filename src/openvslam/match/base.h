@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <numeric>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 namespace openvslam {
 namespace match {

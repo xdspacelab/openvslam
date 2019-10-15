@@ -1,5 +1,7 @@
 #include "openvslam/camera/perspective.h"
 
+#include <iostream>
+
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 

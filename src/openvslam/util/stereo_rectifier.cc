@@ -3,6 +3,7 @@
 #include "openvslam/util/stereo_rectifier.h"
 
 #include <spdlog/spdlog.h>
+#include "opencv2/imgproc.hpp"
 
 namespace openvslam {
 namespace util {
