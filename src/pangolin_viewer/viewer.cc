@@ -7,7 +7,7 @@
 #include "openvslam/publish/frame_publisher.h"
 #include "openvslam/publish/map_publisher.h"
 
-#include "opencv2/highgui.hpp"
+#include <opencv2/highgui.hpp>
 
 namespace pangolin_viewer {
 
