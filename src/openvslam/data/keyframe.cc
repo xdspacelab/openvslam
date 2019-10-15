@@ -10,6 +10,8 @@
 #include "openvslam/feature/orb_params.h"
 #include "openvslam/util/converter.h"
 
+#include <nlohmann/json.hpp>
+
 namespace openvslam {
 namespace data {
 

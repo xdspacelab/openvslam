@@ -1,5 +1,7 @@
 #include "openvslam/data/common.h"
 
+#include <nlohmann/json.hpp>
+
 namespace openvslam {
 namespace data {
 
