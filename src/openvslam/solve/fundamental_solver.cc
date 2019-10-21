@@ -75,9 +75,8 @@ void fundamental_solver::find_via_ransac(const unsigned int max_num_iter, const 
         }
     }
 
-    if (0.0 < best_score_) {
-        solution_is_valid_ = true;
-    }
+    const auto num_inliers = std::count(is_inlier_match_.begin(), is_inlier_match_.end(), true);
+    solution_is_valid_ = (best_score_ > 0.0) && (num_inliers >= min_set_size);
 
     if (!recompute || !solution_is_valid_) {
         return;
