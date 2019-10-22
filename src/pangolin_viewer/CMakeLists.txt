@@ -8,8 +8,8 @@ set_target_properties(pangolin_viewer PROPERTIES
         OUTPUT_NAME pangolin_viewer
         LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
-target_link_libraries(pangolin_viewer
-        ${PROJECT_NAME}
+target_link_libraries(pangolin_viewer PUBLIC
+        ${PROJECT_NAME} 
         pangolin)
 
 install(TARGETS pangolin_viewer

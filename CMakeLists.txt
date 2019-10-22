@@ -109,7 +109,7 @@ set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point op
 #################
 
 # thread library
-find_package(Threads REQUIRED)
+find_package(Threads QUIET REQUIRED)
 
 # OpenMP
 set(USE_OPENMP ON CACHE BOOL "Use OpenMP")
@@ -128,7 +128,7 @@ message(STATUS "Use OpenCV ${OpenCV_VERSION}")
 find_package(Eigen3 3.2 REQUIRED)
 
 # Find imported target from g2o
-find_package(g2o REQUIRED COMPONENTS
+find_package(g2o QUIET REQUIRED COMPONENTS
     g2o::core
     g2o::stuff
     g2o::solver_dense
@@ -164,7 +164,7 @@ find_package(yaml-cpp REQUIRED)
 # pangolin viewer
 set(USE_PANGOLIN_VIEWER ON CACHE BOOL "Enable Pangolin Viewer")
 if(USE_PANGOLIN_VIEWER)
-    find_package(Pangolin REQUIRED)
+    find_package(Pangolin QUIET REQUIRED)
 endif()
 
 # socket publisher
