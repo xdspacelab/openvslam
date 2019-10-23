@@ -11,7 +11,6 @@
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
 
-
     // create options
     popl::OptionParser op("Allowed options");
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
@@ -42,7 +41,7 @@ int main(int argc, char* argv[]) {
     auto node = std::make_shared<rclcpp::Node>("video_publisher");
     rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
     custom_qos.depth = 1;
-    
+
     const image_transport::Publisher publisher = image_transport::create_publisher(node.get(), "/video/image_raw", custom_qos);
 
     cv::Mat frame;
@@ -56,10 +55,9 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-
     rclcpp::WallRate pub_rate(video.get(cv::CAP_PROP_FPS));
     rclcpp::executors::SingleThreadedExecutor exec;
-    
+
     exec.add_node(node);
 
     while (rclcpp::ok() && video.read(frame)) {

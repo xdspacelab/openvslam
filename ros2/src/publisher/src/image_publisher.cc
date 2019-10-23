@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     rclcpp::WallRate pub_rate(img_fps->value());
     rclcpp::executors::SingleThreadedExecutor exec;
-    
+
     exec.add_node(node);
 
     for (unsigned int i = 0; i < frames.size(); ++i) {

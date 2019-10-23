@@ -63,18 +63,20 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
     custom_qos.depth = 1;
 
     // run the SLAM as subscriber
-    image_transport::Subscriber sub = image_transport::create_subscription(node.get(), "camera/image_raw", [&](const sensor_msgs::msg::Image::ConstSharedPtr& msg) {
-        const auto tp_1 = std::chrono::steady_clock::now();
-        const auto timestamp = std::chrono::duration_cast<std::chrono::duration<double>>(tp_1 - tp_0).count();
+    image_transport::Subscriber sub = image_transport::create_subscription(
+        node.get(), "camera/image_raw", [&](const sensor_msgs::msg::Image::ConstSharedPtr& msg) {
+            const auto tp_1 = std::chrono::steady_clock::now();
+            const auto timestamp = std::chrono::duration_cast<std::chrono::duration<double>>(tp_1 - tp_0).count();
 
-        // input the current frame and estimate the camera pose
-        SLAM.feed_monocular_frame(cv_bridge::toCvShare(msg, "bgr8")->image, timestamp, mask);
+            // input the current frame and estimate the camera pose
+            SLAM.feed_monocular_frame(cv_bridge::toCvShare(msg, "bgr8")->image, timestamp, mask);
 
-        const auto tp_2 = std::chrono::steady_clock::now();
+            const auto tp_2 = std::chrono::steady_clock::now();
 
-        const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
-        track_times.push_back(track_time);
-    }, "raw", custom_qos);
+            const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
+            track_times.push_back(track_time);
+        },
+        "raw", custom_qos);
 
     // run the viewer in another thread
 #ifdef USE_PANGOLIN_VIEWER
@@ -100,7 +102,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
         }
     });
 #endif
-    
+
     rclcpp::executors::SingleThreadedExecutor exec;
     exec.add_node(node);
     exec.spin();
