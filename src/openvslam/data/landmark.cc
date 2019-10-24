@@ -4,6 +4,8 @@
 #include "openvslam/data/map_database.h"
 #include "openvslam/match/base.h"
 
+#include <nlohmann/json.hpp>
+
 namespace openvslam {
 namespace data {
 

@@ -3,6 +3,7 @@
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
 
+#include <iostream>
 #include <memory>
 
 #include <spdlog/spdlog.h>

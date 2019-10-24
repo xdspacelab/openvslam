@@ -1,6 +1,9 @@
 #include "openvslam/camera/fisheye.h"
 
+#include <iostream>
+
 #include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 namespace openvslam {
 namespace camera {

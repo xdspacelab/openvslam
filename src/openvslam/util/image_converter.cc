@@ -1,5 +1,7 @@
 #include "openvslam/util/image_converter.h"
 
+#include <opencv2/imgproc.hpp>
+
 namespace openvslam {
 namespace util {
 

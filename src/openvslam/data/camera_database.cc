@@ -5,6 +5,7 @@
 #include "openvslam/data/camera_database.h"
 
 #include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 namespace openvslam {
 namespace data {

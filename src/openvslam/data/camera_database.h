@@ -4,7 +4,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace openvslam {
 
