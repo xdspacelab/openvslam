@@ -18,7 +18,8 @@ camera_database::~camera_database() {
     for (const auto& name_camera : database_) {
         const auto& camera_name = name_camera.first;
         const auto camera = name_camera.second;
-        // curr_camera_はconfigクラスで保持されているのでdeleteしない
+
+        // Since curr_camera is held in the config class, do not delete curr_camera here
         if (camera->name_ == curr_camera_->name_) {
             continue;
         }

@@ -37,11 +37,9 @@ public:
     //! get world coordinates of this landmark
     Vec3_t get_pos_in_world() const;
 
-    //! get mean normal vector of observations
-    //! この3次元点を観測しているkeyframeについて，keyframe->lmのベクトルの平均値(規格化されてる)
+    //! get mean normalized vector of keyframe->lm vectors, for keyframes such that observe the 3D point.
     Vec3_t get_obs_mean_normal() const;
-    //! get reference keyframe
-    //! この3次元点を作成したときのreference keyframe
+    //! get reference keyframe, a keyframe at the creation of a given 3D point
     keyframe* get_ref_keyframe() const;
 
     //! add observation
@@ -110,7 +108,7 @@ public:
     unsigned int first_keyfrm_id_ = 0;
     unsigned int num_observations_ = 0;
 
-    // frame trackingに用いられる変数
+    // Variables for frame tracking.
     Vec2_t reproj_in_tracking_;
     float x_right_in_tracking_;
     bool is_observable_in_tracking_;
@@ -118,7 +116,7 @@ public:
     unsigned int identifier_in_local_map_update_ = 0;
     unsigned int identifier_in_local_lm_search_ = 0;
 
-    // loop closingの際に重複を避けるために用いられる変数
+    // Variables for loop-closing.
     unsigned int loop_fusion_identifier_ = 0;
     unsigned int ref_keyfrm_id_in_loop_fusion_ = 0;
     Vec3_t pos_w_after_global_BA_;
@@ -131,7 +129,7 @@ private:
     //! observations (keyframe and keypoint index)
     std::map<keyframe*, unsigned int> observations_;
 
-    //! この3次元点を観測しているkeyframeについて，keyframe->lmのベクトルの平均値(規格化されてる)
+    //! Normalized average vector (unit vector) of keyframe->lm, for keyframes such that observe the 3D point.
     Vec3_t mean_normal_ = Vec3_t::Zero();
 
     //! representative descriptor
