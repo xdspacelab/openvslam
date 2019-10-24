@@ -283,7 +283,7 @@ float bow_database::align_total_scores_and_keyframes(const unsigned int min_num_
             // Loop for which is included in the initial loop candidates and satisfies the minimum shared word number
             if (static_cast<bool>(init_candidates_.count(covisibility))
                 && min_num_common_words_thr < num_common_words_.at(covisibility)) {
-                // scoreは計算済み
+                // score has already been computed
                 total_score += scores_.at(covisibility);
                 if (best_score < scores_.at(covisibility)) {
                     best_score = scores_.at(covisibility);

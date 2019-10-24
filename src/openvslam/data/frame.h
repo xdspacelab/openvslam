@@ -170,13 +170,12 @@ public:
     feature::orb_extractor* extractor_right_ = nullptr;
 
     //! timestamp
-    // TODO: timestamp_tを作る
     double timestamp_;
 
     //! camera model
     camera::base* camera_ = nullptr;
 
-    // この点より遠い点は無効にする
+    // if a stereo-triangulated point is farther than this threshold, it is invalid
     //! depth threshold
     float depth_thr_;
 
