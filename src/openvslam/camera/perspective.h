@@ -5,7 +5,7 @@
 
 #if CV_MAJOR_VERSION == 3
 #include <opencv2/imgproc.hpp>
-#else if CV_MAJOR_VERSION == 4
+#elif CV_MAJOR_VERSION == 4
 #include <opencv2/calib3d.hpp>
 #endif
 
