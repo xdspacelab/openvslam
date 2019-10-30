@@ -246,6 +246,7 @@ Download, build and install g2o.
     cd /path/to/working/dir
     git clone https://github.com/RainerKuemmerle/g2o.git
     cd g2o
+    git checkout 9b41a4ea5ade8e1250b9c1b279f3a9c098811b5a
     mkdir build && cd build
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
@@ -270,6 +271,7 @@ Download, build and install g2o.
     cd /path/to/working/dir
     git clone https://github.com/stevenlovegrove/Pangolin.git
     cd Pangolin
+    git checkout ad8b5f83222291c51b4800d5a5873b0e90a0cf81
     mkdir build && cd build
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
