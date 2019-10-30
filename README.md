@@ -100,6 +100,8 @@ Please use `g2o` as the dynamic link library because `csparse_extension` module 
 
 ## Citation
 
+OpenVSLAM **won first place** at **ACM Multimedia 2019 Open Source Software Competition**.
+
 If OpenVSLAM helps your research, please cite the paper for OpenVSLAM. Here is a BibTeX entry:
 
 ```
