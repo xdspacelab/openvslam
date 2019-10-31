@@ -98,6 +98,7 @@ message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${json_INCLUDE_DIR}>
   $<INSTALL_INTERFACE:include/openvslam/3rd/json/include>
+  $<INSTALL_INTERFACE:include/openvslam/3rd/spdlog/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
   $<INSTALL_INTERFACE:include/>
   $<BUILD_INTERFACE:${popl_INCLUDE_DIR}>
@@ -149,3 +150,5 @@ install(FILES ${headers} DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR})
 # Install public 3rd party headers
 
 install(FILES "${json_INCLUDE_DIR}/nlohmann/json.hpp" DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/json/include/nlohmann/)
+install(DIRECTORY ${spdlog_INCLUDE_DIR} DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/spdlog/)
+
