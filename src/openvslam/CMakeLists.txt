@@ -104,6 +104,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${popl_INCLUDE_DIR}>
   $<BUILD_INTERFACE:${spdlog_INCLUDE_DIR}>
   $<BUILD_INTERFACE:${BOW_INCLUDE_DIRS}>
+  $<INSTALL_INTERFACE:${BOW_INCLUDE_DIRS}>
 )
 
 # Link to required libraries
@@ -143,12 +144,10 @@ install(TARGETS ${PROJECT_NAME}
     )
 
 # Install OpenVSlam headers
-
 file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 install(FILES ${headers} DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR})
 
 # Install public 3rd party headers
-
 install(FILES "${json_INCLUDE_DIR}/nlohmann/json.hpp" DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/json/include/nlohmann/)
 install(DIRECTORY ${spdlog_INCLUDE_DIR} DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/spdlog/)
 
