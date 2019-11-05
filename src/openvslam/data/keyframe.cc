@@ -284,8 +284,8 @@ Vec3_t keyframe::triangulate_stereo(const unsigned int idx) const {
 
             const float depth = depths_.at(idx);
             if (0.0 < depth) {
-                const float x = keypts_.at(idx).pt.x;
-                const float y = keypts_.at(idx).pt.y;
+                const float x = undist_keypts_.at(idx).pt.x;
+                const float y = undist_keypts_.at(idx).pt.y;
                 const float unproj_x = (x - camera->cx_) * depth * camera->fx_inv_;
                 const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
                 const Vec3_t pos_c{unproj_x, unproj_y, depth};
@@ -302,8 +302,8 @@ Vec3_t keyframe::triangulate_stereo(const unsigned int idx) const {
 
             const float depth = depths_.at(idx);
             if (0.0 < depth) {
-                const float x = keypts_.at(idx).pt.x;
-                const float y = keypts_.at(idx).pt.y;
+                const float x = undist_keypts_.at(idx).pt.x;
+                const float y = undist_keypts_.at(idx).pt.y;
                 const float unproj_x = (x - camera->cx_) * depth * camera->fx_inv_;
                 const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
                 const Vec3_t pos_c{unproj_x, unproj_y, depth};
