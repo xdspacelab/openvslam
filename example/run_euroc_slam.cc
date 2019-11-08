@@ -57,7 +57,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     std::thread thread([&]() {
         for (unsigned int i = 0; i < frames.size(); ++i) {
             const auto& frame = frames.at(i);
-            const auto img = cv::imread(frame.left_img_path_, cv::IMREAD_UNCHANGED);
+            const auto img = cv::imread(frame.left_img_path_, cv::IMREAD_GRAYSCALE);
 
             const auto tp_1 = std::chrono::steady_clock::now();
 
@@ -172,8 +172,8 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     std::thread thread([&]() {
         for (unsigned int i = 0; i < frames.size(); ++i) {
             const auto& frame = frames.at(i);
-            const auto left_img = cv::imread(frame.left_img_path_, cv::IMREAD_UNCHANGED);
-            const auto right_img = cv::imread(frame.right_img_path_, cv::IMREAD_UNCHANGED);
+            const auto left_img = cv::imread(frame.left_img_path_, cv::IMREAD_GRAYSCALE);
+            const auto right_img = cv::imread(frame.right_img_path_, cv::IMREAD_GRAYSCALE);
 
             if (left_img.empty() || right_img.empty()) {
                 continue;
