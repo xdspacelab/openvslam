@@ -12,7 +12,7 @@ stereo_rectifier::stereo_rectifier(const std::shared_ptr<openvslam::config>& cfg
     : stereo_rectifier(cfg->camera_, cfg->yaml_node_) {}
 
 stereo_rectifier::stereo_rectifier(camera::base* camera, const YAML::Node& yaml_node)
-    : model_type_(camera->model_type_) {
+    : model_type_(load_model_type(yaml_node)) {
     spdlog::debug("CONSTRUCT: util::stereo_rectifier");
     assert(camera->setup_type_ == camera::setup_type_t::Stereo);
     // set image size
@@ -40,7 +40,8 @@ stereo_rectifier::stereo_rectifier(camera::base* camera, const YAML::Node& yaml_
             const auto D_l = parse_vector_as_mat(cv::Size(1, D_l_vec.size()), D_l_vec);
             const auto D_r = parse_vector_as_mat(cv::Size(1, D_r_vec.size()), D_r_vec);
             // create undistortion maps
-            auto c = static_cast<camera::fisheye*>(camera);
+            // camera model is perspective after rectification
+            auto c = static_cast<camera::perspective*>(camera);
             cv::fisheye::initUndistortRectifyMap(K_l, D_l, R_l, c->cv_cam_matrix_, img_size, CV_32F, undist_map_x_l_, undist_map_y_l_);
             cv::fisheye::initUndistortRectifyMap(K_r, D_r, R_r, c->cv_cam_matrix_, img_size, CV_32F, undist_map_x_r_, undist_map_y_r_);
             break;
@@ -65,6 +66,21 @@ cv::Mat stereo_rectifier::parse_vector_as_mat(const cv::Size& shape, const std::
     cv::Mat mat(shape, CV_64F);
     std::memcpy(mat.data, vec.data(), shape.height * shape.width * sizeof(double));
     return mat;
+}
+
+camera::model_type_t stereo_rectifier::load_model_type(const YAML::Node& yaml_node) {
+    const auto model_type_str = yaml_node["StereoRectifier.model"].as<std::string>("perspective");
+    if (model_type_str == "perspective") {
+        return camera::model_type_t::Perspective;
+    }
+    else if (model_type_str == "fisheye") {
+        return camera::model_type_t::Fisheye;
+    }
+    else if (model_type_str == "equirectangular") {
+        return camera::model_type_t::Equirectangular;
+    }
+
+    throw std::runtime_error("Invalid camera model: " + model_type_str);
 }
 
 } // namespace util
