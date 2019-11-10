@@ -96,32 +96,25 @@ image_bounds fisheye::compute_image_bounds() const {
             std::vector<cv::KeyPoint> undist_corners;
             undistort_keypoints(corners, undist_corners);
 
-            // deal with over 180 deg fov
-            // some points over 180 deg are projected on the opposite side (plus or minus are different)
-            double INF_VALUE = 1000000;
-            if (undist_corners.at(0).pt.y > rows_ / 2.0)
-                undist_corners.at(0).pt.y = -INF_VALUE;
-            if (undist_corners.at(1).pt.x < cols_ / 2.0)
-                undist_corners.at(1).pt.x = INF_VALUE;
-            if (undist_corners.at(2).pt.x > cols_ / 2.0)
-                undist_corners.at(2).pt.x = -INF_VALUE;
-            if (undist_corners.at(3).pt.y < rows_ / 2.0)
-                undist_corners.at(3).pt.y = INF_VALUE;
-
-            // limit image_bounds by incident angle
-            // when deg_thr = 5, only incident angle < 85 deg is accepted
-            const float deg_thr = 5;
+            // 1. limit image_bounds by incident angle
+            //    when deg_thr = 5, only incident angle < 85 deg is accepted
+            // 2. deal with over 180 deg fov
+            //    some points over 180 deg are projected on the opposite side (plus or minus are different)
+            constexpr float deg_thr = 5.0;
             const float dist_thr_x = fx_ / std::tan(deg_thr * M_PI / 180.0);
             const float dist_thr_y = fy_ / std::tan(deg_thr * M_PI / 180.0);
-            float num_y_min_ = -dist_thr_y + cy_;
-            float num_y_max_ = dist_thr_y + cy_;
-            float num_x_min_ = -dist_thr_x + cx_;
-            float num_x_max_ = dist_thr_x + cx_;
-
-            return image_bounds{std::max(undist_corners.at(2).pt.x, num_x_min_),
-                                std::min(undist_corners.at(1).pt.x, num_x_max_),
-                                std::max(undist_corners.at(0).pt.y, num_y_min_),
-                                std::min(undist_corners.at(3).pt.y, num_y_max_)};
+            const float min_x_thr = -dist_thr_x + cx_;
+            const float max_x_thr = dist_thr_x + cx_;
+            const float min_y_thr = -dist_thr_y + cy_;
+            const float max_y_thr = dist_thr_y + cy_;
+            const float undist_min_x = undist_corners.at(2).pt.x;
+            const float undist_max_x = undist_corners.at(1).pt.x;
+            const float undist_min_y = undist_corners.at(0).pt.y;
+            const float undist_max_y = undist_corners.at(3).pt.y;
+            return image_bounds{(undist_min_x < min_x_thr || undist_min_x > cx_) ? min_x_thr : undist_min_x,
+                                (undist_max_x > max_x_thr || undist_max_x < cx_) ? max_x_thr : undist_max_x,
+                                (undist_min_y < min_y_thr || undist_min_y > cy_) ? min_y_thr : undist_min_y,
+                                (undist_max_y > max_y_thr || undist_max_y < cy_) ? max_y_thr : undist_max_y};
         }
         else {
             // fov is normal (four corners are inside of view)
