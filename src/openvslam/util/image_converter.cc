@@ -35,6 +35,14 @@ void convert_to_grayscale(cv::Mat& img, const camera::color_order_t in_color_ord
                 break;
             }
         }
+    }else if (img.channels() == 1){
+        if(img.type()==CV_16UC1 && in_color_order==camera::color_order_t::Gray){
+            std::vector<unsigned short>vec(img.begin<unsigned short>(), img.end<unsigned short>());
+            std::sort(vec.begin(), vec.end());
+            auto l = vec.at(static_cast<unsigned int>(0.05*vec.size()));
+            auto h = vec.at(static_cast<unsigned int>(0.95*vec.size()));
+            img.convertTo(img, CV_8U, 255.0/(h-l), -255.0*l/(h-l));  // 255*(img-l)/(h-l)
+        }
     }
 }
 
