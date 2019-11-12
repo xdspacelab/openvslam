@@ -1,0 +1,63 @@
+# TUM VI stereo rectify model
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "TUM VI fisheye stereo"
+Camera.setup: "stereo"
+Camera.model: "fisheye"
+
+Camera.fx: 190.97847715128717
+Camera.fy: 190.9733070521226
+Camera.cx: 254.93170605935475
+Camera.cy: 256.8974428996504
+
+Camera.k1: 0.0034823894022493434
+Camera.k2: 0.0007150348452162257
+Camera.k3: -0.0020532361418706202
+Camera.k4: 0.00020293673591811182
+
+Camera.fps: 20
+Camera.cols: 512
+Camera.rows: 512
+Camera.focal_x_baseline: 19.305491800682915
+
+Camera.fx_right: 190.44236969414825
+Camera.fy_right: 190.4344384721956
+Camera.cx_right: 252.59949716835982
+Camera.cy_right: 254.91723064636983
+
+Camera.k1_right: 0.0034003170790442797
+Camera.k2_right: 0.001766278153469831
+Camera.k3_right: -0.00266312569781606
+Camera.k4_right: 0.0003299517423931039
+
+Camera.rvec_left_to_right: [0.0469130, -0.0006753, 0.0008078]
+Camera.tvec_left_to_right: [-0.1010611, -0.0019765, -0.0011756]
+
+Camera.color_order: "Gray"
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 1000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
+
+#=====================#
+# Tracking Parameters #
+#=====================#
+
+depth_threshold: 40
+
+#========================#
+# Initializer Parameters #
+#========================#
+
+Initializer.num_min_triangulated_pts: 100
+
+
