@@ -12,17 +12,39 @@ fisheye::fisheye(const std::string& name, const setup_type_t& setup_type, const 
                  const unsigned int cols, const unsigned int rows, const double fps,
                  const double fx, const double fy, const double cx, const double cy,
                  const double k1, const double k2, const double k3, const double k4,
-                 const double focal_x_baseline)
+                 const double fx_right, const double fy_right, const double cx_right, const double cy_right,
+                 const double k1_right, const double k2_right, const double k3_right, const double k4_right,
+                 const double focal_x_baseline, const std::vector<double> rvec_rl, const std::vector<double> tvec_rl)
     : base(name, setup_type, model_type_t::Fisheye, color_order, cols, rows, fps, focal_x_baseline, focal_x_baseline / fx),
       fx_(fx), fy_(fy), cx_(cx), cy_(cy), fx_inv_(1.0 / fx), fy_inv_(1.0 / fy),
-      k1_(k1), k2_(k2), k3_(k3), k4_(k4) {
+      k1_(k1), k2_(k2), k3_(k3), k4_(k4),
+      fx_right_(fx_right), fy_right_(fy_right), cx_right_(cx_right), cy_right_(cy_right),
+      k1_right_(k1_right), k2_right_(k2_right), k3_right_(k3_right), k4_right_(k4_right){
     spdlog::debug("CONSTRUCT: camera::fisheye");
 
+    // Camera parameter
     cv_cam_matrix_ = (cv::Mat_<float>(3, 3) << fx_, 0, cx_, 0, fy_, cy_, 0, 0, 1);
+    R1_ = cv::Mat::eye(3, 3, CV_32F);
     cv_dist_params_ = (cv::Mat_<float>(4, 1) << k1_, k2_, k3_, k4_);
 
     eigen_cam_matrix_ << fx_, 0, cx_, 0, fy_, cy_, 0, 0, 1;
     eigen_dist_params_ << k1_, k2_, k3_, k4_;
+
+    if(setup_type == camera::setup_type_t::Stereo){
+        // Right camera parameter
+        cv_cam_matrix_right_ = (cv::Mat_<float>(3, 3) << fx_right_, 0, cx_right_, 0, fy_right_, cy_right_, 0, 0, 1);
+        cv_dist_params_right_ = (cv::Mat_<float>(4, 1) << k1_right_, k2_right_, k3_right_, k4_right_);
+        eigen_cam_matrix_right_ << fx_right_, 0, cx_right_, 0, fy_right_, cy_right_, 0, 0, 1;
+        eigen_dist_params_right_ << k1_right_, k2_right_, k3_right_, k4_right_;
+
+        // Estimate rectification parameter
+        cv::Mat rvec, R,T;
+        cv::Vec3d tnew;
+        rvec = (cv::Mat_<double>(3, 1) << rvec_rl.at(0), rvec_rl.at(1), rvec_rl.at(2));
+        T = (cv::Mat_<double>(3, 1) << tvec_rl.at(0), tvec_rl.at(1), tvec_rl.at(2));
+        cv::Rodrigues(rvec, R);
+        get_stereo_rectify_param(R, T, R1_, R2_, tnew);
+    }
 
     img_bounds_ = compute_image_bounds();
 
@@ -45,7 +67,17 @@ fisheye::fisheye(const YAML::Node& yaml_node)
               yaml_node["Camera.k2"].as<double>(),
               yaml_node["Camera.k3"].as<double>(),
               yaml_node["Camera.k4"].as<double>(),
-              yaml_node["Camera.focal_x_baseline"].as<double>(0.0)) {}
+              yaml_node["Camera.fx_right"].as<double>(0.0),
+              yaml_node["Camera.fy_right"].as<double>(0.0),
+              yaml_node["Camera.cx_right"].as<double>(0.0),
+              yaml_node["Camera.cy_right"].as<double>(0.0),
+              yaml_node["Camera.k1_right"].as<double>(0.0),
+              yaml_node["Camera.k2_right"].as<double>(0.0),
+              yaml_node["Camera.k3_right"].as<double>(0.0),
+              yaml_node["Camera.k4_right"].as<double>(0.0),
+              yaml_node["Camera.focal_x_baseline"].as<double>(0.0),
+              yaml_node["Camera.rvec_left_to_right"].as<std::vector<double>>( std::vector<double>()),
+              yaml_node["Camera.tvec_left_to_right"].as<std::vector<double>>( std::vector<double>())) {}
 
 fisheye::~fisheye() {
     spdlog::debug("DESTRUCT: camera::fisheye");
@@ -80,9 +112,9 @@ image_bounds fisheye::compute_image_bounds() const {
 
         // fix for issue #83
         // check if fov is super wide (four corners are out of view) based on upper-left corner
-        const double pwx = (0.0 - cx_) / fx_;
-        const double pwy = (0.0 - cy_) / fy_;
-        const double theta_d = sqrt(pwx * pwx + pwy * pwy);
+        double pwx = (0.0 - cx_) / fx_;
+        double pwy = (0.0 - cy_) / fy_;
+        double theta_d = sqrt(pwx * pwx + pwy * pwy);
 
         if (theta_d > M_PI_2) {
             // fov is super wide (four corners are out of view)
@@ -152,7 +184,37 @@ void fisheye::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypt, s
 
     // undistort
     mat = mat.reshape(2);
-    cv::fisheye::undistortPoints(mat, mat, cv_cam_matrix_, cv_dist_params_, cv::Mat(), cv_cam_matrix_);
+    cv::fisheye::undistortPoints(mat, mat, cv_cam_matrix_, cv_dist_params_, R1_, cv_cam_matrix_);
+    mat = mat.reshape(1);
+
+    // convert to cv::Mat
+    undist_keypt.resize(dist_keypt.size());
+    for (unsigned long idx = 0; idx < undist_keypt.size(); ++idx) {
+        undist_keypt.at(idx).pt.x = mat.at<float>(idx, 0);
+        undist_keypt.at(idx).pt.y = mat.at<float>(idx, 1);
+        undist_keypt.at(idx).angle = dist_keypt.at(idx).angle;
+        undist_keypt.at(idx).size = dist_keypt.at(idx).size;
+        undist_keypt.at(idx).octave = dist_keypt.at(idx).octave;
+    }
+}
+
+void fisheye::undistort_keypoints_right(const std::vector<cv::KeyPoint>& dist_keypt, std::vector<cv::KeyPoint>& undist_keypt) const {
+    // cv::fisheye::undistortPoints does not accept an empty input
+    if (dist_keypt.empty()) {
+        undist_keypt.clear();
+        return;
+    }
+
+    // fill cv::Mat with distorted keypoints
+    cv::Mat mat(dist_keypt.size(), 2, CV_32F);
+    for (unsigned long idx = 0; idx < dist_keypt.size(); ++idx) {
+        mat.at<float>(idx, 0) = dist_keypt.at(idx).pt.x;
+        mat.at<float>(idx, 1) = dist_keypt.at(idx).pt.y;
+    }
+
+    // undistort
+    mat = mat.reshape(2);
+    cv::fisheye::undistortPoints(mat, mat, cv_cam_matrix_right_, cv_dist_params_right_, R2_, cv_cam_matrix_);
     mat = mat.reshape(1);
 
     // convert to cv::Mat
@@ -246,7 +308,51 @@ nlohmann::json fisheye::to_json() const {
             {"k1", k1_},
             {"k2", k2_},
             {"k3", k3_},
-            {"k4", k4_}};
+            {"k4", k4_},
+            {"fx_right", fx_right_},
+            {"fy_right", fy_right_},
+            {"cx_right", cx_right_},
+            {"cy_right", cy_right_},
+            {"k1_right", k1_right_},
+            {"k2_right", k2_right_},
+            {"k3_right", k3_right_},
+            {"k4_right", k4_right_}};
+}
+
+
+void fisheye::get_stereo_rectify_param(const cv::Mat& R, const cv::Mat& T, cv::Mat &R1, cv::Mat &R2, cv::Vec3d &tnew) {
+    // https://github.com/opencv/opencv/blob/master/modules/calib3d/src/fisheye.cpp
+    cv::Vec3d tvec;
+    T.convertTo(tvec, CV_64F);
+
+    cv::Vec3d rvec; // Rodrigues vector
+    cv::Rodrigues(R, rvec);
+
+    // rectification algorithm
+    rvec *= -0.5;              // get average rotation
+
+    cv::Matx33d r_r;
+    cv::Rodrigues(rvec, r_r);  // rotate cameras to same orientation by averaging
+
+    cv::Vec3d t = r_r * tvec;
+    cv::Vec3d uu(t[0] > 0 ? 1 : -1, 0, 0);
+
+    // calculate global Z rotation
+    cv::Vec3d ww = t.cross(uu);
+    double nw = cv::norm(ww);
+    if (nw > 0.0)
+        ww *= acos(fabs(t[0])/cv::norm(t))/nw;
+
+    cv::Matx33d wr;
+    cv::Rodrigues(ww, wr);
+
+    // apply to both views
+    cv::Matx33d ri1 = wr * r_r.t();
+    cv::Mat(ri1, false).convertTo(R1, R1.empty() ? CV_64F : R1.type());
+    cv::Matx33d ri2 = wr * r_r;
+    cv::Mat(ri2, false).convertTo(R2, R2.empty() ? CV_64F : R2.type());
+    tnew = ri2 * tvec;
+    return;
 }
 
 } // namespace camera

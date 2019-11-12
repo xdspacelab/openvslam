@@ -7,6 +7,7 @@
 #include "openvslam/data/landmark.h"
 #include "openvslam/feature/orb_extractor.h"
 #include "openvslam/match/stereo.h"
+#include "openvslam/match/fisheye_stereo.h"
 
 #include <thread>
 
@@ -72,17 +73,29 @@ frame::frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const 
 
     // Undistort keypoints
     camera_->undistort_keypoints(keypts_, undist_keypts_);
+    if(camera_->model_type_==camera::model_type_t::Fisheye){
+        // undistorted keypoints of stereo fisheye right image
+        std::vector<cv::KeyPoint> undist_keypts_right;
 
-    // Estimate depth with stereo match
-    match::stereo stereo_matcher(extractor_left->image_pyramid_, extractor_right_->image_pyramid_,
-                                 keypts_, keypts_right_, descriptors_, descriptors_right_,
-                                 scale_factors_, inv_scale_factors_,
-                                 camera->focal_x_baseline_, camera_->true_baseline_);
-    stereo_matcher.compute(stereo_x_right_, depths_);
+        auto fisheye_camera = static_cast<camera::fisheye*>(camera_);
+        fisheye_camera->undistort_keypoints_right(keypts_right_, undist_keypts_right);
+
+        // Estimate depth with stereo match
+        match::fisheye_stereo stereo_matcher(fisheye_camera, extractor_->image_pyramid_, extractor_right_->image_pyramid_,
+                                             undist_keypts_, undist_keypts_right, descriptors_, descriptors_right_,
+                                             scale_factors_, inv_scale_factors_);
+        stereo_matcher.compute(stereo_x_right_, depths_);
+    }else{
+        // Estimate depth with stereo match
+        match::stereo stereo_matcher(extractor_->image_pyramid_, extractor_right_->image_pyramid_,
+                                     keypts_, keypts_right_, descriptors_, descriptors_right_,
+                                     scale_factors_, inv_scale_factors_,
+                                     camera_->focal_x_baseline_, camera_->true_baseline_);
+        stereo_matcher.compute(stereo_x_right_, depths_);
+    }
 
     // Convert to bearing vector
     camera->convert_keypoints_to_bearings(undist_keypts_, bearings_);
-
     // Initialize association with 3D points
     landmarks_ = std::vector<landmark*>(num_keypts_, nullptr);
     outlier_flags_ = std::vector<bool>(num_keypts_, false);

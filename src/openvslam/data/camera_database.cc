@@ -93,7 +93,18 @@ void camera_database::from_json(const nlohmann::json& json_cameras) {
                                              json_camera.at("k2").get<double>(),
                                              json_camera.at("k3").get<double>(),
                                              json_camera.at("k4").get<double>(),
-                                             json_camera.at("focal_x_baseline").get<double>());
+                                             json_camera.at("fx_right").get<double>(),
+                                             json_camera.at("fy_right").get<double>(),
+                                             json_camera.at("cx_right").get<double>(),
+                                             json_camera.at("cy_right").get<double>(),
+                                             json_camera.at("k1_right").get<double>(),
+                                             json_camera.at("k2_right").get<double>(),
+                                             json_camera.at("k3_right").get<double>(),
+                                             json_camera.at("k4_right").get<double>(),
+                                             json_camera.at("focal_x_baseline").get<double>(),
+                                             json_camera.at("rvec_left_to_right").get<std::vector<double>>(),
+                                             json_camera.at("tvec_left_to_right").get<std::vector<double>>());
+
                 break;
             }
             case camera::model_type_t::Equirectangular: {

@@ -148,12 +148,16 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
     const euroc_sequence sequence(sequence_dir_path);
     const auto frames = sequence.get_frames();
 
-    const openvslam::util::stereo_rectifier rectifier(cfg);
-
+    //
+    std::unique_ptr<openvslam::util::stereo_rectifier> rectifier;
+    if(cfg->camera_->model_type_ == openvslam::camera::model_type_t::Perspective){
+        rectifier = std::make_unique<openvslam::util::stereo_rectifier>(cfg);
+    }
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
     // startup the SLAM process
     SLAM.startup();
+    SLAM.disable_loop_detector();
 
     // create a viewer object
     // and pass the frame_publisher and the map_publisher
@@ -179,7 +183,13 @@ void stereo_tracking(const std::shared_ptr<openvslam::config>& cfg,
                 continue;
             }
 
-            rectifier.rectify(left_img, right_img, left_img_rect, right_img_rect);
+            if(rectifier){
+                rectifier->rectify(left_img, right_img, left_img_rect, right_img_rect);
+            }else{
+                // no need to rectify images
+                left_img_rect = left_img;
+                right_img_rect = right_img;
+            }
 
             const auto tp_1 = std::chrono::steady_clock::now();
 

@@ -14,7 +14,10 @@ public:
             const unsigned int cols, const unsigned int rows, const double fps,
             const double fx, const double fy, const double cx, const double cy,
             const double k1, const double k2, const double k3, const double k4,
-            const double focal_x_baseline = 0.0);
+            const double fx_right, const double fy_right, const double cx_right, const double cy_right,
+            const double k1_right, const double k2_right, const double k3_right, const double k4_right,
+            const double focal_x_baseline = 0.0, const std::vector<double> rvec_rl = std::vector<double>(),
+            const std::vector<double> tvec_rl = std::vector<double>());
 
     fisheye(const YAML::Node& yaml_node);
 
@@ -47,6 +50,7 @@ public:
     }
 
     void undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypt, std::vector<cv::KeyPoint>& undist_keypt) const override final;
+    void undistort_keypoints_right(const std::vector<cv::KeyPoint>& dist_keypt, std::vector<cv::KeyPoint>& undist_keypt) const;
 
     Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
         const auto x_normalized = (undist_keypt.pt.x - cx_) / fx_;
@@ -93,6 +97,18 @@ public:
     const double k3_;
     const double k4_;
 
+    //! pinhole params right camera
+    const double fx_right_;
+    const double fy_right_;
+    const double cx_right_;
+    const double cy_right_;
+
+    //! distortion params right camera
+    const double k1_right_;
+    const double k2_right_;
+    const double k3_right_;
+    const double k4_right_;
+
     //! camera matrix in OpenCV format
     cv::Mat cv_cam_matrix_;
     //! camera matrix in Eigen format
@@ -101,6 +117,21 @@ public:
     cv::Mat cv_dist_params_;
     //! distortion params in Eigen format
     Vec4_t eigen_dist_params_;
+
+    //! camera matrix in OpenCV format
+    cv::Mat cv_cam_matrix_right_;
+    //! camera matrix in Eigen format
+    Mat33_t eigen_cam_matrix_right_;
+    //! distortion params in OpenCV format
+    cv::Mat cv_dist_params_right_;
+    //! distortion params in Eigen format
+    Vec4_t eigen_dist_params_right_;
+
+    cv::Mat R1_, R2_;
+    void get_stereo_rectify_param(const cv::Mat& R, const cv::Mat& T, cv::Mat &R1, cv::Mat &R2, cv::Vec3d &tnew);
+
+
+
 };
 
 } // namespace camera
