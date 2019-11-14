@@ -1,15 +1,19 @@
 #include "helper/landmark.h"
 #include "helper/bearing_vector.h"
+
+#include "openvslam/type.h"
 #include "openvslam/util/converter.h"
 #include "openvslam/solve/pnp_solver.h"
-#include "openvslam/type.h"
-#include <gtest/gtest.h>
-#include <opencv2/core/types.hpp>
+
 #include <memory>
+
+#include <opencv2/core/types.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace openvslam;
 
-TEST(pnp_solver, small_points) {
+TEST(pnp_solver, without_ransac) {
     // Create four landmarks which needed the least number for solve problem
     const unsigned int num_landmarks = 10;
     eigen_alloc_vector<Vec3_t> landmarks;
