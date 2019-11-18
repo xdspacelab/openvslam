@@ -15,6 +15,7 @@ stereo_rectifier::stereo_rectifier(camera::base* camera, const YAML::Node& yaml_
     : model_type_(load_model_type(yaml_node)) {
     spdlog::debug("CONSTRUCT: util::stereo_rectifier");
     assert(camera->setup_type_ == camera::setup_type_t::Stereo);
+    assert(camera->model_type_ == camera::model_type_t::Perspective);
     // set image size
     const cv::Size img_size(camera->cols_, camera->rows_);
     // set camera matrices
@@ -26,24 +27,23 @@ stereo_rectifier::stereo_rectifier(camera::base* camera, const YAML::Node& yaml_
     // set distortion parameters depending on the camera model
     const auto D_l_vec = yaml_node["StereoRectifier.D_left"].as<std::vector<double>>();
     const auto D_r_vec = yaml_node["StereoRectifier.D_right"].as<std::vector<double>>();
+    // get camera matrix after rectification
+    const auto K_rect = static_cast<camera::perspective*>(camera)->cv_cam_matrix_;
     switch (model_type_) {
         case camera::model_type_t::Perspective: {
             const auto D_l = parse_vector_as_mat(cv::Size(1, D_l_vec.size()), D_l_vec);
             const auto D_r = parse_vector_as_mat(cv::Size(1, D_r_vec.size()), D_r_vec);
             // create undistortion maps
-            auto c = static_cast<camera::perspective*>(camera);
-            cv::initUndistortRectifyMap(K_l, D_l, R_l, c->cv_cam_matrix_, img_size, CV_32F, undist_map_x_l_, undist_map_y_l_);
-            cv::initUndistortRectifyMap(K_r, D_r, R_r, c->cv_cam_matrix_, img_size, CV_32F, undist_map_x_r_, undist_map_y_r_);
+            cv::initUndistortRectifyMap(K_l, D_l, R_l, K_rect, img_size, CV_32F, undist_map_x_l_, undist_map_y_l_);
+            cv::initUndistortRectifyMap(K_r, D_r, R_r, K_rect, img_size, CV_32F, undist_map_x_r_, undist_map_y_r_);
             break;
         }
         case camera::model_type_t::Fisheye: {
             const auto D_l = parse_vector_as_mat(cv::Size(1, D_l_vec.size()), D_l_vec);
             const auto D_r = parse_vector_as_mat(cv::Size(1, D_r_vec.size()), D_r_vec);
             // create undistortion maps
-            // camera model is perspective after rectification
-            auto c = static_cast<camera::perspective*>(camera);
-            cv::fisheye::initUndistortRectifyMap(K_l, D_l, R_l, c->cv_cam_matrix_, img_size, CV_32F, undist_map_x_l_, undist_map_y_l_);
-            cv::fisheye::initUndistortRectifyMap(K_r, D_r, R_r, c->cv_cam_matrix_, img_size, CV_32F, undist_map_x_r_, undist_map_y_r_);
+            cv::fisheye::initUndistortRectifyMap(K_l, D_l, R_l, K_rect, img_size, CV_32F, undist_map_x_l_, undist_map_y_l_);
+            cv::fisheye::initUndistortRectifyMap(K_r, D_r, R_r, K_rect, img_size, CV_32F, undist_map_x_r_, undist_map_y_r_);
             break;
         }
         default: {
