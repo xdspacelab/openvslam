@@ -109,15 +109,15 @@ set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point op
 #################
 
 # thread library
-find_package(Threads QUIET REQUIRED)
+find_package(Threads REQUIRED)
 
 # OpenMP
 set(USE_OPENMP ON CACHE BOOL "Use OpenMP")
 
 # OpenCV
-find_package(OpenCV 3.3.1 QUIET REQUIRED COMPONENTS core features2d calib3d)
+find_package(OpenCV 3.3.1 COMPONENTS core features2d calib3d)
 if(NOT OpenCV_FOUND)
-    find_package(OpenCV 4.0 QUIET REQUIRED COMPONENTS core features2d calib3d)
+    find_package(OpenCV 4.0 REQUIRED COMPONENTS core features2d calib3d)
     if(NOT OpenCV_FOUND)
         message(FATAL_ERROR "OpenCV >= 3.3.1 not found")
     endif()
@@ -128,7 +128,7 @@ message(STATUS "Use OpenCV ${OpenCV_VERSION}")
 find_package(Eigen3 3.2 REQUIRED)
 
 # Find imported target from g2o
-find_package(g2o QUIET REQUIRED COMPONENTS
+find_package(g2o REQUIRED COMPONENTS
     g2o::core
     g2o::stuff
     g2o::solver_dense
@@ -164,7 +164,7 @@ find_package(yaml-cpp REQUIRED)
 # pangolin viewer
 set(USE_PANGOLIN_VIEWER ON CACHE BOOL "Enable Pangolin Viewer")
 if(USE_PANGOLIN_VIEWER)
-    find_package(Pangolin QUIET REQUIRED)
+    find_package(Pangolin REQUIRED)
 endif()
 
 # socket publisher
@@ -203,7 +203,7 @@ include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
     "${OPENVSLAM_VERSION_CONFIG}" VERSION ${OPENVSLAM_VERSION} COMPATIBILITY SameMajorVersion
-)
+    )
 
 configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in" "${OPENVSLAM_PROJECT_CONFIG}" @ONLY)
 
