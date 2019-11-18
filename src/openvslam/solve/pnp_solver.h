@@ -2,6 +2,7 @@
 #define OPENVSLAM_SOLVE_PNP_SOLVER_H
 
 #include "openvslam/util/converter.h"
+#include "openvslam/type.h"
 
 #include <vector>
 
@@ -79,65 +80,44 @@ private:
     //-----------------------------------------
     // quoted from EPnP implementation
 
-    void reset_correspondences();
+    double compute_pose(const eigen_alloc_vector<Vec3_t>& bearing_vectors,
+                        const eigen_alloc_vector<Vec3_t>& pos_ws,
+                        Mat33_t& rot_cw, Vec3_t& trans_cw);
 
-    void set_max_num_correspondences(const unsigned int max_num_correspondences);
+    double reprojection_error(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& bearings, const Mat33_t& rot, const Vec3_t& trans);
 
-    void add_correspondence(const Vec3_t& pos_w, const Vec3_t& bearing);
+    eigen_alloc_vector<Vec3_t> choose_control_points(const eigen_alloc_vector<Vec3_t>& pos_ws);
 
-    double compute_pose(Mat33_t& rot_cw, Vec3_t& trans_cw);
+    eigen_alloc_vector<Vec4_t> compute_barycentric_coordinates(const eigen_alloc_vector<Vec3_t>& control_points, const eigen_alloc_vector<Vec3_t>& pos_ws);
 
-    double reprojection_error(const double R[3][3], const double t[3]);
+    MatX_t compute_M(const eigen_alloc_vector<Vec3_t>& bearings,
+                     const eigen_alloc_vector<Vec4_t>& alphas);
 
-    void choose_control_points();
+    eigen_alloc_vector<Vec3_t> compute_ccs(const Vec4_t& betas, const MatX_t& U);
 
-    void compute_barycentric_coordinates();
+    eigen_alloc_vector<Vec3_t> compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const eigen_alloc_vector<Vec3_t>& bearings);
 
-    void fill_M(MatX_t& M, const int row, const double* alphas, const double u, const double v);
+    Vec4_t find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N);
 
-    void compute_ccs(const double* betas, const MatX_t& ut);
+    Vec4_t find_initial_betas_1(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
+    Vec4_t find_initial_betas_2(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
+    Vec4_t find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
 
-    void compute_pcs();
+    void qr_solve(const MatRC_t<6, 4>& A, Vec6_t& b, Vec4_t& X);
 
-    void solve_for_sign();
+    Vec6_t compute_rho(const eigen_alloc_vector<Vec3_t>& control_points);
+    MatRC_t<6, 10> compute_L_6x10(const MatX_t& U);
 
-    void find_betas_approx_1(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double* betas);
+    Vec4_t gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas);
 
-    void find_betas_approx_2(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double* betas);
+    void compute_A_and_b_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b);
 
-    void find_betas_approx_3(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double* betas);
+    double compute_R_and_t(const MatX_t& U, const eigen_alloc_vector<Vec4_t>& alphas, const Vec4_t& betas, const eigen_alloc_vector<Vec3_t>& bearings, const eigen_alloc_vector<Vec3_t>& pws, Mat33_t& rot, Vec3_t& trans);
 
-    void qr_solve(MatRC_t<6, 4>& A, MatRC_t<6, 1>& b, MatRC_t<4, 1>& X);
-
-    double dot(const double* v1, const double* v2);
-
-    double dist2(const double* p1, const double* p2);
-
-    void compute_rho(MatRC_t<6, 1>& Rho);
-
-    void compute_L_6x10(const MatX_t& Ut, MatRC_t<6, 10>& L_6x10);
-
-    void gauss_newton(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double current_betas[4]);
-
-    void compute_A_and_b_gauss_newton(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double cb[4], MatRC_t<6, 4>& A, MatRC_t<6, 1>& b);
-
-    double compute_R_and_t(const MatX_t& Ut, const double* betas, double R[3][3], double t[3]);
-
-    void estimate_R_and_t(double R[3][3], double t[3]);
-
-    double* pws_ = nullptr;
-    double* us_ = nullptr;
-    double* alphas_ = nullptr;
-    double* pcs_ = nullptr;
-    int* signs_ = nullptr;
+    void estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& pcs, Mat33_t& rot, Vec3_t& trans);
 
     // 便宜上のカメラモデル
     static constexpr float fx_ = 1.0, fy_ = 1.0, cx_ = 0.0, cy_ = 0.0;
-
-    double cws[4][3], ccs[4][3];
-
-    unsigned int num_correspondences_ = 0;
-    unsigned int max_num_correspondences_ = 0;
 };
 
 } // namespace solve
