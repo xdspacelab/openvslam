@@ -50,6 +50,9 @@ public:
     //! Get initial matches between the initial and current frames
     std::vector<int> get_initial_matches() const;
 
+    //! Get the initial frame ID which succeeded in initialization
+    unsigned int get_initial_frame_id() const;
+
     //! Initialize with the current frame
     bool initialize(data::frame& curr_frm);
 
@@ -62,6 +65,9 @@ private:
     data::bow_database* bow_db_ = nullptr;
     //! initializer status
     initializer_state_t state_ = initializer_state_t::NotReady;
+
+    //! frame ID used for initialization (will be set after succeeded)
+    unsigned int init_frm_id_ = 0;
 
     //-----------------------------------------
     // parameters
