@@ -7,3 +7,5 @@ add_library(test_helper SHARED
 target_include_directories(test_helper SYSTEM
         PUBLIC ${PROJECT_SOURCE_DIR}/test
         ${PROJECT_SOURCE_DIR}/src)
+
+target_link_libraries(test_helper PUBLIC Eigen3::Eigen)
