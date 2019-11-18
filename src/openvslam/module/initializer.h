@@ -30,41 +30,27 @@ class initializer {
 public:
     initializer() = delete;
 
-    /**
-     * Constructor
-     */
+    //! Constructor
     initializer(const camera::setup_type_t setup_type,
                 data::map_database* map_db, data::bow_database* bow_db,
                 const YAML::Node& yaml_node);
 
-    /**
-     * Destructor
-     */
+    //! Destructor
     ~initializer();
 
-    /**
-     * Reset initializer
-     */
+    //! Reset initializer
     void reset();
 
-    /**
-     * Get initialization state
-     */
+    //! Get initialization state
     initializer_state_t get_state() const;
 
-    /**
-     * Get keypoints of the initial frame
-     */
+    //! Get keypoints of the initial frame
     std::vector<cv::KeyPoint> get_initial_keypoints() const;
 
-    /**
-     * Get initial matches between the initial and current frames
-     */
+    //! Get initial matches between the initial and current frames
     std::vector<int> get_initial_matches() const;
 
-    /**
-     * Initialize with the current frame
-     */
+    //! Initialize with the current frame
     bool initialize(data::frame& curr_frm);
 
 private:
@@ -96,24 +82,16 @@ private:
     //-----------------------------------------
     // for monocular camera model
 
-    /**
-     * Create initializer for monocular
-     */
+    //! Create initializer for monocular
     void create_initializer(data::frame& curr_frm);
 
-    /**
-     * Try to initialize a map with monocular camera setup
-     */
+    //! Try to initialize a map with monocular camera setup
     bool try_initialize_for_monocular(data::frame& curr_frm);
 
-    /**
-     * Create an initial map with monocular camera setup
-     */
+    //! Create an initial map with monocular camera setup
     bool create_map_for_monocular(data::frame& curr_frm);
 
-    /**
-     * Scaling up or down a initial map
-     */
+    //! Scaling up or down a initial map
     void scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_keyfrm, const double scale);
 
     //! initializer for monocular
@@ -128,14 +106,10 @@ private:
     //-----------------------------------------
     // for stereo or RGBD camera model
 
-    /**
-     * Try to initialize a map with stereo or RGBD camera setup
-     */
+    //! Try to initialize a map with stereo or RGBD camera setup
     bool try_initialize_for_stereo(data::frame& curr_frm);
 
-    /**
-     * Create an initial map with stereo or RGBD camera setup
-     */
+    //! Create an initial map with stereo or RGBD camera setup
     bool create_map_for_stereo(data::frame& curr_frm);
 };
 
