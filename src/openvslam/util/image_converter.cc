@@ -47,15 +47,15 @@ void equalize_histogram(cv::Mat& img) {
     if (img.type() == CV_16UC1) {
         std::vector<unsigned short> vec(img.begin<unsigned short>(), img.end<unsigned short>());
         std::sort(vec.begin(), vec.end());
-        auto l = vec.at(static_cast<unsigned int>(0.05 * vec.size()));
-        auto h = vec.at(static_cast<unsigned int>(0.95 * vec.size()));
+        const auto l = vec.at(static_cast<unsigned int>(0.05 * vec.size()));
+        const auto h = vec.at(static_cast<unsigned int>(0.95 * vec.size()));
         img.convertTo(img, CV_8UC1, 255.0 / (h - l), -255.0 * l / (h - l)); // 255*(img-l)/(h-l)
     }
     else if (img.type() == CV_8UC1) {
         std::vector<unsigned char> vec(img.begin<unsigned char>(), img.end<unsigned char>());
         std::sort(vec.begin(), vec.end());
-        auto l = vec.at(static_cast<unsigned int>(0.05 * vec.size()));
-        auto h = vec.at(static_cast<unsigned int>(0.95 * vec.size()));
+        const auto l = vec.at(static_cast<unsigned int>(0.05 * vec.size()));
+        const auto h = vec.at(static_cast<unsigned int>(0.95 * vec.size()));
         img.convertTo(img, CV_8UC1, 255.0 / (h - l), -255.0 * l / (h - l)); // 255*(img-l)/(h-l)
     }
 }
