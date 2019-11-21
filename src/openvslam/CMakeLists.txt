@@ -148,6 +148,8 @@ file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 install(FILES ${headers} DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR})
 
 # Install public 3rd party headers
-install(FILES "${json_INCLUDE_DIR}/nlohmann/json.hpp" DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/json/include/nlohmann/)
+install(FILES "${json_INCLUDE_DIR}/nlohmann/json.hpp" "${json_INCLUDE_DIR}/nlohmann/json_fwd.hpp"
+    DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/json/include/nlohmann/)
+
 install(DIRECTORY ${spdlog_INCLUDE_DIR} DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/3rd/spdlog/)
 
