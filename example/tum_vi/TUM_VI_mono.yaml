@@ -1,0 +1,43 @@
+# TUM VI monocular model
+# https://vision.in.tum.de/data/datasets/visual-inertial-dataset#geometric_calibration
+# pinhole (512x512)
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "TUM VI monocular"
+Camera.setup: "monocular"
+Camera.model: "fisheye"
+
+Camera.fx: 190.97847715128717
+Camera.fy: 190.9733070521226
+Camera.cx: 254.93170605935475
+Camera.cy: 256.8974428996504
+
+Camera.k1: 0.0034823894022493434
+Camera.k2: 0.0007150348452162257
+Camera.k3: -0.0020532361418706202
+Camera.k4: 0.00020293673591811182
+
+Camera.fps: 20
+Camera.cols: 512
+Camera.rows: 512
+
+Camera.color_order: "Gray"
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 1000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
+
+#========================#
+# Initializer Parameters #
+#========================#
+
+Initializer.scaling_factor: 2.0
