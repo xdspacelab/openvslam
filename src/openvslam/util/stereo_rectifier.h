@@ -28,10 +28,11 @@ private:
     //! Parse std::vector as cv::Mat
     static cv::Mat parse_vector_as_mat(const cv::Size& shape, const std::vector<double>& vec);
 
-    //! camera model type before rectification
-    const camera::model_type_t model_type_;
     //! Load model type before rectification from YAML
     static camera::model_type_t load_model_type(const YAML::Node& yaml_node);
+
+    //! camera model type before rectification
+    const camera::model_type_t model_type_;
 
     //! undistortion map for x-axis in left image
     cv::Mat undist_map_x_l_;
