@@ -4,8 +4,8 @@
 #include "openvslam/type.h"
 #include "openvslam/camera/base.h"
 
-#include <opencv2/opencv.hpp>
-#include <nlohmann/json.hpp>
+#include <opencv2/core.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace openvslam {
 namespace data {

@@ -1,0 +1,69 @@
+# TUM VI stereo rectify model
+# https://vision.in.tum.de/data/datasets/visual-inertial-dataset#geometric_calibration
+# pinhole (512x512)
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "TUM VI stereo"
+Camera.setup: "stereo"
+Camera.model: "perspective"
+
+# new "rectified" matrices is the first three cols of the projection matrix which is calculated with cv::stereoRectify()
+# e.g. fx = P1[0][0] or P2[0][0], cx = P1[0][2] or P2[0][2]
+#      fy = P1[1][1] or P2[1][1], cy = P1[1][2] or P2[1][2]
+
+Camera.fx: 61.75453410721205
+Camera.fy: 61.75453410721205
+Camera.cx: 240.22941720459062
+Camera.cy: 255.73235402091632
+
+# there is no distortion after stereo rectification
+
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
+Camera.k3: 0.0
+
+# focal_x_baseline is -P2[0][3] which is calculated with cv::stereoRectify()
+
+Camera.fps: 20
+Camera.cols: 512
+Camera.rows: 512
+Camera.focal_x_baseline: 6.242596912726197
+
+Camera.color_order: "Gray"
+
+#======================#
+# Stereo Rectification #
+#======================#
+
+# original intrinsic parameters (K, D) and stereo-recitification parameters (R)
+# matrices (K, R) are written in row-major order
+# StereoRectifier.model is camera model before rectification
+
+StereoRectifier.model: "fisheye"
+StereoRectifier.K_left: [190.97847715128717, 0.0, 254.93170605935475, 0.0, 190.9733070521226, 256.8974428996504, 0.0, 0.0, 1.0]
+StereoRectifier.D_left: [0.0034823894022493434, 0.0007150348452162257, -0.0020532361418706202, 0.00020293673591811182]
+StereoRectifier.R_left: [0.9997641946925044, 0.01925271884177015, 0.010044293307535757, -0.01901185247371587, 0.9995418997803748, -0.02354867403818772, -0.010493068014919314, 0.02335216051329943, 0.99967223234568]
+StereoRectifier.K_right: [190.44236969414825, 0.0, 252.59949716835982, 0.0, 190.4344384721956, 254.91723064636983, 0.0, 0.0, 1.0]
+StereoRectifier.D_right: [0.0034003170790442797, 0.001766278153469831, -0.00266312569781606, 0.0003299517423931039]
+StereoRectifier.R_right: [0.9997411981023351, 0.01955199401713946, 0.011629976219300583, -0.019819377433695273, 0.9995311538731381, 0.02333805294307984, -0.011168218078479885, -0.023562511898925578, 0.9996599816627474]
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 1000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
+
+#========================#
+# Initializer Parameters #
+#========================#
+
+Initializer.num_min_triangulated_pts: 100

@@ -20,7 +20,7 @@ bow_database::~bow_database() {
 void bow_database::add_keyframe(keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    // keyframes_in_node_のうち，対応するノード番号のlistにkeyframeを追加する
+    // Append keyframe to the corresponding index in keyframes_in_node_ list
     for (const auto& node_id_and_weight : keyfrm->bow_vec_) {
         keyfrms_in_node_[node_id_and_weight.first].push_back(keyfrm);
     }
@@ -29,15 +29,16 @@ void bow_database::add_keyframe(keyframe* keyfrm) {
 void bow_database::erase_keyframe(keyframe* keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    // keyframes_in_node_のうち，対応するノード番号のlistからkeyframeを削除する
+    // Delete keyframe from the coresponding index in keyframes_in_node_ list
     for (const auto& node_id_and_weight : keyfrm->bow_vec_) {
         // first: node ID, second: weight
         if (!static_cast<bool>(keyfrms_in_node_.count(node_id_and_weight.first))) {
             continue;
         }
-        // wordを共有しているキーフレームを取得
+        // Obtain keyframe which shares word
         auto& keyfrms_in_node = keyfrms_in_node_.at(node_id_and_weight.first);
-        // std::list::eraseがイテレータでの削除にしか対応していないのでイテレータで回す
+
+        // std::list::erase only accepts iterator
         for (auto itr = keyfrms_in_node.begin(), lend = keyfrms_in_node.end(); itr != lend; itr++) {
             if (*keyfrm == *(*itr)) {
                 keyfrms_in_node.erase(itr);
@@ -58,19 +59,21 @@ std::vector<keyframe*> bow_database::acquire_loop_candidates(keyframe* qry_keyfr
 
     initialize();
 
-    // 1. データベースの全てのキーフレームについて，query_keyframeと共有しているwordの数(=ノードの数)を集計する
+    // Step 1.
+    // Count up the number of nodes, words which are shared with query_keyframe, for all the keyframes in DoW database
 
-    // query_keyframeの近傍は探索の対象から外す
+    // Not searching near frames of query_keyframe
     auto keyfrms_to_reject = qry_keyfrm->graph_node_->get_connected_keyframes();
     keyfrms_to_reject.insert(qry_keyfrm);
 
-    // 候補がなければ終了
+    // If there are no candidates, done
     if (!set_candidates_sharing_words(qry_keyfrm, keyfrms_to_reject)) {
         return std::vector<keyframe*>();
     }
 
-    // 最大共有word数の80%を候補キーフレーム選出の際の最小word数とする
-    // (共有ワード数が最大共有word数の80%未満のものはループ候補から除外する)
+    // Set min_num_common_words as 80 percentile of max_num_common_words
+    // for the following selection of candidate keyframes.
+    // (Delete frames from candidates if it has less shared words than 80% of the max_num_common_words)
     unsigned int max_num_common_words = 0;
     for (const auto& candidate : init_candidates_) {
         if (max_num_common_words < num_common_words_.at(candidate)) {
@@ -79,26 +82,28 @@ std::vector<keyframe*> bow_database::acquire_loop_candidates(keyframe* qry_keyfr
     }
     const auto min_num_common_words = static_cast<unsigned int>(0.8f * max_num_common_words);
 
-    // 2. 最小word数(min_num_common_words)より共有word数が多いキーフレーム候補を集める
-    //    各キーフレーム候補とquery keyframeの類似度スコアを計算し，min_score以上のものを保持しておく
+    // Step 2.
+    // Collect keyframe candidates which have more shared words than min_num_common_words
+    // by calculating similarity score between each candidate and the query keyframe.
 
-    // 候補がなければ終了
+    // If there are no candidates, done
     if (!compute_scores(qry_keyfrm, min_num_common_words)) {
         return std::vector<keyframe*>();
     }
 
-    // 候補がなければ終了
+    // If there are no candidates, done
     if (!align_scores_and_keyframes(min_num_common_words, min_score)) {
         return std::vector<keyframe*>();
     }
 
-    // 3. 各候補キーフレーム(score_keyfrm_pairs)の近傍ともスコアを計算して総和をとる
-    //    近傍中で一番スコアが高いものをループ候補にする
+    // Step 3.
+    // Calculate sum of the similarity scores for each of score_keyfrm_pairs and the near frames
+    // Candidate will be the frame which has the highest similarity score among the near frames
 
     const auto best_total_score = align_total_scores_and_keyframes(min_num_common_words, min_score);
 
-    // 4. total scoreが最大値の75%以上のものを最終的な候補とする
-
+    // Step 4.
+    // Final candidates have larger total score than 75 percentile
     const float min_total_score = 0.75f * best_total_score;
     std::unordered_set<keyframe*> final_candidates;
 
@@ -119,15 +124,17 @@ std::vector<keyframe*> bow_database::acquire_relocalization_candidates(frame* qr
 
     initialize();
 
-    // 1. データベースの全てのキーフレームについて，query frameと共有しているwordの数(=ノードの数)を集計する
+    // Step 1.
+    // Count up the number of nodes, words which are shared with query_keyframe, for all the keyframes in DoW database
 
-    // 候補がなければ終了
+    // If there are no candidates, done
     if (!set_candidates_sharing_words(qry_frm)) {
         return std::vector<keyframe*>();
     }
 
-    // 最大共有word数の80%を候補キーフレーム選出の際の最小word数とする
-    // (共有ワード数が最大共有word数の80%未満のものはループ候補から除外する)
+    // Set min_num_common_words as 80 percentile of max_num_common_words
+    // for the following selection of candidate keyframes.
+    // (Delete frames from candidates if it has less shared words than 80% of the max_num_common_words)
     unsigned int max_num_common_words = 0;
     for (const auto& candidate : init_candidates_) {
         if (max_num_common_words < num_common_words_.at(candidate)) {
@@ -136,26 +143,27 @@ std::vector<keyframe*> bow_database::acquire_relocalization_candidates(frame* qr
     }
     const auto min_num_common_words = static_cast<unsigned int>(0.8f * max_num_common_words);
 
-    // 2. 最小word数(min_num_common_words)より共有word数が多いキーフレーム候補を集める
-    //    各キーフレーム候補とquery frameの類似度スコアを計算し，min_score以上のものを保持しておく
+    // Step 2.
+    // Collect keyframe candidates which have more shared words than min_num_common_words
+    // by calculating similarity score between each candidate and the query keyframe.
 
-    // 候補がなければ終了
+    // If there are no candidates, done
     if (!compute_scores(qry_frm, min_num_common_words)) {
         return std::vector<keyframe*>();
     }
 
-    // 候補がなければ終了
+    // If there are no candidates, done
     if (!align_scores_and_keyframes(min_num_common_words, 0.0)) {
         return std::vector<keyframe*>();
     }
 
-    // 3. 各候補キーフレーム(score_keyfrm_pairs)の近傍ともスコアを計算して総和をとる
-    //    近傍中で一番スコアが高いものをループ候補にする
-
+    // Step 3.
+    // Calculate sum of the similarity scores for each of score_keyfrm_pairs and the near frames
+    // Candidate will be the frame which has the highest similarity score among the near frames
     const auto best_total_score = align_total_scores_and_keyframes(min_num_common_words, 0.0);
 
-    // 4. total scoreが最大値の75%以上のものを最終的な候補とする
-
+    // Step 4.
+    // Final candidates have larger total score than 75 percentile
     const float min_total_score = 0.75f * best_total_score;
     std::unordered_set<keyframe*> final_candidates;
 
@@ -186,28 +194,28 @@ bool bow_database::set_candidates_sharing_words(const T* const qry_shot, const s
 
     std::lock_guard<std::mutex> lock(mtx_);
 
-    // queryのwords(ノード番号)を取得
+    // Get word (node index) of the query
     const auto& bow_vec = qry_shot->bow_vec_;
-    // queryとwordを共有しているキーフレームについて，共有しているwordの数を集計する
+    // Count the number of shared words for keyframes which share the word with the query keyframe
     for (const auto& node_id_and_weight : bow_vec) {
         // first: node ID, second: weight
-        // データベースになければcontinue
+        // If not in the BoW database, continue
         if (!static_cast<bool>(keyfrms_in_node_.count(node_id_and_weight.first))) {
             continue;
         }
-        // word(ノードID)を共有しているキーフレームを取得
+        // Get a keyframe which shares the word (node ID) with the query
         const auto& keyfrms_in_node = keyfrms_in_node_.at(node_id_and_weight.first);
-        // 各キーフレームについて，共有word数を１つずつ増やす
+        // For each keyframe, increase shared word number one by one
         for (const auto& keyfrm_in_node : keyfrms_in_node) {
-            // num_common_wordsに登録されていなかったら初期化する
+            // Initialize if not in num_common_words
             if (!static_cast<bool>(num_common_words_.count(keyfrm_in_node))) {
                 num_common_words_[keyfrm_in_node] = 0;
-                // queryとqueryの近傍以外の場合，第1段階のループ候補(init_loop_candidates)として保存しておく
+                // If far enough from the query keyframe, store it as the initial loop candidates
                 if (!static_cast<bool>(keyfrms_to_reject.count(keyfrm_in_node))) {
                     init_candidates_.insert(keyfrm_in_node);
                 }
             }
-            // word数を増やす
+            // Count up the number of words
             ++num_common_words_.at(keyfrm_in_node);
         }
     }
@@ -221,13 +229,14 @@ bool bow_database::compute_scores(const T* const qry_shot, const unsigned int mi
 
     for (const auto& candidate : init_candidates_) {
         if (min_num_common_words_thr < num_common_words_.at(candidate)) {
-            // 最小共有word数より共有word数が多いキーフレームとqueryの類似度を計算する
+            // Calculate similarity score with query keyframe
+            // for the keyframes which have more shared words than minimum common words
 #ifdef USE_DBOW2
             const float score = bow_vocab_->score(qry_shot->bow_vec_, candidate->bow_vec_);
 #else
             const float score = fbow::BoWVector::score(qry_shot->bow_vec_, candidate->bow_vec_);
 #endif
-            // スコアを保存
+            // Store score
             scores_[candidate] = score;
         }
     }
@@ -238,7 +247,7 @@ bool bow_database::compute_scores(const T* const qry_shot, const unsigned int mi
 bool bow_database::align_scores_and_keyframes(const unsigned int min_num_common_words_thr, const float min_score) {
     score_keyfrm_pairs_.clear();
 
-    // 最小スコアを超えていれば保存 -> score_keyfrm_pairs
+    // If larger than the minimum score, store to score_keyfrm_pairs
     for (const auto& candidate : init_candidates_) {
         if (min_num_common_words_thr < num_common_words_.at(candidate)) {
             const float score = scores_.at(candidate);
@@ -260,21 +269,21 @@ float bow_database::align_total_scores_and_keyframes(const unsigned int min_num_
         const auto score = score_keyframe.first;
         const auto keyfrm = score_keyframe.second;
 
-        // keyframeの近傍を取得
+        // Get near frames of keyframe
         const auto top_n_covisibilities = keyfrm->graph_node_->get_top_n_covisibilities(10);
-        // 近傍とのスコアの総和を取る
-        // (covisibility_keyframesにkeyframeは含まれないので，scoreで初期化しておく)
+        // Calculate the sum of scores for the near frames
+        // Initialize with score since keyframe is not included in covisibility_keyframes
         float total_score = score;
 
-        // 候補キーフレームの近傍のうち，最もqueryとの類似度スコアが大きいキーフレームを探す
+        // Find a keyframe which has best similarity score with query keyframe from the near frames
         float best_score = score;
         auto best_keyframe = keyfrm;
 
         for (const auto& covisibility : top_n_covisibilities) {
-            // 最初のループ候補に含まれており，かつ最小共有word数の条件を満たすものが対象
+            // Loop for which is included in the initial loop candidates and satisfies the minimum shared word number
             if (static_cast<bool>(init_candidates_.count(covisibility))
                 && min_num_common_words_thr < num_common_words_.at(covisibility)) {
-                // scoreは計算済み
+                // score has already been computed
                 total_score += scores_.at(covisibility);
                 if (best_score < scores_.at(covisibility)) {
                     best_score = scores_.at(covisibility);

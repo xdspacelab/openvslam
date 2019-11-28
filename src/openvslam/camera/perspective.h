@@ -3,6 +3,12 @@
 
 #include "openvslam/camera/base.h"
 
+#if CV_MAJOR_VERSION == 3
+#include <opencv2/imgproc.hpp>
+#elif CV_MAJOR_VERSION == 4
+#include <opencv2/calib3d.hpp>
+#endif
+
 namespace openvslam {
 namespace camera {
 

@@ -25,42 +25,38 @@ void frame_statistics::update_frame_statistics(const data::frame& frm, const boo
 }
 
 void frame_statistics::replace_reference_keyframe(data::keyframe* old_keyfrm, data::keyframe* new_keyfrm) {
-    // keyframeを削除する時は以下の手順で対応関係の更新を行う
-    // 1. frm_ids_of_ref_keyfrms_で削除対象のkeyframeを参照しているframeのIDsを検索する
-    // 2. ref_keyfrms_.at(ID)を削除対象のkeyframeのparentに変更する
-    // 3. rel_cam_poses_from_ref_keyfrms_.at(ID)を削除対象のkeyframeのparentまでの相対姿勢に変更
-    // 4. frm_ids_of_ref_keyfrms_のkeyを削除対象のkeyframeからparentに変更
+    // Delete keyframes and update associations.
 
     assert(num_valid_frms_ == rel_cam_poses_from_ref_keyfrms_.size());
     assert(num_valid_frms_ == ref_keyfrms_.size());
     assert(num_valid_frms_ == timestamps_.size());
     assert(num_valid_frms_ <= is_lost_frms_.size());
 
-    // キーフレームを置き換える必要がなければ終了
+    // Finish if no need to replace keyframes
     if (!frm_ids_of_ref_keyfrms_.count(old_keyfrm)) {
         return;
     }
 
-    // old_keyfrmを参照しているframeを検索
+    // Search frames referencing old_keyfrm which is to be deleted.
     const auto frm_ids = frm_ids_of_ref_keyfrms_.at(old_keyfrm);
 
     for (const auto frm_id : frm_ids) {
         assert(*ref_keyfrms_.at(frm_id) == *old_keyfrm);
 
-        // 古い方のキーフレームの姿勢・相対姿勢を取得しておく
+        // Get pose and relative pose of the old keyframe
         const Mat44_t old_ref_cam_pose_cw = old_keyfrm->get_cam_pose();
         const Mat44_t old_rel_cam_pose_cr = rel_cam_poses_from_ref_keyfrms_.at(frm_id);
 
-        // キーフレームのポインタを置き換え
+        // Replace pointer of the keyframe to new_keyfrm
         ref_keyfrms_.at(frm_id) = new_keyfrm;
 
-        // 相対姿勢を更新
+        // Update relative pose
         const Mat44_t new_ref_cam_pose_cw = new_keyfrm->get_cam_pose();
         const Mat44_t new_rel_cam_pose_cr = old_rel_cam_pose_cr * old_ref_cam_pose_cw * new_ref_cam_pose_cw.inverse();
         rel_cam_poses_from_ref_keyfrms_.at(frm_id) = new_rel_cam_pose_cr;
     }
 
-    // mapのkeyを置き換え
+    // Replace key to new_keyfrm
     frm_ids_of_ref_keyfrms_[new_keyfrm] = std::move(frm_ids_of_ref_keyfrms_.at(old_keyfrm));
     frm_ids_of_ref_keyfrms_.erase(old_keyfrm);
 }

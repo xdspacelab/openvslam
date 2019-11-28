@@ -33,6 +33,7 @@ initializer::~initializer() {
 void initializer::reset() {
     initializer_.reset(nullptr);
     state_ = initializer_state_t::NotReady;
+    init_frm_id_ = 0;
 }
 
 initializer_state_t initializer::get_state() const {
@@ -45,6 +46,10 @@ std::vector<cv::KeyPoint> initializer::get_initial_keypoints() const {
 
 std::vector<int> initializer::get_initial_matches() const {
     return init_matches_;
+}
+
+unsigned int initializer::get_initial_frame_id() const {
+    return init_frm_id_;
 }
 
 bool initializer::initialize(data::frame& curr_frm) {
@@ -61,11 +66,10 @@ bool initializer::initialize(data::frame& curr_frm) {
                 // failed
                 return false;
             }
-            // succeeded
 
-            // create new map, then check the state is succeeded or not
+            // create new map if succeeded
             create_map_for_monocular(curr_frm);
-            return state_ == initializer_state_t::Succeeded;
+            break;
         }
         case camera::setup_type_t::Stereo:
         case camera::setup_type_t::RGBD: {
@@ -76,15 +80,23 @@ bool initializer::initialize(data::frame& curr_frm) {
                 // failed
                 return false;
             }
-            //succeeded
 
-            // create new map, then check the state is succeeded or not
+            // create new map if succeeded
             create_map_for_stereo(curr_frm);
-            return state_ == initializer_state_t::Succeeded;
+            break;
         }
         default: {
             throw std::runtime_error("Undefined camera setup");
         }
+    }
+
+    // check the state is succeeded or not
+    if (state_ == initializer_state_t::Succeeded) {
+        init_frm_id_ = curr_frm.id_;
+        return true;
+    }
+    else {
+        return false;
     }
 }
 

@@ -1,5 +1,7 @@
 #include "openvslam/camera/base.h"
 
+#include <iostream>
+
 #include <spdlog/spdlog.h>
 
 namespace openvslam {

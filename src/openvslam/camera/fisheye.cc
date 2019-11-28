@@ -1,6 +1,9 @@
 #include "openvslam/camera/fisheye.h"
 
+#include <iostream>
+
 #include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 namespace openvslam {
 namespace camera {
@@ -75,19 +78,61 @@ image_bounds fisheye::compute_image_bounds() const {
     else {
         // distortion exists
 
-        // corner coordinates: (x, y) = (col, row)
-        const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0),      // left top
-                                                cv::KeyPoint(cols_, 0.0, 1.0),    // right top
-                                                cv::KeyPoint(0.0, rows_, 1.0),    // left bottom
-                                                cv::KeyPoint(cols_, rows_, 1.0)}; // right bottom
+        // fix for issue #83
+        // check if fov is super wide (four corners are out of view) based on upper-left corner
+        const double pwx = (0.0 - cx_) / fx_;
+        const double pwy = (0.0 - cy_) / fy_;
+        const double theta_d = sqrt(pwx * pwx + pwy * pwy);
 
-        std::vector<cv::KeyPoint> undist_corners;
-        undistort_keypoints(corners, undist_corners);
+        if (theta_d > M_PI_2) {
+            // fov is super wide (four corners are out of view)
 
-        return image_bounds{std::min(undist_corners.at(0).pt.x, undist_corners.at(2).pt.x),
-                            std::max(undist_corners.at(1).pt.x, undist_corners.at(3).pt.x),
-                            std::min(undist_corners.at(0).pt.y, undist_corners.at(1).pt.y),
-                            std::max(undist_corners.at(2).pt.y, undist_corners.at(3).pt.y)};
+            // corner coordinates: (x, y) = (col, row)
+            const std::vector<cv::KeyPoint> corners{cv::KeyPoint(cx_, 0.0, 1.0),    // top: min_y
+                                                    cv::KeyPoint(cols_, cy_, 1.0),  // right: max_x
+                                                    cv::KeyPoint(0.0, cy_, 1.0),    // left: min_x
+                                                    cv::KeyPoint(cx_, rows_, 1.0)}; // down: max_y
+
+            std::vector<cv::KeyPoint> undist_corners;
+            undistort_keypoints(corners, undist_corners);
+
+            // 1. limit image_bounds by incident angle
+            //    when deg_thr = 5, only incident angle < 85 deg is accepted
+            // 2. deal with over 180 deg fov
+            //    some points over 180 deg are projected on the opposite side (plus or minus are different)
+            constexpr float deg_thr = 5.0;
+            const float dist_thr_x = fx_ / std::tan(deg_thr * M_PI / 180.0);
+            const float dist_thr_y = fy_ / std::tan(deg_thr * M_PI / 180.0);
+            const float min_x_thr = -dist_thr_x + cx_;
+            const float max_x_thr = dist_thr_x + cx_;
+            const float min_y_thr = -dist_thr_y + cy_;
+            const float max_y_thr = dist_thr_y + cy_;
+            const float undist_min_x = undist_corners.at(2).pt.x;
+            const float undist_max_x = undist_corners.at(1).pt.x;
+            const float undist_min_y = undist_corners.at(0).pt.y;
+            const float undist_max_y = undist_corners.at(3).pt.y;
+            return image_bounds{(undist_min_x < min_x_thr || undist_min_x > cx_) ? min_x_thr : undist_min_x,
+                                (undist_max_x > max_x_thr || undist_max_x < cx_) ? max_x_thr : undist_max_x,
+                                (undist_min_y < min_y_thr || undist_min_y > cy_) ? min_y_thr : undist_min_y,
+                                (undist_max_y > max_y_thr || undist_max_y < cy_) ? max_y_thr : undist_max_y};
+        }
+        else {
+            // fov is normal (four corners are inside of view)
+
+            // corner coordinates: (x, y) = (col, row)
+            const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0),      // left top
+                                                    cv::KeyPoint(cols_, 0.0, 1.0),    // right top
+                                                    cv::KeyPoint(0.0, rows_, 1.0),    // left bottom
+                                                    cv::KeyPoint(cols_, rows_, 1.0)}; // right bottom
+
+            std::vector<cv::KeyPoint> undist_corners;
+            undistort_keypoints(corners, undist_corners);
+
+            return image_bounds{std::min(undist_corners.at(0).pt.x, undist_corners.at(2).pt.x),
+                                std::max(undist_corners.at(1).pt.x, undist_corners.at(3).pt.x),
+                                std::min(undist_corners.at(0).pt.y, undist_corners.at(1).pt.y),
+                                std::max(undist_corners.at(2).pt.y, undist_corners.at(3).pt.y)};
+        }
     }
 }
 
