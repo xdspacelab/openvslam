@@ -32,7 +32,9 @@ foreach(SOURCE_PATH ${SOURCE_PATHS})
     target_link_libraries(${TEST_EXECUTABLE_NAME}
             ${PROJECT_NAME}
             test_helper
-            gtest_main)
+            gtest_main
+            opencv_imgcodecs
+            opencv_highgui)
 
     set_target_properties(${TEST_EXECUTABLE_NAME} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}"

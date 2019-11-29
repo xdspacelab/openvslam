@@ -17,17 +17,18 @@ set(json_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/json/include)
 
 # Create the library
 add_library(${PROJECT_NAME} SHARED
-        ${CMAKE_CURRENT_SOURCE_DIR}/config.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/type.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/system.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/tracking_module.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/mapping_module.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/global_optimization_module.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/config.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/system.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/tracking_module.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/mapping_module.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/global_optimization_module.cc)
+    ${CMAKE_CURRENT_SOURCE_DIR}/config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/type.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/system.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tracking_module.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mapping_module.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/global_optimization_module.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/config.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/system.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/tracking_module.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/mapping_module.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/global_optimization_module.cc
+    )
 
 # Append all sources
 add_subdirectory(camera)
@@ -43,8 +44,9 @@ add_subdirectory(solve)
 add_subdirectory(util)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-        OUTPUT_NAME openvslam
-        LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+    OUTPUT_NAME openvslam
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+    )
 
 # Set Compilation definitions if needed
 if(USE_OPENMP)
@@ -96,39 +98,39 @@ message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PUBLIC
-  $<BUILD_INTERFACE:${json_INCLUDE_DIR}>
-  $<INSTALL_INTERFACE:include/openvslam/3rd/json/include>
-  $<INSTALL_INTERFACE:include/openvslam/3rd/spdlog/include>
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
-  $<INSTALL_INTERFACE:include/>
-  $<BUILD_INTERFACE:${popl_INCLUDE_DIR}>
-  $<BUILD_INTERFACE:${spdlog_INCLUDE_DIR}>
-  $<BUILD_INTERFACE:${BOW_INCLUDE_DIRS}>
-  $<INSTALL_INTERFACE:${BOW_INCLUDE_DIRS}>
+    $<BUILD_INTERFACE:${json_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include/openvslam/3rd/json/include>
+    $<INSTALL_INTERFACE:include/openvslam/3rd/spdlog/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
+    $<INSTALL_INTERFACE:include/>
+    $<BUILD_INTERFACE:${popl_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${spdlog_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${BOW_INCLUDE_DIRS}>
+    $<INSTALL_INTERFACE:${BOW_INCLUDE_DIRS}>
 )
 
 # Link to required libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
-        Threads::Threads
-        Eigen3::Eigen
-        opencv_core
-        opencv_features2d
-        opencv_calib3d
-        yaml-cpp
-        g2o::core
-        g2o::stuff
-        g2o::solver_dense
-        g2o::solver_eigen
-        g2o::solver_csparse
-        g2o::csparse_extension
-        g2o::types_sba
-        g2o::types_sim3
-        ${CXSPARSE_LIBRARIES}
-        ${SUITESPARSE_LIBRARIES}
-        ${BOW_LIBS}
-        PRIVATE
-        ${LAPACK_LIBRARIES}
-        )
+    Threads::Threads
+    Eigen3::Eigen
+    opencv_core
+    opencv_features2d
+    opencv_calib3d
+    yaml-cpp
+    g2o::core
+    g2o::stuff
+    g2o::solver_dense
+    g2o::solver_eigen
+    g2o::solver_csparse
+    g2o::csparse_extension
+    g2o::types_sba
+    g2o::types_sim3
+    ${CXSPARSE_LIBRARIES}
+    ${SUITESPARSE_LIBRARIES}
+    ${BOW_LIBS}
+    PRIVATE
+    ${LAPACK_LIBRARIES}
+    )
 
 ###########
 # Install #
@@ -137,10 +139,10 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 # Install OpenVSlam library
 
 install(TARGETS ${PROJECT_NAME}
-      EXPORT ${OPENVSLAM_TARGETS_EXPORT_NAME}
-      RUNTIME DESTINATION ${RUNTIME_DESTINATION}
-      LIBRARY DESTINATION ${LIBRARY_DESTINATION}
-      ARCHIVE DESTINATION ${ARCHIVE_DESTINATION}
+    EXPORT ${OPENVSLAM_TARGETS_EXPORT_NAME}
+    RUNTIME DESTINATION ${RUNTIME_DESTINATION}
+    LIBRARY DESTINATION ${LIBRARY_DESTINATION}
+    ARCHIVE DESTINATION ${ARCHIVE_DESTINATION}
     )
 
 # Install OpenVSlam headers

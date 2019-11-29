@@ -9,7 +9,8 @@ set_target_properties(pangolin_viewer PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 target_link_libraries(pangolin_viewer PUBLIC
-        ${PROJECT_NAME} 
+        ${PROJECT_NAME}
+        opencv_highgui
         pangolin)
 
 install(TARGETS pangolin_viewer
