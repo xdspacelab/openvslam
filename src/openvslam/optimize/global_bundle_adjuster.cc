@@ -69,7 +69,7 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
     // reprojection edgeのcontainer
     using reproj_edge_wrapper = g2o::se3::reproj_edge_wrapper<data::keyframe>;
     std::vector<reproj_edge_wrapper> reproj_edge_wraps;
-    reproj_edge_wraps.reserve(keyfrms.size() * lms.size());
+    reproj_edge_wraps.reserve(10 * lms.size());
 
     // 有意水準5%のカイ2乗値
     // 自由度n=2
