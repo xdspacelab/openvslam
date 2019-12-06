@@ -7,6 +7,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
@@ -64,8 +65,10 @@ int main(int argc, char* argv[]) {
         // send message
         msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
         publisher.publish(msg);
-        exec.spin_once();
+        exec.spin_some();
         pub_rate.sleep();
     }
+
+    rclcpp::shutdown();
     return EXIT_SUCCESS;
 }
