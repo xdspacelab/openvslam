@@ -71,9 +71,16 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg, const std::str
         },
         "raw", custom_qos);
 
-    // run the viewer in another thread
-#ifdef USE_PANGOLIN_VIEWER
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(node);
+    
     std::thread thread([&]() {
+        exec.spin();
+    });
+
+    // run the viewer in another thread 
+    // This does not work, the pangolin needs to be run in the main thread on OSX
+#ifdef USE_PANGOLIN_VIEWER
         viewer.run();
         if (SLAM.terminate_is_requested()) {
             // wait until the loop BA is finished
@@ -82,7 +89,6 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg, const std::str
             }
             rclcpp::shutdown();
         }
-    });
 #elif USE_SOCKET_PUBLISHER
     std::thread thread([&]() {
         publisher.run();
@@ -96,9 +102,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg, const std::str
     });
 #endif
 
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(node);
-    exec.spin();
+
 
     // automatically close the viewer
 #ifdef USE_PANGOLIN_VIEWER

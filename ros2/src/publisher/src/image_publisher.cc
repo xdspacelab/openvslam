@@ -64,7 +64,6 @@ int main(int argc, char* argv[]) {
     for (unsigned int i = 0; i < frames.size(); ++i) {
         const auto& frame = frames.at(i);
         while (rclcpp::ok()) {
-            std::cout << "next img: " << frame.img_path_ << std::endl;
             const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
             msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", img).toImageMsg();
             publisher.publish(msg);

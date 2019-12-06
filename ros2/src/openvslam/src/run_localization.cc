@@ -79,9 +79,14 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
         },
         "raw", custom_qos);
 
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(node);
+    
+    std::thread thread([&]() {
+        exec.spin();
+    }
     // run the viewer in another thread
 #ifdef USE_PANGOLIN_VIEWER
-    std::thread thread([&]() {
         viewer.run();
         if (SLAM.terminate_is_requested()) {
             // wait until the loop BA is finished
@@ -90,7 +95,6 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
             }
             rclcpp::shutdown();
         }
-    });
 #elif USE_SOCKET_PUBLISHER
     std::thread thread([&]() {
         publisher.run();
@@ -103,10 +107,6 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
         }
     });
 #endif
-
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(node);
-    exec.spin();
 
     // automatically close the viewer
 #ifdef USE_PANGOLIN_VIEWER
