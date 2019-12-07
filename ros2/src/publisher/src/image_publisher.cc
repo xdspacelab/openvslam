@@ -11,7 +11,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
-
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
 
