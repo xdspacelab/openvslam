@@ -79,4 +79,11 @@ foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # link OpenVSLAM
     target_link_libraries(${EXECUTABLE_TARGET} PRIVATE
             ${PROJECT_NAME})
+
+    # include popl and spdlog headers
+    target_include_directories(${EXECUTABLE_TARGET} PRIVATE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rd/spdlog/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rd/popl/include>
+        )
+
 endforeach()

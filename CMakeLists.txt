@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
 project(openvslam LANGUAGES CXX C)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(POLICY CMP0042)
     cmake_policy(SET CMP0042 NEW)
 endif()
@@ -98,124 +101,65 @@ endif()
 
 set(USE_SSE_ORB OFF CACHE BOOL "Enable SSE3 instruction for ORB extraction (-msse3)")
 
-if(USE_SSE_ORB)
-    message(STATUS "SSE3 for ORB extraction (-msse3): ENABLED")
-    add_definitions(-DUSE_SSE_ORB)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse3")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
-else()
-    message(STATUS "SSE3 for ORB extraction (-msse3): DISABLED")
-    remove_definitions(-DUSE_SSE_ORB)
-endif()
-
 set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point operation (-mfpmath=sse)")
 
-if(USE_SSE_FP_MATH)
-    message(STATUS "SSE for floating-point operation (-mfpmath=sse): ENABLED")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=sse")
-else()
-    message(STATUS "SSE for floating-point operation (-mfpmath=sse): DISABLED")
-endif()
-
-#######################
-# Check C++11 support #
-#######################
-
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
-check_cxx_compiler_flag("-std=c++14" COMPILER_SUPPORTS_CXX14)
-check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
-check_cxx_compiler_flag("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX17)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-    message(STATUS "C++11 support: OK (-std=c++17)")
-elseif(COMPILER_SUPPORTS_CXX14)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-    message(STATUS "C++11 support: OK (-std=c++14)")
-elseif(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    message(STATUS "C++11 support: OK (-std=c++11)")
-elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-    message(STATUS "C++11 support: OK (-std=c++0x)")
-else()
-    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
-endif()
 
 #################
 # Find packages #
 #################
-
-include_directories(${PROJECT_SOURCE_DIR}/src)
 
 # thread library
 find_package(Threads REQUIRED)
 
 # OpenMP
 set(USE_OPENMP ON CACHE BOOL "Use OpenMP")
-if(USE_OPENMP)
-    find_package(OpenMP)
-    if(OpenMP_FOUND)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        add_definitions(-DUSE_OPENMP)
-        message(STATUS "OpenMP: ENABLED")
-    else()
-        remove_definitions(-DUSE_OPENMP)
-        message(STATUS "OpenMP: DISABLED")
-    endif()
-else()
-    remove_definitions(-DUSE_OPENMP)
-    message(STATUS "OpenMP: DISABLED")
-endif()
 
 # OpenCV
-find_package(OpenCV 3.3.1 QUIET)
+find_package(OpenCV 3.3.1 QUIET COMPONENTS core features2d calib3d highgui)
 if(NOT OpenCV_FOUND)
-    find_package(OpenCV 4.0)
+    find_package(OpenCV 4.0 REQUIRED COMPONENTS core features2d calib3d highgui)
     if(NOT OpenCV_FOUND)
         message(FATAL_ERROR "OpenCV >= 3.3.1 not found")
     endif()
 endif()
 message(STATUS "Use OpenCV ${OpenCV_VERSION}")
-include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Eigen
 find_package(Eigen3 3.2 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
 
-# g2o
-find_package(G2O REQUIRED)
-include_directories(${G2O_INCLUDE_DIR})
+# Find imported target from g2o
+find_package(g2o REQUIRED COMPONENTS
+    g2o::core
+    g2o::stuff
+    g2o::solver_dense
+    g2o::solver_eigen
+    g2o::solver_csparse
+    g2o::csparse_extension
+    g2o::types_sba
+    g2o::types_sim3
+    OPTIONAL_COMPONENTS
+    g2o::csparse)
 
-# CXSparse for g2o
-find_package(CXSparse)
-if(CXSPARSE_FOUND)
-    include_directories(${CXSPARSE_INCLUDE_DIRS})
-endif()
+# Check first if csparse is build from g2o.
+if(TARGET g2o::csparse)
+    set(${CXSPARSE_LIBRARIES} g2o::csparse)
+else()
+    # CXSparse for g2o
+    find_package(CXSparse)
+    if(CXSPARSE_FOUND)
+        include_directories(${CXSPARSE_INCLUDE_DIRS})
+    endif()
 
-# SuiteSparse for g2o
-find_package(SuiteSparse)
-if(SUITESPARSE_FOUND)
-    include_directories(${SUITESPARSE_INCLUDE_DIRS})
+    # SuiteSparse for g2o
+    find_package(SuiteSparse)
+    if(SUITESPARSE_FOUND)
+        include_directories(${SUITESPARSE_INCLUDE_DIRS})
+    endif()
+
 endif()
 
 # yaml-cpp
-find_package(YamlCpp REQUIRED)
-include_directories(${YAMLCPP_INCLUDE_DIRS})
-
-# spdlog
-set(spdlog_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/spdlog/include)
-include_directories(${spdlog_INCLUDE_DIR})
-
-# popl
-set(popl_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/popl/include)
-include_directories(${popl_INCLUDE_DIR})
-
-# json
-set(json_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/json/include)
-include_directories(${json_INCLUDE_DIR})
+find_package(yaml-cpp REQUIRED)
 
 # pangolin viewer
 set(USE_PANGOLIN_VIEWER ON CACHE BOOL "Enable Pangolin Viewer")
@@ -241,57 +185,57 @@ endif()
 set(BOW_FRAMEWORK "DBoW2" CACHE STRING "DBoW2 or FBoW")
 set_property(CACHE BOW_FRAMEWORK PROPERTY STRINGS "DBoW2" "FBoW")
 
-if(BOW_FRAMEWORK MATCHES "DBoW2")
-    find_package(DBoW2 REQUIRED)
-    set(BOW_INCLUDE_DIRS ${DBoW2_INCLUDE_DIRS})
-    set(BOW_LIBS ${DBoW2_LIBS})
-    add_definitions(-DUSE_DBOW2)
-elseif(BOW_FRAMEWORK MATCHES "FBoW")
-    find_package(fbow REQUIRED)
-    set(BOW_INCLUDE_DIRS ${fbow_INCLUDE_DIRS})
-    set(BOW_LIBS ${fbow_LIBS})
-else()
-    message(FATAL_ERROR "Invalid BoW framework: ${BOW_FRAMEWORK}")
-endif()
-include_directories(${BOW_INCLUDE_DIRS})
-message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
+#################
+# Config files  #
+#################
 
-##############################
-# Select g2o library modules #
-##############################
+# Generate cmake configuration scripts
 
-set(USE_G2O_DEBUG OFF CACHE BOOL "Use the debug build of g2o")
+set(OPENVSLAM_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(OPENVSLAM_VERSION_CONFIG "${OPENVSLAM_GENERATED_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
+set(OPENVSLAM_PROJECT_CONFIG "${OPENVSLAM_GENERATED_DIR}/${PROJECT_NAME}Config.cmake")
+set(OPENVSLAM_TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(OPENVSLAM_CONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}")
+set(OPENVSLAM_NAMESPACE "${PROJECT_NAME}::")
+set(OPENVSLAM_VERSION 1.0.0)
 
-if(USE_G2O_DEBUG)
-    set(G2O_LIBS
-            ${G2O_CORE_LIBRARY_DEBUG}
-            ${G2O_STUFF_LIBRARY_DEBUG}
-            ${G2O_SOLVER_DENSE_DEBUG}
-            ${G2O_SOLVER_EIGEN_DEBUG}
-            ${G2O_SOLVER_CHOLMOD_DEBUG}
-            ${G2O_SOLVER_CSPARSE_DEBUG}
-            ${G2O_SOLVER_CSPARSE_EXTENSION_DEBUG}
-            ${G2O_TYPES_SBA_DEBUG}
-            ${G2O_TYPES_SIM3_DEBUG})
-else()
-    set(G2O_LIBS
-            ${G2O_CORE_LIBRARY}
-            ${G2O_STUFF_LIBRARY}
-            ${G2O_SOLVER_DENSE}
-            ${G2O_SOLVER_EIGEN}
-            ${G2O_SOLVER_CHOLMOD}
-            ${G2O_SOLVER_CSPARSE}
-            ${G2O_SOLVER_CSPARSE_EXTENSION}
-            ${G2O_TYPES_SBA}
-            ${G2O_TYPES_SIM3})
-endif()
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+    "${OPENVSLAM_VERSION_CONFIG}" VERSION ${OPENVSLAM_VERSION} COMPATIBILITY SameMajorVersion
+    )
+
+configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in" "${OPENVSLAM_PROJECT_CONFIG}" @ONLY)
+
+install(
+    FILES "${OPENVSLAM_PROJECT_CONFIG}" "${OPENVSLAM_VERSION_CONFIG}"
+    DESTINATION "${OPENVSLAM_CONFIG_INSTALL_DIR}")
+
+install(
+    EXPORT "${OPENVSLAM_TARGETS_EXPORT_NAME}"
+    NAMESPACE "${OPENVSLAM_NAMESPACE}"
+    DESTINATION "${OPENVSLAM_CONFIG_INSTALL_DIR}")
+
+# Set standard installation directories
+set(RUNTIME_DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+set(LIBRARY_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+set(ARCHIVE_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+set(INCLUDES_DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+set(OPENVSLAM_INCLUDE_INSTALL_DIR ${INCLUDES_DESTINATION}/openvslam)
+set(PANGOLIN_VIEWER_INCLUDE_INSTALL_DIR ${INCLUDES_DESTINATION}/pangolin_viewer)
+set(SOCKER_VIEWER_INCLUDE_INSTALL_DIR ${INCLUDES_DESTINATION}/socket_viewer)
 
 ###################
 # Build Selection #
 ###################
 
 add_subdirectory(src)
-add_subdirectory(example)
+
+set(BUILD_EXAMPLES OFF CACHE BOOL "Build Examples")
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
 
 set(BUILD_TESTS OFF CACHE BOOL "Build tests")
 if(BUILD_TESTS)

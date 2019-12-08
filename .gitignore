@@ -38,3 +38,5 @@ cmake-build-release/
 *.exe
 *.out
 *.app
+
+*.user
