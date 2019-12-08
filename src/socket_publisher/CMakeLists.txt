@@ -42,6 +42,7 @@ target_include_directories(socket_publisher
 target_link_libraries(socket_publisher
                       PUBLIC
                       ${PROJECT_NAME}
+                      opencv_imgcodecs
                       ${SIOCLIENT_LIBRARY}
                       ${PROTOBUF_LIBRARIES})
 
