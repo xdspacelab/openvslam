@@ -96,7 +96,11 @@ foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     endif()
 
     # Link OpenVSLAM
-    target_link_libraries(${EXECUTABLE_TARGET} PRIVATE ${PROJECT_NAME})
+    target_link_libraries(${EXECUTABLE_TARGET}
+                          PRIVATE
+                          ${PROJECT_NAME}
+                          opencv_imgcodecs
+                          opencv_videoio)
 
     # include popl and spdlog headers
     target_include_directories(${EXECUTABLE_TARGET}

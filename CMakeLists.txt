@@ -81,11 +81,11 @@ find_package(yaml-cpp REQUIRED)
 # OpenCV
 find_package(OpenCV 3.3.1 QUIET
              COMPONENTS
-             core features2d calib3d highgui)
+             core imgcodecs videoio features2d calib3d highgui)
 if(NOT OpenCV_FOUND)
     find_package(OpenCV 4.0 REQUIRED
                  COMPONENTS
-                 core features2d calib3d highgui)
+                 core imgcodecs videoio features2d calib3d highgui)
     if(NOT OpenCV_FOUND)
         message(FATAL_ERROR "OpenCV >= 3.3.1 not found")
     endif()
