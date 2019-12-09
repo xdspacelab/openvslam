@@ -103,8 +103,6 @@ private:
     Vec4_t find_initial_betas_2(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
     Vec4_t find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
 
-    void qr_solve(const MatRC_t<6, 4>& A, Vec6_t& b, Vec4_t& X);
-
     Vec6_t compute_rho(const eigen_alloc_vector<Vec3_t>& control_points);
     MatRC_t<6, 10> compute_L_6x10(const MatX_t& U);
 
@@ -116,7 +114,7 @@ private:
 
     void estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& pcs, Mat33_t& rot, Vec3_t& trans);
 
-    // 便宜上のカメラモデル
+    // A camera model to utilize bearing vector as a pixel coordinate
     static constexpr float fx_ = 1.0, fy_ = 1.0, cx_ = 0.0, cy_ = 0.0;
 };
 

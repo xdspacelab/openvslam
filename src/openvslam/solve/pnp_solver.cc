@@ -534,113 +534,13 @@ Vec4_t pnp_solver::gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho,
 
     for (unsigned int j = 0; j < iterations_number; j++) {
         compute_A_and_b_gauss_newton(L_6x10, Rho, betas, A, B);
-        qr_solve(A, B, X);
+
+        // Using fastest QR decomposition in Eigen
+        const Vec4_t X = A.householderQr().solve(B);
 
         betas += X;
     }
     return betas;
-}
-
-void pnp_solver::qr_solve(const MatRC_t<6, 4>& A_orig, Vec6_t& b, Vec4_t& X) {
-    MatRC_t<4, 6> A = A_orig.transpose();
-
-    static int max_nr = 0;
-    static double *A1, *A2;
-
-    const int nr = A_orig.rows();
-    const int nc = A_orig.cols();
-
-    if (max_nr != 0 && max_nr < nr) {
-        delete[] A1;
-        delete[] A2;
-    }
-    if (max_nr < nr) {
-        max_nr = nr;
-        A1 = new double[nr];
-        A2 = new double[nr];
-    }
-
-    double* pA = A.data();
-    double* ppAkk = pA;
-    for (int k = 0; k < nc; ++k) {
-        double* ppAik = ppAkk;
-        double eta = fabs(*ppAik);
-        for (int i = k + 1; i < nr; ++i) {
-            const double elt = fabs(*ppAik);
-            if (eta < elt) {
-                eta = elt;
-            }
-            ppAik += nc;
-        }
-
-        if (eta == 0) {
-            A1[k] = A2[k] = 0.0;
-            return;
-        }
-        else {
-            double* ppAik = ppAkk;
-            double sum = 0.0;
-            const double inv_eta = 1.0 / eta;
-            for (int i = k; i < nr; ++i) {
-                *ppAik *= inv_eta;
-                sum += *ppAik * *ppAik;
-                ppAik += nc;
-            }
-            double sigma = sqrt(sum);
-            if (*ppAkk < 0) {
-                sigma = -sigma;
-            }
-            *ppAkk += sigma;
-            A1[k] = sigma * *ppAkk;
-            A2[k] = -eta * sigma;
-            for (int j = k + 1; j < nc; ++j) {
-                double* ppAik = ppAkk;
-                double sum = 0.0;
-                for (int i = k; i < nr; i++) {
-                    sum += *ppAik * ppAik[j - k];
-                    ppAik += nc;
-                }
-                const double tau = sum / A1[k];
-                ppAik = ppAkk;
-                for (int i = k; i < nr; ++i) {
-                    ppAik[j - k] -= tau * *ppAik;
-                    ppAik += nc;
-                }
-            }
-        }
-        ppAkk += nc + 1;
-    }
-
-    // b <- Qt b
-    double* ppAjj = pA;
-    double* pb = b.data();
-    for (int j = 0; j < nc; ++j) {
-        double *ppAij = ppAjj, tau = 0;
-        for (int i = j; i < nr; i++) {
-            tau += *ppAij * pb[i];
-            ppAij += nc;
-        }
-        tau /= A1[j];
-        ppAij = ppAjj;
-        for (int i = j; i < nr; ++i) {
-            pb[i] -= tau * *ppAij;
-            ppAij += nc;
-        }
-        ppAjj += nc + 1;
-    }
-
-    // X = R-1 b
-    double* pX = X.data();
-    pX[nc - 1] = pb[nc - 1] / A2[nc - 1];
-    for (int i = nc - 2; i >= 0; --i) {
-        double *ppAij = pA + i * nc + (i + 1), sum = 0;
-
-        for (int j = i + 1; j < nc; ++j) {
-            sum += *ppAij * pX[j];
-            ppAij++;
-        }
-        pX[i] = (pb[i] - sum) / A2[i];
-    }
 }
 
 } // namespace solve
