@@ -370,7 +370,7 @@ When building with support for SocketViewer, please specify the following cmake 
     - ``Eigen3_DIR=/usr/local/share/eigen3/cmake``
     - ``OpenCV_DIR=/usr/local/share/OpenCV``
     - ``DBoW2_DIR=/usr/local/lib/cmake/DBoW2``
-    - ``G2O_ROOT=/usr/local``
+    - ``g2o_DIR=/usr/local/lib/cmake/g2o``
     - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin`` (if installed)
     - ``sioclient_DIR=/usr/local/lib/cmake/sioclient`` (if installed)
 
