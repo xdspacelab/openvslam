@@ -110,13 +110,14 @@ std::ostream& operator<<(std::ostream& os, const config& cfg) {
     std::cout << "ORB Configuration:" << std::endl;
     cfg.orb_params_.show_parameters();
 
-    std::cout << "Tracking Configuration:" << std::endl;
     if (cfg.camera_->setup_type_ == camera::setup_type_t::Stereo || cfg.camera_->setup_type_ == camera::setup_type_t::RGBD) {
+        std::cout << "Stereo Configuration:" << std::endl;
         std::cout << "- true baseline: " << cfg.camera_->true_baseline_ << std::endl;
         std::cout << "- true depth threshold: " << cfg.true_depth_thr_ << std::endl;
         std::cout << "- depth threshold factor: " << cfg.true_depth_thr_ / cfg.camera_->true_baseline_ << std::endl;
     }
     if (cfg.camera_->setup_type_ == camera::setup_type_t::RGBD) {
+        std::cout << "Depth Image Configuration:" << std::endl;
         std::cout << "- depthmap factor: " << cfg.depthmap_factor_ << std::endl;
     }
 

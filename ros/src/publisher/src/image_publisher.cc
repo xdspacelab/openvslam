@@ -54,18 +54,14 @@ int main(int argc, char* argv[]) {
 
     ros::Rate pub_rate(img_fps->value());
 
-    for (unsigned int i = 0; i < frames.size(); ++i) {
+    for (unsigned int i = 0; i < frames.size() && nh.ok(); ++i) {
         const auto& frame = frames.at(i);
-        while (nh.ok()) {
-            std::cout << "next img: " << frame.img_path_ << std::endl;
-            const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
-            msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
-            publisher.publish(msg);
-            ros::spinOnce();
-            pub_rate.sleep();
-            break;
-        }
+        std::cout << "next img: " << frame.img_path_ << std::endl;
+        const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
+        msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+        publisher.publish(msg);
+        ros::spinOnce();
+        pub_rate.sleep();
     }
-
     return EXIT_SUCCESS;
 }
