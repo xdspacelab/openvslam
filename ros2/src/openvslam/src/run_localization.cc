@@ -84,7 +84,8 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
 
     std::thread thread([&]() {
         exec.spin();
-    }
+    });
+
     // run the viewer in another thread
 #ifdef USE_PANGOLIN_VIEWER
         viewer.run();
