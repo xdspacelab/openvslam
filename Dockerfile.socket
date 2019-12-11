@@ -20,7 +20,8 @@ RUN set -x && \
   apt-get install -y -qq \
     libgoogle-glog-dev \
     libatlas-base-dev \
-    libsuitesparse-dev && \
+    libsuitesparse-dev \
+    libglew-dev && \
   : "OpenCV dependencies" && \
   apt-get install -y -qq \
     libjpeg-dev \
@@ -98,7 +99,7 @@ RUN set -x && \
   make install && \
   cd /tmp && \
   rm -rf *
-ENV G2O_ROOT=${CMAKE_INSTALL_PREFIX}
+ENV g2o_DIR=${CMAKE_INSTALL_PREFIX}/lib/cmake/g2o
 
 # OpenCV
 ARG OPENCV_VERSION=4.1.0
