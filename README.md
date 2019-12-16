@@ -3,10 +3,11 @@
 </p>
 
 # OpenVSLAM: A Versatile Visual SLAM Framework
-[![Wercker Status](https://app.wercker.com/status/8b02a43f48216385658bb3857aae5fd8/s/)](https://app.wercker.com/project/byKey/8b02a43f48216385658bb3857aae5fd8)
-[![Travis CI Status](https://travis-ci.org/xdspacelab/openvslam.svg)](https://travis-ci.org/xdspacelab/openvslam)
-[![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/en/master/?badge=master)
+[![Wercker Status](https://app.wercker.com/status/8b02a43f48216385658bb3857aae5fd8/s/master)](https://app.wercker.com/shinsumicco/openvslam/runs)
+[![Travis CI Status](https://api.travis-ci.org/xdspacelab/openvslam.svg?branch=master)](https://travis-ci.org/xdspacelab/openvslam)
+[![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/)
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/shinsumicco/openvslam.svg)](https://hub.docker.com/r/shinsumicco/openvslam)
+[![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
 ## Overview
 
