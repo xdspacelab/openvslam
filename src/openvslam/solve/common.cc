@@ -1,49 +1,37 @@
 #include "openvslam/solve/common.h"
 
+#include <numeric>
+
 namespace openvslam {
 namespace solve {
 
 void normalize(const std::vector<cv::KeyPoint>& keypts, std::vector<cv::Point2f>& normalized_pts, Mat33_t& transform) {
-    float mean_x = 0;
-    float mean_y = 0;
     const auto num_keypts = keypts.size();
 
+    // compute centroids
+    const auto pts_mean = std::accumulate(keypts.begin(), keypts.end(), cv::Point2f{0.0f, 0.0f},
+                                          [](const cv::Point2f& acc, const cv::KeyPoint& keypt) { return acc + keypt.pt; })
+                          / static_cast<double>(num_keypts);
+
+    // compute average absolute deviations
+    cv::Point2f pts_l1_dev{0.0f, 0.0f};
     normalized_pts.resize(num_keypts);
-
-    for (const auto& keypt : keypts) {
-        mean_x += keypt.pt.x;
-        mean_y += keypt.pt.y;
+    for (unsigned int idx = 0; idx < num_keypts; ++idx) {
+        // convert points to zero-mean distribution
+        normalized_pts.at(idx) = keypts.at(idx).pt - pts_mean;
+        // accumulate L1 distance from centroid
+        pts_l1_dev += cv::Point2f{std::abs(normalized_pts.at(idx).x), std::abs(normalized_pts.at(idx).y)};
     }
-    mean_x = mean_x / num_keypts;
-    mean_y = mean_y / num_keypts;
+    pts_l1_dev /= static_cast<double>(num_keypts);
 
-    float mean_l1_dev_x = 0;
-    float mean_l1_dev_y = 0;
+    // apply normalization
+    std::transform(normalized_pts.begin(), normalized_pts.end(), normalized_pts.begin(),
+                   [&pts_l1_dev](const cv::Point2f& pt) { return cv::Point2f{pt.x / pts_l1_dev.x, pt.y / pts_l1_dev.y}; });
 
-    for (unsigned int index = 0; index < num_keypts; ++index) {
-        normalized_pts.at(index).x = keypts.at(index).pt.x - mean_x;
-        normalized_pts.at(index).y = keypts.at(index).pt.y - mean_y;
-
-        mean_l1_dev_x += std::abs(normalized_pts.at(index).x);
-        mean_l1_dev_y += std::abs(normalized_pts.at(index).y);
-    }
-
-    mean_l1_dev_x = mean_l1_dev_x / num_keypts;
-    mean_l1_dev_y = mean_l1_dev_y / num_keypts;
-
-    const float mean_l1_dev_x_inv = static_cast<float>(1.0) / mean_l1_dev_x;
-    const float mean_l1_dev_y_inv = static_cast<float>(1.0) / mean_l1_dev_y;
-
-    for (auto& normalized_pt : normalized_pts) {
-        normalized_pt.x *= mean_l1_dev_x_inv;
-        normalized_pt.y *= mean_l1_dev_y_inv;
-    }
-
-    transform = Mat33_t::Identity();
-    transform(0, 0) = mean_l1_dev_x_inv;
-    transform(1, 1) = mean_l1_dev_y_inv;
-    transform(0, 2) = -mean_x * mean_l1_dev_x_inv;
-    transform(1, 2) = -mean_y * mean_l1_dev_y_inv;
+    // build transformation matrix
+    transform << 1.0, 0.0, -pts_mean.x, 0.0, 1.0, -pts_mean.y, 0.0, 0.0, 1.0;
+    transform.block<1, 3>(0, 0) /= pts_l1_dev.x;
+    transform.block<1, 3>(1, 0) /= pts_l1_dev.y;
 }
 
 } // namespace solve
