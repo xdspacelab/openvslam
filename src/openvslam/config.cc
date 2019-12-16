@@ -11,7 +11,10 @@
 namespace openvslam {
 
 config::config(const std::string& config_file_path)
-    : config_file_path_(config_file_path), yaml_node_(YAML::LoadFile(config_file_path)) {
+    : config(YAML::LoadFile(config_file_path), config_file_path) {}
+
+config::config(const YAML::Node& yaml_node, const std::string& config_file_path)
+    : config_file_path_(config_file_path), yaml_node_(yaml_node) {
     spdlog::debug("CONSTRUCT: config");
 
     spdlog::info("config file loaded: {}", config_file_path_);
