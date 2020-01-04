@@ -45,6 +45,7 @@ public:
 
     /**
      * Constructor for monocular frame
+     * @param img
      * @param img_gray
      * @param timestamp
      * @param extractor
@@ -53,13 +54,15 @@ public:
      * @param depth_thr
      * @param mask
      */
-    frame(const cv::Mat& img_gray, const double timestamp,
+    frame(const cv::Mat& img, const cv::Mat& img_gray, const double timestamp,
           feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
           camera::base* camera, const float depth_thr,
           const cv::Mat& mask = cv::Mat{});
 
     /**
      * Constructor for stereo frame
+     * @param left_img
+     * @param right_img
      * @param left_img_gray
      * @param right_img_gray
      * @param timestamp
@@ -70,13 +73,15 @@ public:
      * @param depth_thr
      * @param mask
      */
-    frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const double timestamp,
+    frame(const cv::Mat& left_img, const cv::Mat& right_img,
+          const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const double timestamp,
           feature::orb_extractor* extractor_left, feature::orb_extractor* extractor_right, bow_vocabulary* bow_vocab,
           camera::base* camera, const float depth_thr,
           const cv::Mat& mask = cv::Mat{});
 
     /**
      * Constructor for RGBD frame
+     * @param img
      * @param img_gray
      * @param img_depth
      * @param timestamp
@@ -86,7 +91,7 @@ public:
      * @param depth_thr
      * @param mask
      */
-    frame(const cv::Mat& img_gray, const cv::Mat& img_depth, const double timestamp,
+    frame(const cv::Mat& img, const cv::Mat& img_gray, const cv::Mat& img_depth, const double timestamp,
           feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
           camera::base* camera, const float depth_thr,
           const cv::Mat& mask = cv::Mat{});
@@ -155,6 +160,7 @@ public:
     Vec3_t triangulate_stereo(const unsigned int idx) const;
 
     //! current image
+    const cv::Mat* img_;
     const cv::Mat* img_gray_;
 
     //! current frame ID

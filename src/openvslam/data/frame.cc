@@ -17,11 +17,11 @@ namespace data {
 
 std::atomic<unsigned int> frame::next_id_{0};
 
-frame::frame(const cv::Mat& img_gray, const double timestamp,
+frame::frame(const cv::Mat& img, const cv::Mat& img_gray, const double timestamp,
              feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
              camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
+    : img_(&img), img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();
@@ -51,11 +51,12 @@ frame::frame(const cv::Mat& img_gray, const double timestamp,
     assign_keypoints_to_grid(camera_, undist_keypts_, keypt_indices_in_cells_);
 }
 
-frame::frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const double timestamp,
+frame::frame(const cv::Mat& left_img, const cv::Mat& right_img,
+             const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const double timestamp,
              feature::orb_extractor* extractor_left, feature::orb_extractor* extractor_right,
              bow_vocabulary* bow_vocab, camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : img_gray_(&left_img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor_left), extractor_right_(extractor_right),
+    : img_(&left_img), img_gray_(&left_img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor_left), extractor_right_(extractor_right),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();
@@ -91,11 +92,11 @@ frame::frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const 
     assign_keypoints_to_grid(camera_, undist_keypts_, keypt_indices_in_cells_);
 }
 
-frame::frame(const cv::Mat& img_gray, const cv::Mat& img_depth, const double timestamp,
+frame::frame(const cv::Mat& img, const cv::Mat& img_gray, const cv::Mat& img_depth, const double timestamp,
              feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
              camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
+    : img_(&img), img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();

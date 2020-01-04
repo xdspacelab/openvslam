@@ -280,7 +280,7 @@ void mapping_module::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, da
 
         // create a landmark object
         cv::Point2f pt = keyfrm_1->keypts_[idx_1].pt;
-        cv::Vec<uchar, 3> color = keyfrm_1->frm_->img_gray_->at<cv::Vec<uchar, 3>>(pt.x, pt.y);
+        cv::Vec<uchar, 3> color = keyfrm_1->frm_->img_->at<cv::Vec<uchar, 3>>(pt);
         auto lm = new data::landmark(pos_w, keyfrm_1, map_db_, color);
 
         lm->add_observation(keyfrm_1, idx_1);
