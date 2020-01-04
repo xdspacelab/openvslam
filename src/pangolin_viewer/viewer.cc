@@ -289,14 +289,15 @@ void viewer::draw_landmarks() {
     glBegin(GL_POINTS);
 
     for (const auto lm : landmarks) {
-        glColor3ub(lm->color_[0],lm->color_[1], lm->color_[2]);
-
         if (!lm || lm->will_be_erased()) {
             continue;
         }
         if (*menu_show_local_map_ && local_landmarks.count(lm)) {
             continue;
         }
+
+        glColor3ub(lm->color_[0], lm->color_[1], lm->color_[2]);
+
         const openvslam::Vec3_t pos_w = lm->get_pos_in_world();
         glVertex3fv(pos_w.cast<float>().eval().data());
     }
@@ -312,10 +313,12 @@ void viewer::draw_landmarks() {
     glBegin(GL_POINTS);
 
     for (const auto local_lm : local_landmarks) {
-        glColor3ub(local_lm->color_[0],local_lm->color_[1], local_lm->color_[2]);
         if (local_lm->will_be_erased()) {
             continue;
         }
+
+        glColor3ub(local_lm->color_[0], local_lm->color_[1], local_lm->color_[2]);
+
         const openvslam::Vec3_t pos_w = local_lm->get_pos_in_world();
         glVertex3fv(pos_w.cast<float>().eval().data());
     }
