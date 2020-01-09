@@ -81,11 +81,6 @@
 # CCOLAMD_INCLUDE_DIR
 # CCOLAMD_LIBRARY
 #
-# == Sparse Supernodal Cholesky Factorization and Update/Downdate (CHOLMOD)
-# CHOLMOD_FOUND
-# CHOLMOD_INCLUDE_DIR
-# CHOLMOD_LIBRARY
-#
 # == Common configuration for all but CSparse (SuiteSparse version >= 4).
 # SUITESPARSE_CONFIG_FOUND
 # SUITESPARSE_CONFIG_INCLUDE_DIR
@@ -309,31 +304,6 @@ else (EXISTS ${CCOLAMD_INCLUDE_DIR})
 endif (EXISTS ${CCOLAMD_INCLUDE_DIR})
 mark_as_advanced(CCOLAMD_INCLUDE_DIR)
 
-# CHOLMOD.
-set(CHOLMOD_FOUND TRUE)
-list(APPEND SUITESPARSE_FOUND_REQUIRED_VARS CHOLMOD_FOUND)
-find_library(CHOLMOD_LIBRARY NAMES cholmod
-        PATHS ${SUITESPARSE_CHECK_LIBRARY_DIRS})
-if (EXISTS ${CHOLMOD_LIBRARY})
-    message(STATUS "Found CHOLMOD library: ${CHOLMOD_LIBRARY}")
-else (EXISTS ${CHOLMOD_LIBRARY})
-    suitesparse_report_not_found(
-            "Did not find CHOLMOD library (required SuiteSparse component).")
-    set(CHOLMOD_FOUND FALSE)
-endif (EXISTS ${CHOLMOD_LIBRARY})
-mark_as_advanced(CHOLMOD_LIBRARY)
-
-find_path(CHOLMOD_INCLUDE_DIR NAMES cholmod.h
-        PATHS ${SUITESPARSE_CHECK_INCLUDE_DIRS})
-if (EXISTS ${CHOLMOD_INCLUDE_DIR})
-    message(STATUS "Found CHOLMOD header in: ${CHOLMOD_INCLUDE_DIR}")
-else (EXISTS ${CHOLMOD_INCLUDE_DIR})
-    suitesparse_report_not_found(
-            "Did not find CHOLMOD header (required SuiteSparse component).")
-    set(CHOLMOD_FOUND FALSE)
-endif (EXISTS ${CHOLMOD_INCLUDE_DIR})
-mark_as_advanced(CHOLMOD_INCLUDE_DIR)
-
 # UFconfig / SuiteSparse_config.
 #
 # If SuiteSparse version is >= 4 then SuiteSparse_config is required.
@@ -500,7 +470,6 @@ if (SUITESPARSE_FOUND)
             ${CAMD_INCLUDE_DIR}
             ${COLAMD_INCLUDE_DIR}
             ${CCOLAMD_INCLUDE_DIR}
-            ${CHOLMOD_INCLUDE_DIR}
             ${SUITESPARSEQR_INCLUDE_DIR})
     # Handle config separately, as otherwise at least one of them will be set
     # to NOTFOUND which would cause any check on SUITESPARSE_INCLUDE_DIRS to fail.
@@ -520,7 +489,6 @@ if (SUITESPARSE_FOUND)
     # could potentially be static libraries their link ordering is important.
     list(APPEND SUITESPARSE_LIBRARIES
             ${SUITESPARSEQR_LIBRARY}
-            ${CHOLMOD_LIBRARY}
             ${CCOLAMD_LIBRARY}
             ${CAMD_LIBRARY}
             ${COLAMD_LIBRARY}

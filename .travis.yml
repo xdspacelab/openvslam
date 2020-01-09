@@ -85,7 +85,9 @@ before_install:
         -DBUILD_SHARED_LIBS=ON \
         -DBUILD_UNITTESTS=OFF \
         -DBUILD_WITH_MARCH_NATIVE=ON \
-        -DG2O_USE_CHOLMOD=ON \
+        -DG2O_BUILD_EXAMPLES=OFF \
+        -DG2O_BUILD_APPS=OFF \
+        -DG2O_USE_CHOLMOD=OFF \
         -DG2O_USE_CSPARSE=ON \
         -DG2O_USE_OPENGL=OFF \
         -DG2O_USE_OPENMP=ON \
