@@ -137,13 +137,14 @@ set(dependencies
   image_transport
   rcutils
   OpenCV
+  openvslam
 )
 
 # thread library
 find_package(Threads REQUIRED)
 
 # OpenVSLAM
-find_library(OpenVSLAM_LIB openvslam HINTS ${OpenVSLAM_LIB_DIR})
+find_package(openvslam REQUIRED)
 
 # OpenCV
 find_package(OpenCV 3.3.1 QUIET)
@@ -157,7 +158,7 @@ message(STATUS "Use OpenCV ${OpenCV_VERSION}")
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Eigen
-find_package(Eigen3 3.2 REQUIRED)
+find_package(Eigen3 3.3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # spdlog
@@ -220,7 +221,7 @@ message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 
 include_directories(
         ${rclcpp_INCLUDE_DIRS}
-        ${OpenVSLAM_SRC_DIR})
+        ${openvslam_INCLUDE_DIR})
 
 link_libraries(
         ${rclcpp_LIBRARIES}
