@@ -22,6 +22,7 @@ cache:
     - ${HOME}/Library/Caches/Homebrew
     - ${DEPS_DIR}/DBoW2
     - ${DEPS_DIR}/g2o
+    - ${DEPS_DIR}/Pangolin
     - ${DEPS_DIR}/socket.io-client-cpp
     - ${DATASET_DIR}
 
