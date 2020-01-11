@@ -38,6 +38,7 @@ addons:
       - eigen
       - ffmpeg
       - opencv
+      - openexr
       - yaml-cpp
       - glog
       - gflags
