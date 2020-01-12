@@ -474,6 +474,7 @@ void tracking_module::update_local_keyframes() {
         const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
         for (auto neighbor : neighbors) {
             if (add_local_keyframe(neighbor)) {
+                end = local_keyfrms_.cend();
                 break;
             }
         }
@@ -482,13 +483,16 @@ void tracking_module::update_local_keyframes() {
         const auto spanning_children = keyfrm->graph_node_->get_spanning_children();
         for (auto child : spanning_children) {
             if (add_local_keyframe(child)) {
+                end = local_keyfrms_.cend();
                 break;
             }
         }
 
         // parent of the spanning tree
         auto parent = keyfrm->graph_node_->get_spanning_parent();
-        add_local_keyframe(parent);
+        if (add_local_keyframe(parent)) {
+            end = local_keyfrms_.cend();
+        }
     }
 
     // update the reference keyframe with the nearest one
