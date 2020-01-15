@@ -124,6 +124,8 @@ Install the dependencies via ``apt``.
     apt install -y libgtk-3-dev
     apt install -y ffmpeg
     apt install -y libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavresample-dev
+    # eigen dependencies
+    apt install -y gfortran
     # other dependencies
     apt install -y libyaml-cpp-dev libgoogle-glog-dev libgflags-dev 
 
