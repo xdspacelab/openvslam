@@ -56,8 +56,10 @@ void frame_statistics::replace_reference_keyframe(data::keyframe* old_keyfrm, da
         rel_cam_poses_from_ref_keyfrms_.at(frm_id) = new_rel_cam_pose_cr;
     }
 
-    // Replace key to new_keyfrm
-    frm_ids_of_ref_keyfrms_[new_keyfrm] = std::move(frm_ids_of_ref_keyfrms_.at(old_keyfrm));
+    // Update frames referencing new_keyfrm
+    auto& new_frm_ids = frm_ids_of_ref_keyfrms_[new_keyfrm];
+    new_frm_ids.insert(new_frm_ids.end(), frm_ids.begin(), frm_ids.end());
+    // Remove frames referencing old_keyfrm
     frm_ids_of_ref_keyfrms_.erase(old_keyfrm);
 }
 
