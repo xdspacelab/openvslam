@@ -10,7 +10,6 @@ list(APPEND EXECUTABLE_TARGETS image_publisher)
 set_target_properties(image_publisher PROPERTIES OUTPUT_NAME image PREFIX "")
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
-    #add_dependencies(${EXECUTABLE_TARGET} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
     ament_target_dependencies(${EXECUTABLE_TARGET}
       ${dependencies}
     )

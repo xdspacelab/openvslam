@@ -14,9 +14,10 @@ list(APPEND EXECUTABLE_TARGETS run_slam)
 add_executable(run_localization run_localization.cc)
 list(APPEND EXECUTABLE_TARGETS run_localization)
 
-foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
-    #add_dependencies(${EXECUTABLE_TARGET} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(run_odometry run_odometry.cc)
+list(APPEND EXECUTABLE_TARGETS run_odometry)
 
+foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # pangolin_viewer is used on a priority basis
     if(USE_PANGOLIN_VIEWER)
         # set macro flag

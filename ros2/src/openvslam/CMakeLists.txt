@@ -128,11 +128,13 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 
 set(dependencies
   rclcpp
+  nav_msgs
   cv_bridge
   image_transport
   rcutils
