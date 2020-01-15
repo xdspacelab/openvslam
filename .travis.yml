@@ -109,6 +109,7 @@ before_install:
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DBUILD_PANGOLIN_LIBOPENEXR=OFF \
         ..
     make -j 3
     make install
