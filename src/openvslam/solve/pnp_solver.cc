@@ -20,6 +20,7 @@ pnp_solver::pnp_solver(const eigen_alloc_vector<Vec3_t>& valid_bearings, const s
 
     constexpr double max_rad_error = 1.0 * M_PI / 180.0;
     for (unsigned int i = 0; i < num_matches_; ++i) {
+        // Calculate radial error threshold from each scale factor
         const auto max_rad_error_with_scale = scale_factors.at(valid_keypts.at(i).octave) * max_rad_error;
         max_cos_errors_.at(i) = util::cos(max_rad_error_with_scale);
     }
@@ -127,8 +128,10 @@ unsigned int pnp_solver::check_inliers(const Mat33_t& rot_cw, const Vec3_t& tran
 
         const Vec3_t pos_c = rot_cw * pos_w + trans_cw;
 
+        // Compute cosine similarity between the bearing vector and the position of the 3D point
         const auto cos = pos_c.dot(bearing) / pos_c.norm();
 
+        // The match is inlier if the cosine similarity is less than or equal to the threshold
         if (max_cos_errors_.at(i) < cos) {
             is_inlier.at(i) = true;
             ++num_inliers;
@@ -144,16 +147,22 @@ unsigned int pnp_solver::check_inliers(const Mat33_t& rot_cw, const Vec3_t& tran
 double pnp_solver::compute_pose(const eigen_alloc_vector<Vec3_t>& bearing_vectors,
                                 const eigen_alloc_vector<Vec3_t>& pos_ws,
                                 Mat33_t& rot_cw, Vec3_t& trans_cw) {
+    // EPnP: An AccurateO(n)Solution to the PnP Problem
+    // (Lepetit et al. in IJCV 2009)
+
     const eigen_alloc_vector<Vec3_t> control_points = choose_control_points(pos_ws);
     const eigen_alloc_vector<Vec4_t> alphas = compute_barycentric_coordinates(control_points, pos_ws);
 
+    // Construct M matrix according to Eq.(5) and (6)
     const MatX_t M = compute_M(bearing_vectors, alphas);
 
+    // Compute singular vectors U
     const MatRC_t<12, 12> MtM = M.transpose() * M;
     Eigen::JacobiSVD<MatRC_t<12, 12>> SVD(MtM, Eigen::ComputeFullV | Eigen::ComputeFullU);
 
     const MatRC_t<12, 12> U = SVD.matrixU();
 
+    // Compute L matrix and rho vector in Eq.(13)
     const MatRC_t<6, 10> L_6x10 = compute_L_6x10(U);
     const MatRC_t<6, 1> Rho = compute_rho(control_points);
 
@@ -161,7 +170,10 @@ double pnp_solver::compute_pose(const eigen_alloc_vector<Vec3_t>& bearing_vector
     Vec3_t trans_cand;
     double reproj_minimum = 1e20;
     for (unsigned int N = 1; N <= 3; N++) {
+
+        // Solve Eq.(13)
         const Vec4_t betas = find_initial_betas(L_6x10, Rho, N);
+        // Minimize Eq.(15)
         const Vec4_t refined_betas = gauss_newton(L_6x10, Rho, betas);
         const auto reproj_error = compute_R_and_t(U, alphas, refined_betas, bearing_vectors, pos_ws, rot_cand, trans_cand);
         if (reproj_error < reproj_minimum) {
@@ -206,6 +218,8 @@ eigen_alloc_vector<Vec3_t> pnp_solver::choose_control_points(const eigen_alloc_v
 
 eigen_alloc_vector<Vec4_t> pnp_solver::compute_barycentric_coordinates(const eigen_alloc_vector<Vec3_t>& control_points, const eigen_alloc_vector<Vec3_t>& pos_ws) {
     const unsigned int num_correspondences = pos_ws.size();
+    // The barycentric coordinates are obtained easily
+    // because the positions of C1 to C3 relative to C0 form the orthogonal basis
     Mat33_t CC;
     for (unsigned int i = 0; i < 3; i++) {
         CC.block<3, 1>(0, i) = control_points.at(i + 1) - control_points.at(0);
@@ -231,6 +245,7 @@ MatX_t pnp_solver::compute_M(const eigen_alloc_vector<Vec3_t>& bearings,
 
     MatX_t M(num_correspondences * 2, 12);
 
+    // Fill the M matrix up according to Eq.(5) and (6)
     for (unsigned int j = 0; j < num_correspondences; j++) {
         const Vec4_t alpha = alphas.at(j);
         const Vec3_t bearing = bearings.at(j);
@@ -256,6 +271,7 @@ eigen_alloc_vector<Vec3_t> pnp_solver::compute_ccs(const Vec4_t& betas, const Ma
         ccs.emplace_back(Vec3_t{0, 0, 0});
     }
 
+    // Compute the local control points
     for (unsigned int i = 0; i < 4; i++) {
         for (unsigned int j = 0; j < 4; j++) {
             ccs.at(i) += betas(j) * U.block<3, 1>(3 * i, 11 - j);
@@ -267,6 +283,7 @@ eigen_alloc_vector<Vec3_t> pnp_solver::compute_ccs(const Vec4_t& betas, const Ma
 eigen_alloc_vector<Vec3_t> pnp_solver::compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const eigen_alloc_vector<Vec3_t>& bearings) {
     const unsigned int num_correspondences = alphas.size();
     eigen_alloc_vector<Vec3_t> pcs;
+    // Compute local 3D points using the barycentric coordinates and the local control points
     for (unsigned int i = 0; i < num_correspondences; ++i) {
         const Vec4_t a = alphas.at(i);
         pcs.emplace_back(a(0) * ccs.at(0) + a(1) * ccs.at(1) + a(2) * ccs.at(2) + a(3) * ccs.at(3));
@@ -284,6 +301,7 @@ double pnp_solver::reprojection_error(const eigen_alloc_vector<Vec3_t>& pws, con
     double sum2 = 0.0;
 
     for (unsigned int i = 0; i < num_correspondences; ++i) {
+        // Calculate reprojection errors on the virtual camera projection surface
         const Vec3_t pw = pws.at(i);
         const Vec3_t pc = rot * pw + trans;
         const double x = fx_ * pc(0) / pc(2) + cx_;

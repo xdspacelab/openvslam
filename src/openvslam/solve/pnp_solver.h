@@ -80,38 +80,49 @@ private:
     //-----------------------------------------
     // quoted from EPnP implementation
 
+    //! Compute camera pose by local bearing vectors and world point positions
     double compute_pose(const eigen_alloc_vector<Vec3_t>& bearing_vectors,
                         const eigen_alloc_vector<Vec3_t>& pos_ws,
                         Mat33_t& rot_cw, Vec3_t& trans_cw);
 
+    //! Reprojecton error on a virtual camera projection surface (intrinsic params are fx_, fy_, cx_ and cy_)
     double reprojection_error(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& bearings, const Mat33_t& rot, const Vec3_t& trans);
 
+    //! Choose control points on the world coordinate
     eigen_alloc_vector<Vec3_t> choose_control_points(const eigen_alloc_vector<Vec3_t>& pos_ws);
 
+    //! Compute the barycentric coordinate for each world point using control points
     eigen_alloc_vector<Vec4_t> compute_barycentric_coordinates(const eigen_alloc_vector<Vec3_t>& control_points, const eigen_alloc_vector<Vec3_t>& pos_ws);
 
+    //! Compute M matrix to gain the basis of the local control points
     MatX_t compute_M(const eigen_alloc_vector<Vec3_t>& bearings,
                      const eigen_alloc_vector<Vec4_t>& alphas);
 
+    //! Conpute control points on the local coordinate
     eigen_alloc_vector<Vec3_t> compute_ccs(const Vec4_t& betas, const MatX_t& U);
 
     eigen_alloc_vector<Vec3_t> compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const eigen_alloc_vector<Vec3_t>& bearings);
 
+    //! Find coarse value of batase which is coefficient of the basis of the local control points
     Vec4_t find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N);
 
     Vec4_t find_initial_betas_1(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
     Vec4_t find_initial_betas_2(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
     Vec4_t find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
 
+    //! Compute rho vector which is used to solve initial batas
     Vec6_t compute_rho(const eigen_alloc_vector<Vec3_t>& control_points);
+    //! Compute L matrix which is used to solve initial batas
     MatRC_t<6, 10> compute_L_6x10(const MatX_t& U);
 
+    //! Comupte fine beta using the gauss-newton algorithm
     Vec4_t gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas);
 
     void compute_A_and_b_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b);
 
     double compute_R_and_t(const MatX_t& U, const eigen_alloc_vector<Vec4_t>& alphas, const Vec4_t& betas, const eigen_alloc_vector<Vec3_t>& bearings, const eigen_alloc_vector<Vec3_t>& pws, Mat33_t& rot, Vec3_t& trans);
 
+    //! Estimate R and t by the local 3D points and the world 3D points
     void estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& pcs, Mat33_t& rot, Vec3_t& trans);
 
     // A camera model to utilize bearing vector as a pixel coordinate
