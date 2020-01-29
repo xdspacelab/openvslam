@@ -106,9 +106,12 @@ private:
     //! Find coarse value of batase which is coefficient of the basis of the local control points
     Vec4_t find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N);
 
-    Vec4_t find_initial_betas_1(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
+    //! Find coarse value of betas in case of N (the number of the non-null space of M) is 2
     Vec4_t find_initial_betas_2(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
+    //! Find coarse value of betas in case of N is 3
     Vec4_t find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
+    //! Find coarse value of betas in case of N is 4
+    Vec4_t find_initial_betas_4(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
 
     //! Compute rho vector which is used to solve initial batas
     Vec6_t compute_rho(const eigen_alloc_vector<Vec3_t>& control_points);

@@ -169,7 +169,9 @@ double pnp_solver::compute_pose(const eigen_alloc_vector<Vec3_t>& bearing_vector
     Mat33_t rot_cand;
     Vec3_t trans_cand;
     double reproj_minimum = 1e20;
-    for (unsigned int N = 1; N <= 3; N++) {
+    for (unsigned int N = 2; N <= 4; N++) {
+        // Solve rotation and translation from the Case N = 2 to the Case N = 4
+        // The result which achieved the lowest reprojection error will be chosen
 
         // Solve Eq.(13)
         const Vec4_t betas = find_initial_betas(L_6x10, Rho, N);
@@ -327,85 +329,46 @@ void pnp_solver::estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const e
     pc0 /= num_correspondences;
     pw0 /= num_correspondences;
 
-    Mat33_t Abt = Mat33_t::Zero();
+    // Correlation matrix of world points to local points
+    Mat33_t CM = Mat33_t::Zero();
 
     for (unsigned int i = 0; i < num_correspondences; i++) {
         const Vec3_t pc = pcs.at(i);
         const Vec3_t pw = pws.at(i);
-        Abt += (pc - pc0) * (pw - pw0).transpose();
+        CM += (pc - pc0) * (pw - pw0).transpose();
     }
 
-    Eigen::JacobiSVD<MatX_t> SVD(Abt, Eigen::ComputeFullV | Eigen::ComputeFullU);
-    const MatX_t& Abt_u = SVD.matrixU();
-    const MatX_t& Abt_vt = SVD.matrixV().transpose();
+    Eigen::JacobiSVD<MatX_t> SVD(CM, Eigen::ComputeFullV | Eigen::ComputeFullU);
+    const MatX_t& CM_u = SVD.matrixU();
+    const MatX_t& CM_vt = SVD.matrixV().transpose();
 
-    rot = Abt_u * Abt_vt;
+    rot = CM_u * CM_vt;
     const double det = rot.determinant();
 
     if (det < 0) {
         Mat33_t SGM = Mat33_t::Identity();
         SGM(2, 2) = -1;
-        rot = Abt_u * SGM * Abt_vt;
+        rot = CM_u * SGM * CM_vt;
     }
 
     trans = pc0 - rot * pw0;
 }
 
-double pnp_solver::compute_R_and_t(const MatX_t& U, const eigen_alloc_vector<Vec4_t>& alphas, const Vec4_t& betas, const eigen_alloc_vector<Vec3_t>& bearings, const eigen_alloc_vector<Vec3_t>& pws, Mat33_t& rot, Vec3_t& trans) {
-    const eigen_alloc_vector<Vec3_t> ccs = compute_ccs(betas, U);
-    const eigen_alloc_vector<Vec3_t> pcs = compute_pcs(alphas, ccs, bearings);
-
-    // solve for sign
-
-    estimate_R_and_t(pws, pcs, rot, trans);
-
-    return reprojection_error(pws, bearings, rot, trans);
-}
-
 Vec4_t pnp_solver::find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N) {
-    assert(1 <= N && N <= 3);
-    if (N == 1) {
-        return find_initial_betas_1(L_6x10, Rho);
-    }
-    else if (N == 2) {
+    if (N == 2) {
         return find_initial_betas_2(L_6x10, Rho);
     }
     else if (N == 3) {
         return find_initial_betas_3(L_6x10, Rho);
     }
+    else if (N == 4) {
+        return find_initial_betas_4(L_6x10, Rho);
+    }
+    assert(false);
 }
 
 // betas10        = [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
 // betas_approx_1 = [B11 B12     B13         B14]
-
-Vec4_t pnp_solver::find_initial_betas_1(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho) {
-    Vec4_t betas;
-    MatRC_t<6, 4> L_6x4;
-
-    for (unsigned int i = 0; i < 6; ++i) {
-        L_6x4(i, 0) = L_6x10(i, 0);
-        L_6x4(i, 1) = L_6x10(i, 1);
-        L_6x4(i, 2) = L_6x10(i, 3);
-        L_6x4(i, 3) = L_6x10(i, 6);
-    }
-
-    Eigen::JacobiSVD<MatX_t> SVD(L_6x4, Eigen::ComputeFullV | Eigen::ComputeFullU);
-    const Vec4_t b4 = SVD.solve(Rho);
-
-    if (b4(0) < 0) {
-        betas(0) = sqrt(-b4(0));
-        betas(1) = -b4(1) / betas(0);
-        betas(2) = -b4(2) / betas(0);
-        betas(3) = -b4(3) / betas(0);
-    }
-    else {
-        betas(0) = sqrt(b4(0));
-        betas(1) = b4(1) / betas(0);
-        betas(2) = b4(2) / betas(0);
-        betas(3) = b4(3) / betas(0);
-    }
-    return betas;
-}
 
 // betas10        = [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
 // betas_approx_2 = [B11 B12 B22                            ]
@@ -475,6 +438,35 @@ Vec4_t pnp_solver::find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6
     betas(2) = b5(3) / betas(0);
     betas(3) = 0.0;
 
+    return betas;
+}
+
+Vec4_t pnp_solver::find_initial_betas_4(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho) {
+    Vec4_t betas;
+    MatRC_t<6, 4> L_6x4;
+
+    for (unsigned int i = 0; i < 6; ++i) {
+        L_6x4(i, 0) = L_6x10(i, 0);
+        L_6x4(i, 1) = L_6x10(i, 1);
+        L_6x4(i, 2) = L_6x10(i, 3);
+        L_6x4(i, 3) = L_6x10(i, 6);
+    }
+
+    Eigen::JacobiSVD<MatX_t> SVD(L_6x4, Eigen::ComputeFullV | Eigen::ComputeFullU);
+    const Vec4_t b4 = SVD.solve(Rho);
+
+    if (b4(0) < 0) {
+        betas(0) = sqrt(-b4(0));
+        betas(1) = -b4(1) / betas(0);
+        betas(2) = -b4(2) / betas(0);
+        betas(3) = -b4(3) / betas(0);
+    }
+    else {
+        betas(0) = sqrt(b4(0));
+        betas(1) = b4(1) / betas(0);
+        betas(2) = b4(2) / betas(0);
+        betas(3) = b4(3) / betas(0);
+    }
     return betas;
 }
 
