@@ -1,4 +1,5 @@
 #include "pangolin_viewer/viewer.h"
+
 #include "openvslam/config.h"
 #include "openvslam/system.h"
 #include "openvslam/data/keyframe.h"
@@ -308,7 +309,7 @@ void viewer::draw_landmarks() {
         return;
     }
 
-    glPointSize(point_size_ * *menu_lm_size_);
+    glPointSize(point_size_ * *menu_lm_size_ * 2);
 
     glBegin(GL_POINTS);
 
