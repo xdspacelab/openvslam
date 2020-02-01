@@ -135,11 +135,9 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
             }
         }
 
-
         // idxに対応する3次元がなければstereo triangulationで作る
         const Vec3_t pos_w = curr_frm.triangulate_stereo(idx);
-        const cv::Point2f& pt = curr_frm.keypts_[count].pt;
-        const cv::Vec3b& color = curr_frm.img_->at<cv::Vec3b>(pt);
+        const auto color = curr_frm.get_keypoint_color(count);
         auto lm = new data::landmark(pos_w, keyfrm, map_db_, color);
 
         lm->add_observation(keyfrm, idx);

@@ -21,7 +21,7 @@ frame::frame(const cv::Mat& img, const cv::Mat& img_gray, const double timestamp
              feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
              camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : img_(&img), img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
+    : img_(img), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();
@@ -56,7 +56,7 @@ frame::frame(const cv::Mat& left_img, const cv::Mat& right_img,
              feature::orb_extractor* extractor_left, feature::orb_extractor* extractor_right,
              bow_vocabulary* bow_vocab, camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : img_(&left_img), img_gray_(&left_img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor_left), extractor_right_(extractor_right),
+    : img_(left_img), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor_left), extractor_right_(extractor_right),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();
@@ -96,7 +96,7 @@ frame::frame(const cv::Mat& img, const cv::Mat& img_gray, const cv::Mat& img_dep
              feature::orb_extractor* extractor, bow_vocabulary* bow_vocab,
              camera::base* camera, const float depth_thr,
              const cv::Mat& mask)
-    : img_(&img), img_gray_(&img_gray), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
+    : img_(img), id_(next_id_++), bow_vocab_(bow_vocab), extractor_(extractor), extractor_right_(nullptr),
       timestamp_(timestamp), camera_(camera), depth_thr_(depth_thr) {
     // ORBのスケール情報を取得
     update_orb_info();
@@ -245,6 +245,14 @@ Vec3_t frame::triangulate_stereo(const unsigned int idx) const {
     }
 
     return Vec3_t::Zero();
+}
+
+const cv::Vec3b& frame::get_keypoint_color(const unsigned int idx) const {
+    return get_point_color(keypts_[idx].pt);
+}
+
+const cv::Vec3b& frame::get_point_color(const cv::Point& pt) const {
+    return img_.at<cv::Vec<uchar, 3>>(pt);
 }
 
 void frame::extract_orb(const cv::Mat& img, const cv::Mat& mask, const image_side& img_side) {

@@ -169,6 +169,11 @@ public:
      */
     float compute_median_depth(const bool abs = false) const;
 
+    /**
+     * Get RGB color of a keypoint
+     */
+    const cv::Vec3b& get_keypoint_color(const unsigned int idx) const;
+
     //-----------------------------------------
     // flags
 

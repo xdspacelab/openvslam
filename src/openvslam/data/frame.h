@@ -159,9 +159,19 @@ public:
      */
     Vec3_t triangulate_stereo(const unsigned int idx) const;
 
-    //! current image
-    const cv::Mat* img_;
-    const cv::Mat* img_gray_;
+    /**
+     * Get RGB color of a keypoint
+     * @param idx
+     * @return
+     */
+    const cv::Vec3b& get_keypoint_color(const unsigned int idx) const;
+
+    /**
+     * Get RGB color of a point
+     * @param idx
+     * @return
+     */
+    const cv::Vec3b& get_point_color(const cv::Point& pt) const;
 
     //! current frame ID
     unsigned int id_;
@@ -282,6 +292,9 @@ private:
     Mat33_t rot_wc_;
     //! translation: camera -> world
     Vec3_t cam_center_;
+
+    //! current image
+    cv::Mat img_;
 };
 
 } // namespace data

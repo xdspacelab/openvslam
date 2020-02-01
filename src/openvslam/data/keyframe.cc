@@ -350,6 +350,12 @@ float keyframe::compute_median_depth(const bool abs) const {
     return depths.at((depths.size() - 1) / 2);
 }
 
+const cv::Vec3b& keyframe::get_keypoint_color(const unsigned int idx) const
+{
+    const auto& pt = keypts_[idx].pt;
+    return frm_->get_point_color(pt);
+}
+
 void keyframe::set_not_to_be_erased() {
     cannot_be_erased_ = true;
 }
