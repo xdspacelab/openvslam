@@ -101,7 +101,8 @@ private:
     //! Conpute control points on the local coordinate
     eigen_alloc_vector<Vec3_t> compute_ccs(const Vec4_t& betas, const MatX_t& U);
 
-    eigen_alloc_vector<Vec3_t> compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const eigen_alloc_vector<Vec3_t>& bearings);
+    //! Compute local 3D points by utilize barycentric coordinates(alphas) and local control points(scs)
+    eigen_alloc_vector<Vec3_t> compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const bool bearing_z_sign);
 
     //! Find coarse value of batase which is coefficient of the basis of the local control points
     Vec4_t find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N);
@@ -121,9 +122,8 @@ private:
     //! Comupte fine beta using the gauss-newton algorithm
     Vec4_t gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas);
 
-    void compute_A_and_b_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b);
-
-    double compute_R_and_t(const MatX_t& U, const eigen_alloc_vector<Vec4_t>& alphas, const Vec4_t& betas, const eigen_alloc_vector<Vec3_t>& bearings, const eigen_alloc_vector<Vec3_t>& pws, Mat33_t& rot, Vec3_t& trans);
+    //! Compute A matrix and b vector used for gauss-newton algorithm
+    void compute_A_and_b_for_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b);
 
     //! Estimate R and t by the local 3D points and the world 3D points
     void estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& pcs, Mat33_t& rot, Vec3_t& trans);

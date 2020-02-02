@@ -177,7 +177,17 @@ double pnp_solver::compute_pose(const eigen_alloc_vector<Vec3_t>& bearing_vector
         const Vec4_t betas = find_initial_betas(L_6x10, Rho, N);
         // Minimize Eq.(15)
         const Vec4_t refined_betas = gauss_newton(L_6x10, Rho, betas);
-        const auto reproj_error = compute_R_and_t(U, alphas, refined_betas, bearing_vectors, pos_ws, rot_cand, trans_cand);
+
+        // Eq.(16)
+        const eigen_alloc_vector<Vec3_t> ccs = compute_ccs(refined_betas, U);
+        const bool bearing_z_sign = bearing_vectors.at(0)(2) > 0;
+        const eigen_alloc_vector<Vec3_t> pcs = compute_pcs(alphas, ccs, bearing_z_sign);
+
+        estimate_R_and_t(pos_ws, pcs, rot_cand, trans_cand);
+
+        const auto reproj_error = reprojection_error(pos_ws, bearing_vectors, rot_cand, trans_cand);
+
+        // Take the rotation and translation which archieve the minimum reprojection error
         if (reproj_error < reproj_minimum) {
             reproj_minimum = reproj_error;
             rot_cw = rot_cand;
@@ -193,6 +203,7 @@ eigen_alloc_vector<Vec3_t> pnp_solver::choose_control_points(const eigen_alloc_v
     for (unsigned int i = 0; i < 4; i++) {
         cws.emplace_back(Vec3_t{0, 0, 0});
     }
+
     // Take C0 as the reference points centroid:
     for (unsigned int i = 0; i < num_correspondences; ++i) {
         cws.at(0) += pos_ws.at(i);
@@ -282,7 +293,7 @@ eigen_alloc_vector<Vec3_t> pnp_solver::compute_ccs(const Vec4_t& betas, const Ma
     return ccs;
 }
 
-eigen_alloc_vector<Vec3_t> pnp_solver::compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const eigen_alloc_vector<Vec3_t>& bearings) {
+eigen_alloc_vector<Vec3_t> pnp_solver::compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const bool bearing_z_sign) {
     const unsigned int num_correspondences = alphas.size();
     eigen_alloc_vector<Vec3_t> pcs;
     // Compute local 3D points using the barycentric coordinates and the local control points
@@ -290,7 +301,9 @@ eigen_alloc_vector<Vec3_t> pnp_solver::compute_pcs(const eigen_alloc_vector<Vec4
         const Vec4_t a = alphas.at(i);
         pcs.emplace_back(a(0) * ccs.at(0) + a(1) * ccs.at(1) + a(2) * ccs.at(2) + a(3) * ccs.at(3));
     }
-    if (pcs.at(0)(2) * bearings.at(0)(2) < 0) {
+    // Invert the local points if they have not the same direction of the bearing vectors
+    const bool pc_z_sign = pcs.at(0)(2) > 0;
+    if (pc_z_sign != bearing_z_sign) {
         for (Vec3_t& pc : pcs) {
             pc *= -1;
         }
@@ -518,7 +531,7 @@ Vec6_t pnp_solver::compute_rho(const eigen_alloc_vector<Vec3_t>& control_points)
     return Rho;
 }
 
-void pnp_solver::compute_A_and_b_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho,
+void pnp_solver::compute_A_and_b_for_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho,
                                               const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b) {
     for (unsigned int i = 0; i < 6; ++i) {
         A(i, 0) = 2 * L_6x10(i, 0) * betas(0) + L_6x10(i, 1) * betas(1)
@@ -543,7 +556,7 @@ Vec4_t pnp_solver::gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho,
     Vec4_t X;
 
     for (unsigned int j = 0; j < iterations_number; j++) {
-        compute_A_and_b_gauss_newton(L_6x10, Rho, betas, A, B);
+        compute_A_and_b_for_gauss_newton(L_6x10, Rho, betas, A, B);
 
         // Using fastest QR decomposition in Eigen
         const Vec4_t X = A.householderQr().solve(B);
