@@ -532,7 +532,7 @@ Vec6_t pnp_solver::compute_rho(const eigen_alloc_vector<Vec3_t>& control_points)
 }
 
 void pnp_solver::compute_A_and_b_for_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho,
-                                              const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b) {
+                                                  const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b) {
     for (unsigned int i = 0; i < 6; ++i) {
         A(i, 0) = 2 * L_6x10(i, 0) * betas(0) + L_6x10(i, 1) * betas(1)
                   + L_6x10(i, 3) * betas(2) + L_6x10(i, 6) * betas(3);
