@@ -1,6 +1,7 @@
 #include "openvslam/camera/equirectangular.h"
 
 #include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 namespace openvslam {
 namespace camera {

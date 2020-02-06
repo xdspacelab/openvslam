@@ -9,7 +9,7 @@
 #include <vector>
 #include <atomic>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 #include <Eigen/Core>
 
 #ifdef USE_DBOW2
@@ -189,13 +189,12 @@ public:
     feature::orb_extractor* extractor_right_ = nullptr;
 
     //! timestamp
-    // TODO: timestamp_tを作る
     double timestamp_;
 
     //! camera model
     camera::base* camera_ = nullptr;
 
-    // この点より遠い点は無効にする
+    // if a stereo-triangulated point is farther than this threshold, it is invalid
     //! depth threshold
     float depth_thr_;
 
@@ -283,7 +282,7 @@ private:
      */
     void compute_stereo_from_depth(const cv::Mat& right_img_depth);
 
-    // カメラ姿勢
+    //! Camera pose
     //! rotation: world -> camera
     Mat33_t rot_cw_;
     //! translation: world -> camera

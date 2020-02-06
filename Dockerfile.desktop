@@ -20,7 +20,8 @@ RUN set -x && \
   apt-get install -y -qq \
     libgoogle-glog-dev \
     libatlas-base-dev \
-    libsuitesparse-dev && \
+    libsuitesparse-dev \
+    libglew-dev && \
   : "OpenCV dependencies" && \
   apt-get install -y -qq \
     libgtk-3-dev \
@@ -35,9 +36,6 @@ RUN set -x && \
     libavutil-dev \
     libswscale-dev \
     libavresample-dev && \
-  : "Pangolin dependencies" && \
-  apt-get install -y -qq \
-    libglew-dev && \
   : "other dependencies" && \
   apt-get install -y -qq \
     libyaml-cpp-dev && \
@@ -93,7 +91,7 @@ RUN set -x && \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_UNITTESTS=OFF \
     -DBUILD_WITH_MARCH_NATIVE=ON \
-    -DG2O_USE_CHOLMOD=ON \
+    -DG2O_USE_CHOLMOD=OFF \
     -DG2O_USE_CSPARSE=ON \
     -DG2O_USE_OPENGL=OFF \
     -DG2O_USE_OPENMP=ON \
@@ -105,7 +103,7 @@ RUN set -x && \
   make install && \
   cd /tmp && \
   rm -rf *
-ENV G2O_ROOT=${CMAKE_INSTALL_PREFIX}
+ENV g2o_DIR=${CMAKE_INSTALL_PREFIX}/lib/cmake/g2o
 
 # OpenCV
 ARG OPENCV_VERSION=4.1.0

@@ -1,6 +1,12 @@
 #ifndef OPENVSLAM_TYPE_H
 #define OPENVSLAM_TYPE_H
 
+// Visual Studio only: we need M_PI and M_PI_2
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES
+#include <cmath>
+#endif // _MSC_VER
+
 #include <vector>
 #include <map>
 #include <set>

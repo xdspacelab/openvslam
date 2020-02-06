@@ -4,7 +4,7 @@
 #include "openvslam/type.h"
 
 #include <Eigen/SVD>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 namespace openvslam {
 namespace solve {

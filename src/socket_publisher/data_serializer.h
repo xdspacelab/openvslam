@@ -7,7 +7,7 @@
 
 #include <Eigen/Core>
 #include <sio_client.h>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 namespace openvslam {
 

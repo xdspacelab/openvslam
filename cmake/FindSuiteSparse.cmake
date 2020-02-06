@@ -81,16 +81,6 @@
 # CCOLAMD_INCLUDE_DIR
 # CCOLAMD_LIBRARY
 #
-# == Sparse Supernodal Cholesky Factorization and Update/Downdate (CHOLMOD)
-# CHOLMOD_FOUND
-# CHOLMOD_INCLUDE_DIR
-# CHOLMOD_LIBRARY
-#
-# == Multifrontal Sparse QR (SuiteSparseQR)
-# SUITESPARSEQR_FOUND
-# SUITESPARSEQR_INCLUDE_DIR
-# SUITESPARSEQR_LIBRARY
-#
 # == Common configuration for all but CSparse (SuiteSparse version >= 4).
 # SUITESPARSE_CONFIG_FOUND
 # SUITESPARSE_CONFIG_INCLUDE_DIR
@@ -314,100 +304,6 @@ else (EXISTS ${CCOLAMD_INCLUDE_DIR})
 endif (EXISTS ${CCOLAMD_INCLUDE_DIR})
 mark_as_advanced(CCOLAMD_INCLUDE_DIR)
 
-# CHOLMOD.
-set(CHOLMOD_FOUND TRUE)
-list(APPEND SUITESPARSE_FOUND_REQUIRED_VARS CHOLMOD_FOUND)
-find_library(CHOLMOD_LIBRARY NAMES cholmod
-        PATHS ${SUITESPARSE_CHECK_LIBRARY_DIRS})
-if (EXISTS ${CHOLMOD_LIBRARY})
-    message(STATUS "Found CHOLMOD library: ${CHOLMOD_LIBRARY}")
-else (EXISTS ${CHOLMOD_LIBRARY})
-    suitesparse_report_not_found(
-            "Did not find CHOLMOD library (required SuiteSparse component).")
-    set(CHOLMOD_FOUND FALSE)
-endif (EXISTS ${CHOLMOD_LIBRARY})
-mark_as_advanced(CHOLMOD_LIBRARY)
-
-find_path(CHOLMOD_INCLUDE_DIR NAMES cholmod.h
-        PATHS ${SUITESPARSE_CHECK_INCLUDE_DIRS})
-if (EXISTS ${CHOLMOD_INCLUDE_DIR})
-    message(STATUS "Found CHOLMOD header in: ${CHOLMOD_INCLUDE_DIR}")
-else (EXISTS ${CHOLMOD_INCLUDE_DIR})
-    suitesparse_report_not_found(
-            "Did not find CHOLMOD header (required SuiteSparse component).")
-    set(CHOLMOD_FOUND FALSE)
-endif (EXISTS ${CHOLMOD_INCLUDE_DIR})
-mark_as_advanced(CHOLMOD_INCLUDE_DIR)
-
-# SuiteSparseQR.
-set(SUITESPARSEQR_FOUND TRUE)
-list(APPEND SUITESPARSE_FOUND_REQUIRED_VARS SUITESPARSEQR_FOUND)
-find_library(SUITESPARSEQR_LIBRARY NAMES spqr
-        PATHS ${SUITESPARSE_CHECK_LIBRARY_DIRS})
-if (EXISTS ${SUITESPARSEQR_LIBRARY})
-    message(STATUS "Found SuiteSparseQR library: ${SUITESPARSEQR_LIBRARY}")
-else (EXISTS ${SUITESPARSEQR_LIBRARY})
-    suitesparse_report_not_found(
-            "Did not find SuiteSparseQR library (required SuiteSparse component).")
-    set(SUITESPARSEQR_FOUND FALSE)
-endif (EXISTS ${SUITESPARSEQR_LIBRARY})
-mark_as_advanced(SUITESPARSEQR_LIBRARY)
-
-find_path(SUITESPARSEQR_INCLUDE_DIR NAMES SuiteSparseQR.hpp
-        PATHS ${SUITESPARSE_CHECK_INCLUDE_DIRS})
-if (EXISTS ${SUITESPARSEQR_INCLUDE_DIR})
-    message(STATUS "Found SuiteSparseQR header in: ${SUITESPARSEQR_INCLUDE_DIR}")
-else (EXISTS ${SUITESPARSEQR_INCLUDE_DIR})
-    suitesparse_report_not_found(
-            "Did not find SUITESPARSEQR header (required SuiteSparse component).")
-    set(SUITESPARSEQR_FOUND FALSE)
-endif (EXISTS ${SUITESPARSEQR_INCLUDE_DIR})
-mark_as_advanced(SUITESPARSEQR_INCLUDE_DIR)
-
-if (SUITESPARSEQR_FOUND)
-    # SuiteSparseQR may be compiled with Intel Threading Building Blocks,
-    # we assume that if TBB is installed, SuiteSparseQR was compiled with
-    # support for it, this will do no harm if it wasn't.
-    set(TBB_FOUND TRUE)
-    find_library(TBB_LIBRARIES NAMES tbb
-            PATHS ${SUITESPARSE_CHECK_LIBRARY_DIRS})
-    if (EXISTS ${TBB_LIBRARIES})
-        message(STATUS "Found Intel Thread Building Blocks (TBB) library: "
-                "${TBB_LIBRARIES}, assuming SuiteSparseQR was compiled with TBB.")
-    else (EXISTS ${TBB_LIBRARIES})
-        message(STATUS "Did not find Intel TBB library, assuming SuiteSparseQR was "
-                "not compiled with TBB.")
-        set(TBB_FOUND FALSE)
-    endif (EXISTS ${TBB_LIBRARIES})
-    mark_as_advanced(TBB_LIBRARIES)
-
-    if (TBB_FOUND)
-        find_library(TBB_MALLOC_LIB NAMES tbbmalloc
-                PATHS ${SUITESPARSE_CHECK_LIBRARY_DIRS})
-        if (EXISTS ${TBB_MALLOC_LIB})
-            message(STATUS "Found Intel Thread Building Blocks (TBB) Malloc library: "
-                    "${TBB_MALLOC_LIB}")
-            # Append TBB malloc library to TBB libraries list whilst retaining
-            # any CMake generated help string (cache variable).
-            list(APPEND TBB_LIBRARIES ${TBB_MALLOC_LIB})
-            get_property(HELP_STRING CACHE TBB_LIBRARIES PROPERTY HELPSTRING)
-            set(TBB_LIBRARIES "${TBB_LIBRARIES}" CACHE STRING "${HELP_STRING}")
-
-            # Add the TBB libraries to the SuiteSparseQR libraries (the only
-            # libraries to optionally depend on TBB).
-            list(APPEND SUITESPARSEQR_LIBRARY ${TBB_LIBRARIES})
-
-        else (EXISTS ${TBB_MALLOC_LIB})
-            # If we cannot find all required TBB components do not include it as
-            # a dependency.
-            message(STATUS "Did not find Intel Thread Building Blocks (TBB) Malloc "
-                    "Library, discarding TBB as a dependency.")
-            set(TBB_FOUND FALSE)
-        endif (EXISTS ${TBB_MALLOC_LIB})
-        mark_as_advanced(TBB_MALLOC_LIB)
-    endif (TBB_FOUND)
-endif(SUITESPARSEQR_FOUND)
-
 # UFconfig / SuiteSparse_config.
 #
 # If SuiteSparse version is >= 4 then SuiteSparse_config is required.
@@ -574,7 +470,6 @@ if (SUITESPARSE_FOUND)
             ${CAMD_INCLUDE_DIR}
             ${COLAMD_INCLUDE_DIR}
             ${CCOLAMD_INCLUDE_DIR}
-            ${CHOLMOD_INCLUDE_DIR}
             ${SUITESPARSEQR_INCLUDE_DIR})
     # Handle config separately, as otherwise at least one of them will be set
     # to NOTFOUND which would cause any check on SUITESPARSE_INCLUDE_DIRS to fail.
@@ -594,7 +489,6 @@ if (SUITESPARSE_FOUND)
     # could potentially be static libraries their link ordering is important.
     list(APPEND SUITESPARSE_LIBRARIES
             ${SUITESPARSEQR_LIBRARY}
-            ${CHOLMOD_LIBRARY}
             ${CCOLAMD_LIBRARY}
             ${CAMD_LIBRARY}
             ${COLAMD_LIBRARY}

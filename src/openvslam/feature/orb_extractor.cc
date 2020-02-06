@@ -33,11 +33,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
+// Visual Studio only: we need M_PI and M_PI_2
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES
+#include <cmath>
+#endif // _MSC_VER
+
 #include "openvslam/feature/orb_extractor.h"
 #include "openvslam/feature/orb_point_pairs.h"
 #include "openvslam/util/trigonometric.h"
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/features2d.hpp>
 
 #ifdef USE_SSE_ORB
 #ifdef _MSC_VER

@@ -4,6 +4,8 @@
 #include "openvslam/data/map_database.h"
 #include "openvslam/match/base.h"
 
+#include <nlohmann/json.hpp>
+
 namespace openvslam {
 namespace data {
 
@@ -136,7 +138,7 @@ void landmark::compute_descriptor() {
         return;
     }
 
-    // 対応している特徴点の特徴量を集める
+    // Append features of corresponding points
     std::vector<cv::Mat> descriptors;
     descriptors.reserve(observations.size());
     for (const auto& observation : observations) {
@@ -148,9 +150,8 @@ void landmark::compute_descriptor() {
         }
     }
 
-    // ハミング距離の中央値を計算
-
-    // まず特徴量間の距離を全組み合わせで計算
+    // Get median of Hamming distance
+    // Calculate all the Hamming distances between every pair of the features
     const auto num_descs = descriptors.size();
     std::vector<std::vector<unsigned int>> hamm_dists(num_descs, std::vector<unsigned int>(num_descs));
     for (unsigned int i = 0; i < num_descs; ++i) {
@@ -162,7 +163,7 @@ void landmark::compute_descriptor() {
         }
     }
 
-    // 中央値に最も近いものを求める
+    // Get the nearest value to median
     unsigned int best_median_dist = match::MAX_HAMMING_DIST;
     unsigned int best_idx = 0;
     for (unsigned idx = 0; idx < num_descs; ++idx) {

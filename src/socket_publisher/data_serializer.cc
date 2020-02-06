@@ -5,6 +5,10 @@
 #include "openvslam/publish/frame_publisher.h"
 #include "openvslam/publish/map_publisher.h"
 
+#include <forward_list>
+
+#include <opencv2/imgcodecs.hpp>
+
 // map_segment.pb.h will be generated into build/src/socket_publisher/ when make
 #include "map_segment.pb.h"
 

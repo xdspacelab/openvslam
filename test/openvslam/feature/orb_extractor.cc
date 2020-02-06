@@ -1,6 +1,10 @@
 #include "openvslam/feature/orb_extractor.h"
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include <gtest/gtest.h>
 

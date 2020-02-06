@@ -3,11 +3,19 @@
 
 #include "openvslam/camera/base.h"
 
+#if CV_MAJOR_VERSION == 3
+#include <opencv2/imgproc.hpp>
+#elif CV_MAJOR_VERSION == 4
+#include <opencv2/calib3d.hpp>
+#endif
+
 namespace openvslam {
 namespace camera {
 
 class perspective final : public base {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     perspective(const std::string& name, const setup_type_t& setup_type, const color_order_t& color_order,
                 const unsigned int cols, const unsigned int rows, const double fps,
                 const double fx, const double fy, const double cx, const double cy,

@@ -14,6 +14,7 @@
 #include <numeric>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <spdlog/spdlog.h>
 #include <popl.hpp>
 

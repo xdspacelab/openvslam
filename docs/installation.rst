@@ -246,6 +246,7 @@ Download, build and install g2o.
     cd /path/to/working/dir
     git clone https://github.com/RainerKuemmerle/g2o.git
     cd g2o
+    git checkout 9b41a4ea5ade8e1250b9c1b279f3a9c098811b5a
     mkdir build && cd build
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
@@ -254,7 +255,7 @@ Download, build and install g2o.
         -DBUILD_SHARED_LIBS=ON \
         -DBUILD_UNITTESTS=OFF \
         -DBUILD_WITH_MARCH_NATIVE=ON \
-        -DG2O_USE_CHOLMOD=ON \
+        -DG2O_USE_CHOLMOD=OFF \
         -DG2O_USE_CSPARSE=ON \
         -DG2O_USE_OPENGL=OFF \
         -DG2O_USE_OPENMP=ON \
@@ -270,6 +271,7 @@ Download, build and install g2o.
     cd /path/to/working/dir
     git clone https://github.com/stevenlovegrove/Pangolin.git
     cd Pangolin
+    git checkout ad8b5f83222291c51b4800d5a5873b0e90a0cf81
     mkdir build && cd build
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
@@ -368,7 +370,7 @@ When building with support for SocketViewer, please specify the following cmake 
     - ``Eigen3_DIR=/usr/local/share/eigen3/cmake``
     - ``OpenCV_DIR=/usr/local/share/OpenCV``
     - ``DBoW2_DIR=/usr/local/lib/cmake/DBoW2``
-    - ``G2O_ROOT=/usr/local``
+    - ``g2o_DIR=/usr/local/lib/cmake/g2o``
     - ``Pangolin_DIR=/usr/local/lib/cmake/Pangolin`` (if installed)
     - ``sioclient_DIR=/usr/local/lib/cmake/sioclient`` (if installed)
 

@@ -11,7 +11,7 @@
 #include <atomic>
 
 #include <g2o/types/sba/types_six_dof_expmap.h>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #ifdef USE_DBOW2
 #include <DBoW2/BowVector.h>

@@ -220,16 +220,18 @@ void tracking_module::track() {
         // update the frame statistics
         map_db_->update_frame_statistics(curr_frm_, tracking_state_ == tracker_state_t::Lost);
 
-        // if tracking is failed soon after initialization, reset the databases
-        if (tracking_state_ == tracker_state_t::Lost && curr_frm_.id_ < camera_->fps_) {
-            spdlog::info("tracking lost soon after initialization");
+        // if tracking is failed within 5.0 sec after initialization, reset the system
+        constexpr float init_retry_thr = 5.0;
+        if (tracking_state_ == tracker_state_t::Lost
+            && curr_frm_.id_ - initializer_.get_initial_frame_id() < camera_->fps_ * init_retry_thr) {
+            spdlog::info("tracking lost within {} sec after initialization", init_retry_thr);
             system_->request_reset();
             return;
         }
 
         // show message if tracking has been lost
         if (last_tracking_state_ != tracker_state_t::Lost && tracking_state_ == tracker_state_t::Lost) {
-            spdlog::info("tracking lost");
+            spdlog::info("tracking lost: frame {}", curr_frm_.id_);
         }
 
         // check to insert the new keyframe derived from the current frame
@@ -472,6 +474,7 @@ void tracking_module::update_local_keyframes() {
         const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
         for (auto neighbor : neighbors) {
             if (add_local_keyframe(neighbor)) {
+                end = local_keyfrms_.cend();
                 break;
             }
         }
@@ -480,13 +483,16 @@ void tracking_module::update_local_keyframes() {
         const auto spanning_children = keyfrm->graph_node_->get_spanning_children();
         for (auto child : spanning_children) {
             if (add_local_keyframe(child)) {
+                end = local_keyfrms_.cend();
                 break;
             }
         }
 
         // parent of the spanning tree
         auto parent = keyfrm->graph_node_->get_spanning_parent();
-        add_local_keyframe(parent);
+        if (add_local_keyframe(parent)) {
+            end = local_keyfrms_.cend();
+        }
     }
 
     // update the reference keyframe with the nearest one
