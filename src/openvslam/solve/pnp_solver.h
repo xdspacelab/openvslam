@@ -65,10 +65,10 @@ private:
     std::vector<float> max_cos_errors_;
 
     //! minimum number of inliers
-    //! (Note: if the number of inliers is less than this, solution is regarded as invalid)
+    //! (Note: if the number of inliers is less than this, the solution is regarded as invalid)
     const unsigned int min_num_inliers_;
 
-    //! solution is valid or not
+    //! the solution is valid or not
     bool solution_is_valid_ = false;
     //! most reliable rotation
     Mat33_t best_rot_cw_;
@@ -98,31 +98,31 @@ private:
     MatX_t compute_M(const eigen_alloc_vector<Vec3_t>& bearings,
                      const eigen_alloc_vector<Vec4_t>& alphas);
 
-    //! Conpute control points on the local coordinate
+    //! Compute control points on the local coordinate
     eigen_alloc_vector<Vec3_t> compute_ccs(const Vec4_t& betas, const MatX_t& U);
 
-    //! Compute local 3D points by utilize barycentric coordinates(alphas) and local control points(scs)
+    //! Compute local 3D points by utilize barycentric coordinates(alphas) and local control points(ccs)
     eigen_alloc_vector<Vec3_t> compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const bool bearing_z_sign);
 
-    //! Find coarse value of batase which is coefficient of the basis of the local control points
+    //! Find the coarse value of betas which are coefficients of the basis of the local control points
     Vec4_t find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N);
 
-    //! Find coarse value of betas in case of N (the number of the non-null space of M) is 2
+    //! Find the coarse value of betas in the case of N (the number of the non-null space of M) is 2
     Vec4_t find_initial_betas_2(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
-    //! Find coarse value of betas in case of N is 3
+    //! Find the coarse value of betas in the case of N is 3
     Vec4_t find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
-    //! Find coarse value of betas in case of N is 4
+    //! Find the coarse value of betas in the case of N is 4
     Vec4_t find_initial_betas_4(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
 
-    //! Compute rho vector which is used to solve initial batas
+    //! Compute rho vector which is used to solve initial betas
     Vec6_t compute_rho(const eigen_alloc_vector<Vec3_t>& control_points);
-    //! Compute L matrix which is used to solve initial batas
+    //! Compute L matrix which is used to solve initial betas
     MatRC_t<6, 10> compute_L_6x10(const MatX_t& U);
 
-    //! Comupte fine beta using the gauss-newton algorithm
+    //! Compute fine beta using the gauss-newton algorithm
     Vec4_t gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas);
 
-    //! Compute A matrix and b vector used for gauss-newton algorithm
+    //! Compute A matrix and b vector used for the gauss-newton algorithm
     void compute_A_and_b_for_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b);
 
     //! Estimate R and t by the local 3D points and the world 3D points

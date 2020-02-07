@@ -342,7 +342,7 @@ void pnp_solver::estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const e
     pc0 /= num_correspondences;
     pw0 /= num_correspondences;
 
-    // Correlation matrix of world points to local points
+    // The correlation matrix of world points to local points
     Mat33_t CM = Mat33_t::Zero();
 
     for (unsigned int i = 0; i < num_correspondences; i++) {
@@ -486,7 +486,7 @@ Vec4_t pnp_solver::find_initial_betas_4(const MatRC_t<6, 10>& L_6x10, const Vec6
 MatRC_t<6, 10> pnp_solver::compute_L_6x10(const MatX_t& U) {
     eigen_alloc_vector<eigen_alloc_vector<Vec3_t>> dv;
 
-    // Compute difference vectors for four left-singular vectors which correspond to null-space
+    // Compute difference vectors for four each candidate control vectors
     for (unsigned int i = 0; i < 4; i++) {
         const MatRC_t<12, 1> u = U.block<12, 1>(0, 11 - i);
         // Difference vectors among four candidate control vectors
