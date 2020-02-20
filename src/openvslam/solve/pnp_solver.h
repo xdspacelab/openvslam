@@ -2,6 +2,7 @@
 #define OPENVSLAM_SOLVE_PNP_SOLVER_H
 
 #include "openvslam/util/converter.h"
+#include "openvslam/type.h"
 
 #include <vector>
 
@@ -64,10 +65,10 @@ private:
     std::vector<float> max_cos_errors_;
 
     //! minimum number of inliers
-    //! (Note: if the number of inliers is less than this, solution is regarded as invalid)
+    //! (Note: if the number of inliers is less than this, the solution is regarded as invalid)
     const unsigned int min_num_inliers_;
 
-    //! solution is valid or not
+    //! the solution is valid or not
     bool solution_is_valid_ = false;
     //! most reliable rotation
     Mat33_t best_rot_cw_;
@@ -79,65 +80,56 @@ private:
     //-----------------------------------------
     // quoted from EPnP implementation
 
-    void reset_correspondences();
+    //! Compute camera pose by local bearing vectors and world point positions
+    double compute_pose(const eigen_alloc_vector<Vec3_t>& bearing_vectors,
+                        const eigen_alloc_vector<Vec3_t>& pos_ws,
+                        Mat33_t& rot_cw, Vec3_t& trans_cw);
 
-    void set_max_num_correspondences(const unsigned int max_num_correspondences);
+    //! Reprojecton error on a virtual camera projection surface (intrinsic params are fx_, fy_, cx_ and cy_)
+    double reprojection_error(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& bearings, const Mat33_t& rot, const Vec3_t& trans);
 
-    void add_correspondence(const Vec3_t& pos_w, const Vec3_t& bearing);
+    //! Choose control points on the world coordinate
+    eigen_alloc_vector<Vec3_t> choose_control_points(const eigen_alloc_vector<Vec3_t>& pos_ws);
 
-    double compute_pose(Mat33_t& rot_cw, Vec3_t& trans_cw);
+    //! Compute the barycentric coordinate for each world point using control points
+    eigen_alloc_vector<Vec4_t> compute_barycentric_coordinates(const eigen_alloc_vector<Vec3_t>& control_points, const eigen_alloc_vector<Vec3_t>& pos_ws);
 
-    double reprojection_error(const double R[3][3], const double t[3]);
+    //! Compute M matrix to gain the basis of the local control points
+    MatX_t compute_M(const eigen_alloc_vector<Vec3_t>& bearings,
+                     const eigen_alloc_vector<Vec4_t>& alphas);
 
-    void choose_control_points();
+    //! Compute control points on the local coordinate
+    eigen_alloc_vector<Vec3_t> compute_ccs(const Vec4_t& betas, const MatX_t& U);
 
-    void compute_barycentric_coordinates();
+    //! Compute local 3D points by utilize barycentric coordinates(alphas) and local control points(ccs)
+    eigen_alloc_vector<Vec3_t> compute_pcs(const eigen_alloc_vector<Vec4_t>& alphas, const eigen_alloc_vector<Vec3_t>& ccs, const bool bearing_z_sign);
 
-    void fill_M(MatX_t& M, const int row, const double* alphas, const double u, const double v);
+    //! Find the coarse value of betas which are coefficients of the basis of the local control points
+    Vec4_t find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N);
 
-    void compute_ccs(const double* betas, const MatX_t& ut);
+    //! Find the coarse value of betas in the case of N (the number of the non-null space of M) is 2
+    Vec4_t find_initial_betas_2(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
+    //! Find the coarse value of betas in the case of N is 3
+    Vec4_t find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
+    //! Find the coarse value of betas in the case of N is 4
+    Vec4_t find_initial_betas_4(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho);
 
-    void compute_pcs();
+    //! Compute rho vector which is used to solve initial betas
+    Vec6_t compute_rho(const eigen_alloc_vector<Vec3_t>& control_points);
+    //! Compute L matrix which is used to solve initial betas
+    MatRC_t<6, 10> compute_L_6x10(const MatX_t& U);
 
-    void solve_for_sign();
+    //! Compute fine beta using the gauss-newton algorithm
+    Vec4_t gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas);
 
-    void find_betas_approx_1(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double* betas);
+    //! Compute A matrix and b vector used for the gauss-newton algorithm
+    void compute_A_and_b_for_gauss_newton(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, const Vec4_t& betas, MatRC_t<6, 4>& A, Vec6_t& b);
 
-    void find_betas_approx_2(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double* betas);
+    //! Estimate R and t by the local 3D points and the world 3D points
+    void estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const eigen_alloc_vector<Vec3_t>& pcs, Mat33_t& rot, Vec3_t& trans);
 
-    void find_betas_approx_3(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double* betas);
-
-    void qr_solve(MatRC_t<6, 4>& A, MatRC_t<6, 1>& b, MatRC_t<4, 1>& X);
-
-    double dot(const double* v1, const double* v2);
-
-    double dist2(const double* p1, const double* p2);
-
-    void compute_rho(MatRC_t<6, 1>& Rho);
-
-    void compute_L_6x10(const MatX_t& Ut, MatRC_t<6, 10>& L_6x10);
-
-    void gauss_newton(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double current_betas[4]);
-
-    void compute_A_and_b_gauss_newton(const MatRC_t<6, 10>& L_6x10, const MatRC_t<6, 1>& Rho, double cb[4], MatRC_t<6, 4>& A, MatRC_t<6, 1>& b);
-
-    double compute_R_and_t(const MatX_t& Ut, const double* betas, double R[3][3], double t[3]);
-
-    void estimate_R_and_t(double R[3][3], double t[3]);
-
-    double* pws_ = nullptr;
-    double* us_ = nullptr;
-    double* alphas_ = nullptr;
-    double* pcs_ = nullptr;
-    int* signs_ = nullptr;
-
-    // 便宜上のカメラモデル
+    // A camera model to utilize bearing vector as a pixel coordinate
     static constexpr float fx_ = 1.0, fy_ = 1.0, cx_ = 0.0, cy_ = 0.0;
-
-    double cws[4][3], ccs[4][3];
-
-    unsigned int num_correspondences_ = 0;
-    unsigned int max_num_correspondences_ = 0;
 };
 
 } // namespace solve
