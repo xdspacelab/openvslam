@@ -223,7 +223,7 @@ eigen_alloc_vector<Vec3_t> pnp_solver::choose_control_points(const eigen_alloc_v
     const MatX_t U = SVD.matrixU();
 
     for (unsigned int i = 1; i < 4; ++i) {
-        const double k = sqrt(D(i - 1, 0) / num_correspondences);
+        const double k = std::sqrt(D(i - 1, 0) / num_correspondences);
         cws.at(i) = cws.at(0) + k * U.block<3, 1>(0, i - 1);
     }
     return cws;
@@ -326,7 +326,7 @@ double pnp_solver::reprojection_error(const eigen_alloc_vector<Vec3_t>& pws, con
         const double ux = bearing(0) / bearing(2);
         const double uy = bearing(1) / bearing(2);
 
-        sum2 += sqrt((x - ux) * (x - ux) + (y - uy) * (y - uy));
+        sum2 += std::sqrt((x - ux) * (x - ux) + (y - uy) * (y - uy));
     }
     return sum2 / num_correspondences;
 }
@@ -400,12 +400,12 @@ Vec4_t pnp_solver::find_initial_betas_2(const MatRC_t<6, 10>& L_6x10, const Vec6
     const Vec3_t b3 = SVD.solve(Rho);
 
     if (b3(0) < 0) {
-        betas(0) = sqrt(-b3(0));
-        betas(1) = (b3(2) < 0) ? sqrt(-b3(2)) : 0.0;
+        betas(0) = std::sqrt(-b3(0));
+        betas(1) = (b3(2) < 0) ? std::sqrt(-b3(2)) : 0.0;
     }
     else {
-        betas(0) = sqrt(b3(0));
-        betas(1) = (b3(2) > 0) ? sqrt(b3(2)) : 0.0;
+        betas(0) = std::sqrt(b3(0));
+        betas(1) = (b3(2) > 0) ? std::sqrt(b3(2)) : 0.0;
     }
 
     if (b3(1) < 0) {
@@ -437,12 +437,12 @@ Vec4_t pnp_solver::find_initial_betas_3(const MatRC_t<6, 10>& L_6x10, const Vec6
     const Vec5_t b5 = SVD.solve(Rho);
 
     if (b5(0) < 0) {
-        betas(0) = sqrt(-b5(0));
-        betas(1) = (b5(2) < 0) ? sqrt(-b5(2)) : 0.0;
+        betas(0) = std::sqrt(-b5(0));
+        betas(1) = (b5(2) < 0) ? std::sqrt(-b5(2)) : 0.0;
     }
     else {
-        betas(0) = sqrt(b5(0));
-        betas(1) = (b5(2) > 0) ? sqrt(b5(2)) : 0.0;
+        betas(0) = std::sqrt(b5(0));
+        betas(1) = (b5(2) > 0) ? std::sqrt(b5(2)) : 0.0;
     }
     if (b5(1) < 0) {
         betas(0) = -betas(0);
@@ -469,13 +469,13 @@ Vec4_t pnp_solver::find_initial_betas_4(const MatRC_t<6, 10>& L_6x10, const Vec6
     const Vec4_t b4 = SVD.solve(Rho);
 
     if (b4(0) < 0) {
-        betas(0) = sqrt(-b4(0));
+        betas(0) = std::sqrt(-b4(0));
         betas(1) = -b4(1) / betas(0);
         betas(2) = -b4(2) / betas(0);
         betas(3) = -b4(3) / betas(0);
     }
     else {
-        betas(0) = sqrt(b4(0));
+        betas(0) = std::sqrt(b4(0));
         betas(1) = b4(1) / betas(0);
         betas(2) = b4(2) / betas(0);
         betas(3) = b4(3) / betas(0);
