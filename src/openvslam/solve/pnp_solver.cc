@@ -368,16 +368,16 @@ void pnp_solver::estimate_R_and_t(const eigen_alloc_vector<Vec3_t>& pws, const e
 }
 
 Vec4_t pnp_solver::find_initial_betas(const MatRC_t<6, 10>& L_6x10, const Vec6_t& Rho, unsigned int N) {
+    assert(2 <= N && N <= 4);
     if (N == 2) {
         return find_initial_betas_2(L_6x10, Rho);
     }
     else if (N == 3) {
         return find_initial_betas_3(L_6x10, Rho);
     }
-    else if (N == 4) {
+    else {
         return find_initial_betas_4(L_6x10, Rho);
     }
-    assert(false);
 }
 
 // betas10        = [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
