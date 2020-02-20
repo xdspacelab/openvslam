@@ -213,7 +213,7 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
 void map_database::register_keyframe(camera_database* cam_db, bow_vocabulary* bow_vocab, bow_database* bow_db,
                                      const unsigned int id, const nlohmann::json& json_keyfrm) {
     // Metadata
-    const auto src_frm_id = json_keyfrm.at("n_keypts").get<unsigned int>();
+    const auto src_frm_id = json_keyfrm.at("src_frm_id").get<unsigned int>();
     const auto timestamp = json_keyfrm.at("ts").get<double>();
     const auto camera_name = json_keyfrm.at("cam").get<std::string>();
     const auto camera = cam_db->get_camera(camera_name);
