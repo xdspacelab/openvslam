@@ -118,6 +118,7 @@ TEST(common, invalid_cases) {
     // create keypoints
     std::vector<cv::KeyPoint> test_cases;
     constexpr float eps = 0.01;
+    // clang-format off
     // - invalid corners
     test_cases.emplace_back(cv::KeyPoint{cam.img_bounds_.min_x_ - eps, cam.img_bounds_.min_y_ - eps, 0.0}); // top left
     test_cases.emplace_back(cv::KeyPoint{cam.img_bounds_.max_x_, cam.img_bounds_.min_y_ - eps, 0.0}); // top right
@@ -128,6 +129,7 @@ TEST(common, invalid_cases) {
     test_cases.emplace_back(cv::KeyPoint{cols / 2.0, cam.img_bounds_.max_y_, 0.0}); // bottom center
     test_cases.emplace_back(cv::KeyPoint{cam.img_bounds_.min_x_ - eps, rows / 2.0, 0.0}); // left center
     test_cases.emplace_back(cv::KeyPoint{cam.img_bounds_.max_x_, rows / 2.0, 0.0}); // right center
+    // clang-format on
 
     // check
     for (const auto& test_case : test_cases) {
