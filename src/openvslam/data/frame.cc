@@ -247,12 +247,24 @@ Vec3_t frame::triangulate_stereo(const unsigned int idx) const {
     return Vec3_t::Zero();
 }
 
-const cv::Vec3b& frame::get_keypoint_color(const unsigned int idx) const {
+const cv::Vec3b frame::get_keypoint_color(const unsigned int idx) const {
     return get_point_color(keypts_[idx].pt);
 }
 
-const cv::Vec3b& frame::get_point_color(const cv::Point& pt) const {
-    return img_.at<cv::Vec<uchar, 3>>(pt);
+const cv::Vec3b frame::get_point_color(const cv::Point& pt) const {
+    const auto channels = img_.channels();
+    if (channels == 3) {
+        return img_.at<cv::Vec3b>(pt);
+    }
+    if (channels == 4) {
+        const auto rgba = img_.at<cv::Vec4b>(pt);
+        return cv::Vec3b(rgba[0], rgba[1], rgba[2]);
+    }
+    if (channels == 1) {
+        const auto value = img_.at<uchar>(pt);
+        return cv::Vec3b(value, value, value);
+    }
+    throw std::runtime_error("Unsupported channel count: " + std::to_string(channels));
 }
 
 void frame::extract_orb(const cv::Mat& img, const cv::Mat& mask, const image_side& img_side) {

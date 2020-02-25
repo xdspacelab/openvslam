@@ -164,14 +164,14 @@ public:
      * @param idx
      * @return
      */
-    const cv::Vec3b& get_keypoint_color(const unsigned int idx) const;
+    const cv::Vec3b get_keypoint_color(const unsigned int idx) const;
 
     /**
      * Get RGB color of a point
      * @param idx
      * @return
      */
-    const cv::Vec3b& get_point_color(const cv::Point& pt) const;
+    const cv::Vec3b get_point_color(const cv::Point& pt) const;
 
     //! current frame ID
     unsigned int id_;

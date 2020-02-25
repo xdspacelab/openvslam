@@ -172,7 +172,7 @@ public:
     /**
      * Get RGB color of a keypoint
      */
-    const cv::Vec3b& get_keypoint_color(const unsigned int idx) const;
+    const cv::Vec3b get_keypoint_color(const unsigned int idx) const;
 
     //-----------------------------------------
     // flags
