@@ -299,7 +299,7 @@ void viewer::draw_landmarks() {
             continue;
         }
 
-        glColor3ub(lm->color_[0], lm->color_[1], lm->color_[2]);
+        glColor3ub(lm->color_[2], lm->color_[1], lm->color_[0]);
 
         const openvslam::Vec3_t pos_w = lm->get_pos_in_world();
         glVertex3fv(pos_w.cast<float>().eval().data());
@@ -320,7 +320,7 @@ void viewer::draw_landmarks() {
             continue;
         }
 
-        glColor3ub(local_lm->color_[0], local_lm->color_[1], local_lm->color_[2]);
+        glColor3ub(local_lm->color_[2], local_lm->color_[1], local_lm->color_[0]);
 
         const openvslam::Vec3_t pos_w = local_lm->get_pos_in_world();
         glVertex3fv(pos_w.cast<float>().eval().data());
