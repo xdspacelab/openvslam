@@ -208,7 +208,7 @@ void landmark::update_normal_and_depth() {
         auto keyfrm = observation.first;
         const Vec3_t cam_center = keyfrm->get_cam_center();
         const Vec3_t normal = pos_w_ - cam_center;
-        mean_normal = mean_normal + normal / normal.norm();
+        mean_normal = mean_normal + normal.normalized();
         ++num_observations;
     }
 
@@ -222,7 +222,7 @@ void landmark::update_normal_and_depth() {
         std::lock_guard<std::mutex> lock3(mtx_position_);
         max_valid_dist_ = dist * scale_factor;
         min_valid_dist_ = max_valid_dist_ / ref_keyfrm->scale_factors_.at(num_scale_levels - 1);
-        mean_normal_ = mean_normal / num_observations;
+        mean_normal_ = mean_normal.normalized();
     }
 }
 
