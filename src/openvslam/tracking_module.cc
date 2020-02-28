@@ -463,7 +463,7 @@ void tracking_module::update_local_keyframes() {
         local_keyfrms_.push_back(keyfrm);
         return true;
     };
-    for (auto iter = local_keyfrms_.cbegin(), end = local_keyfrms_.cend(); iter != end; ++iter) {
+    for (auto iter = local_keyfrms_.cbegin(); iter != local_keyfrms_.cend(); ++iter) {
         if (max_num_local_keyfrms < local_keyfrms_.size()) {
             break;
         }
