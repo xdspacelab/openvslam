@@ -17,7 +17,7 @@ class mono_perspective_reproj_edge final : public ::g2o::BaseBinaryEdge<2, Vec2_
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    mono_perspective_reproj_edge();
+    mono_perspective_reproj_edge() : ::g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex>() {}
 
     bool read(std::istream& is) override;
 
@@ -49,7 +49,7 @@ class stereo_perspective_reproj_edge final : public ::g2o::BaseBinaryEdge<3, Vec
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    stereo_perspective_reproj_edge();
+    stereo_perspective_reproj_edge() : ::g2o::BaseBinaryEdge<3, Vec3_t, landmark_vertex, shot_vertex>() {}
 
     bool read(std::istream& is) override;
 

@@ -13,7 +13,7 @@ class landmark_vertex final : public ::g2o::BaseVertex<3, Vec3_t> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    landmark_vertex();
+    landmark_vertex() : ::g2o::BaseVertex<3, Vec3_t>() {}
 
     bool read(std::istream& is) override;
 

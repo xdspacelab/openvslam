@@ -15,7 +15,7 @@ class shot_vertex final : public ::g2o::BaseVertex<6, ::g2o::SE3Quat> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    shot_vertex();
+    shot_vertex() : ::g2o::BaseVertex<6, ::g2o::SE3Quat>() {}
 
     bool read(std::istream& is) override;
 

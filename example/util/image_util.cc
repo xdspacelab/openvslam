@@ -1,6 +1,6 @@
 #include "image_util.h"
 
-#include <dirent.h>
+#include "msdirent.h"
 #include <algorithm>
 #include <stdexcept>
 

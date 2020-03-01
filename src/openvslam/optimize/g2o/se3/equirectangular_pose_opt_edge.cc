@@ -5,9 +5,6 @@ namespace optimize {
 namespace g2o {
 namespace se3 {
 
-equirectangular_pose_opt_edge::equirectangular_pose_opt_edge()
-    : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
-
 bool equirectangular_pose_opt_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
         is >> _measurement(i);

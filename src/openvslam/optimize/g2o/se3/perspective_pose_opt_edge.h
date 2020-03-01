@@ -17,7 +17,7 @@ class mono_perspective_pose_opt_edge final : public ::g2o::BaseUnaryEdge<2, Vec2
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    mono_perspective_pose_opt_edge();
+    mono_perspective_pose_opt_edge() : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
 
     bool read(std::istream& is) override;
 
@@ -48,7 +48,7 @@ class stereo_perspective_pose_opt_edge : public ::g2o::BaseUnaryEdge<3, Vec3_t, 
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    stereo_perspective_pose_opt_edge();
+    stereo_perspective_pose_opt_edge() : ::g2o::BaseUnaryEdge<3, Vec3_t, shot_vertex>() {}
 
     bool read(std::istream& is) override;
 

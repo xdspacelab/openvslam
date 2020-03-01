@@ -16,7 +16,7 @@ class equirectangular_reproj_edge final : public ::g2o::BaseBinaryEdge<2, Vec2_t
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    equirectangular_reproj_edge();
+    equirectangular_reproj_edge() : ::g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex>() {}
 
     bool read(std::istream& is) override;
 

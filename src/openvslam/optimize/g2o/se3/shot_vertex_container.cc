@@ -6,11 +6,6 @@ namespace optimize {
 namespace g2o {
 namespace se3 {
 
-shot_vertex_container::shot_vertex_container(const unsigned int offset, const unsigned int num_reserve)
-    : offset_(offset) {
-    vtx_container_.reserve(num_reserve);
-}
-
 shot_vertex* shot_vertex_container::create_vertex(const unsigned int id, const Mat44_t& cam_pose_cw, const bool is_constant) {
     // vertexを作成
     const auto vtx_id = offset_ + id;

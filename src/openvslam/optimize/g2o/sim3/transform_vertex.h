@@ -15,7 +15,7 @@ class transform_vertex final : public ::g2o::BaseVertex<7, ::g2o::Sim3> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    transform_vertex();
+    transform_vertex() : ::g2o::BaseVertex<7, ::g2o::Sim3>() {}
 
     bool read(std::istream& is) override;
 

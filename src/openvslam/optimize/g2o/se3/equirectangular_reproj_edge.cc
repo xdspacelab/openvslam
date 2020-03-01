@@ -5,9 +5,6 @@ namespace optimize {
 namespace g2o {
 namespace se3 {
 
-equirectangular_reproj_edge::equirectangular_reproj_edge()
-    : BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex>() {}
-
 bool equirectangular_reproj_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
         is >> _measurement(i);

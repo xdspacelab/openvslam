@@ -16,7 +16,7 @@ class equirectangular_pose_opt_edge final : public ::g2o::BaseUnaryEdge<2, Vec2_
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    equirectangular_pose_opt_edge();
+    equirectangular_pose_opt_edge() : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
 
     bool read(std::istream& is) override;
 

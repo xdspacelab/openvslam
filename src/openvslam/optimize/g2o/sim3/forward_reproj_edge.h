@@ -15,7 +15,7 @@ class base_forward_reproj_edge : public ::g2o::BaseUnaryEdge<2, Vec2_t, transfor
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    base_forward_reproj_edge();
+    base_forward_reproj_edge() : ::g2o::BaseUnaryEdge<2, Vec2_t, transform_vertex>() {}
 
     bool read(std::istream& is) override;
 
@@ -47,7 +47,7 @@ class perspective_forward_reproj_edge final : public base_forward_reproj_edge {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    perspective_forward_reproj_edge();
+    perspective_forward_reproj_edge() : base_forward_reproj_edge() {}
 
     inline Vec2_t cam_project(const Vec3_t& pos_c) const override {
         return {fx_ * pos_c(0) / pos_c(2) + cx_, fy_ * pos_c(1) / pos_c(2) + cy_};
@@ -60,7 +60,7 @@ class equirectangular_forward_reproj_edge final : public base_forward_reproj_edg
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    equirectangular_forward_reproj_edge();
+    equirectangular_forward_reproj_edge() : base_forward_reproj_edge() {}
 
     inline Vec2_t cam_project(const Vec3_t& pos_c) const override {
         const double theta = std::atan2(pos_c(0), pos_c(2));

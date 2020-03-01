@@ -26,7 +26,10 @@ public:
      * @param offset
      * @param num_reserve
      */
-    explicit shot_vertex_container(const unsigned int offset = 0, const unsigned int num_reserve = 50);
+    explicit shot_vertex_container(const unsigned int offset = 0, const unsigned int num_reserve = 50)
+        : offset_(offset) {
+        vtx_container_.reserve(num_reserve);
+    }
 
     /**
      * Destructor
