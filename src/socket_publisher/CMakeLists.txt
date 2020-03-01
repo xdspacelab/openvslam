@@ -19,13 +19,13 @@ set_source_files_properties(${MAP_PB_HEADER} ${MAP_PB_SOURCE}
 # ----- Configure SocketPublisher library -----
 
 add_library(socket_publisher
-            data_serializer.h
-            publisher.h
-            socket_client.h
-            data_serializer.cc
-            publisher.cc
-            socket_client.cc
-            ${MAP_PB_SOURCE})
+            ${CMAKE_CURRENT_SOURCE_DIR}/data_serializer.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/publisher.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/socket_client.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/data_serializer.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/publisher.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/socket_client.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/${MAP_PB_SOURCE})
 
 set_target_properties(socket_publisher PROPERTIES
                       OUTPUT_NAME socket_publisher
