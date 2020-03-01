@@ -39,7 +39,6 @@ endif()
 # ----- Create OpenVSLAM library -----
 
 add_library(${PROJECT_NAME}
-            SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/config.h
             ${CMAKE_CURRENT_SOURCE_DIR}/type.h
             ${CMAKE_CURRENT_SOURCE_DIR}/system.h
@@ -55,6 +54,7 @@ add_library(${PROJECT_NAME}
 # Set output directory of the library
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       OUTPUT_NAME openvslam
+                      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
                       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 # ----- Compile configuration -----

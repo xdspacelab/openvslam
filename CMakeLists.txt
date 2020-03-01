@@ -21,6 +21,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+option(BUILD_SHARED_LIBS "Build OpenVSLAM as a shared library" OFF)
+
 # ----- Set options for debugging -----
 
 set(USE_CCACHE ON CACHE BOOL "Use ccache to accelerate build")

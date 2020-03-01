@@ -6,7 +6,6 @@ find_package(Pangolin REQUIRED)
 # ----- Configure PangolinViewer library -----
 
 add_library(pangolin_viewer
-            SHARED
             viewer.h
             color_scheme.h
             viewer.cc
@@ -14,6 +13,7 @@ add_library(pangolin_viewer
 
 set_target_properties(pangolin_viewer PROPERTIES
                       OUTPUT_NAME pangolin_viewer
+                      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
                       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 target_include_directories(pangolin_viewer 

@@ -19,7 +19,6 @@ set_source_files_properties(${MAP_PB_HEADER} ${MAP_PB_SOURCE}
 # ----- Configure SocketPublisher library -----
 
 add_library(socket_publisher
-            SHARED
             data_serializer.h
             publisher.h
             socket_client.h
@@ -30,6 +29,7 @@ add_library(socket_publisher
 
 set_target_properties(socket_publisher PROPERTIES
                       OUTPUT_NAME socket_publisher
+                      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
                       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 target_include_directories(socket_publisher
