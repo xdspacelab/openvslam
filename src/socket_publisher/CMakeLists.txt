@@ -25,7 +25,7 @@ add_library(socket_publisher
             ${CMAKE_CURRENT_SOURCE_DIR}/data_serializer.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/publisher.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/socket_client.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/${MAP_PB_SOURCE})
+            ${MAP_PB_SOURCE})
 
 set_target_properties(socket_publisher PROPERTIES
                       OUTPUT_NAME socket_publisher
