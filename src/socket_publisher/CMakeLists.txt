@@ -14,7 +14,7 @@ message(STATUS "Found protoc executable: ${PROTOBUF_PROTOC_EXECUTABLE}")
 
 protobuf_generate_cpp(MAP_PB_SOURCE MAP_PB_HEADER protobuf/map_segment.proto)
 set_source_files_properties(${MAP_PB_HEADER} ${MAP_PB_SOURCE}
-                            COMPILE_FLAGS -Wno-unused-variable)
+                            COMPILE_FLAGS $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-unused-variable>)
 
 # ----- Configure SocketPublisher library -----
 
