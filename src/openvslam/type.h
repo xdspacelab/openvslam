@@ -1,12 +1,6 @@
 #ifndef OPENVSLAM_TYPE_H
 #define OPENVSLAM_TYPE_H
 
-// Visual Studio only: we need M_PI and M_PI_2
-#ifdef _MSC_VER
-#define _USE_MATH_DEFINES
-#include <cmath>
-#endif // _MSC_VER
-
 #include <vector>
 #include <map>
 #include <set>
@@ -16,6 +10,12 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <opencv2/core/types.hpp>
+
+#ifndef M_PI
+// M_PI is not part of the C++ standard. Rather it is part of the POSIX standard. As such,
+// it is not directly available on Visual C++ (although _USE_MATH_DEFINES does exist).
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace openvslam {
 

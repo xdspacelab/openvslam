@@ -84,7 +84,7 @@ image_bounds fisheye::compute_image_bounds() const {
         const double pwy = (0.0 - cy_) / fy_;
         const double theta_d = sqrt(pwx * pwx + pwy * pwy);
 
-        if (theta_d > M_PI_2) {
+        if (theta_d > M_PI / 2) {
             // fov is super wide (four corners are out of view)
 
             // corner coordinates: (x, y) = (col, row)
