@@ -219,7 +219,8 @@ message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 
 include_directories(
         ${catkin_INCLUDE_DIRS}
-        ${OpenVSLAM_SRC_DIR})
+        ${OpenVSLAM_SRC_DIR}
+        src)
 
 link_libraries(
         ${catkin_LIBRARIES}
