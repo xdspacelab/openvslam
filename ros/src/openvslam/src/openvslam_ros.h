@@ -45,6 +45,17 @@ public:
     using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image>;
     message_filters::Synchronizer<SyncPolicy> sync_;
 };
+
+class rgbd : public system {
+public:
+    rgbd(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path, const std::string& mask_img_path);
+    void callback(const sensor_msgs::ImageConstPtr& color, const sensor_msgs::ImageConstPtr& depth);
+
+    std::shared_ptr<openvslam::util::stereo_rectifier> rectifier_;
+    image_transport::SubscriberFilter color_sf_, depth_sf_;
+    using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image>;
+    message_filters::Synchronizer<SyncPolicy> sync_;
+};
 } // namespace openvslam_ros
 
 #endif // OPENVSLAM_ROS_H

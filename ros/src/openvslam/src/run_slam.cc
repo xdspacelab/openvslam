@@ -33,6 +33,9 @@ void tracking(const std::shared_ptr<openvslam::config>& cfg, const std::string& 
     else if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Stereo) {
         ros = std::make_shared<openvslam_ros::stereo>(cfg, vocab_file_path, mask_img_path, rectify);
     }
+    else if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::RGBD) {
+        ros = std::make_shared<openvslam_ros::rgbd>(cfg, vocab_file_path, mask_img_path);
+    }
     else {
         throw std::runtime_error("Invalid setup type: " + cfg->camera_->get_setup_type_string());
     }

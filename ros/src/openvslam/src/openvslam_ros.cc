@@ -59,4 +59,31 @@ void stereo::callback(const sensor_msgs::ImageConstPtr& left, const sensor_msgs:
     const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
     track_times_.push_back(track_time);
 }
+
+rgbd::rgbd(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path, const std::string& mask_img_path)
+    : system(cfg, vocab_file_path, mask_img_path),
+      color_sf_(image_transport::SubscriberFilter(it_, "/camera/color/image_raw", 1)),
+      depth_sf_(image_transport::SubscriberFilter(it_, "/camera/depth/image_raw", 1)),
+      sync_(message_filters::Synchronizer(SyncPolicy(10), color_sf_, depth_sf_)) {
+    sync_.registerCallback(boost::bind<void>(&rgbd::callback, this, _1, _2));
+}
+
+void rgbd::callback(const sensor_msgs::ImageConstPtr& color, const sensor_msgs::ImageConstPtr& depth) {
+    auto colorcv = cv_bridge::toCvShare(color)->image;
+    auto depthcv = cv_bridge::toCvShare(depth)->image;
+    if (colorcv.empty() || depthcv.empty()) {
+        return;
+    }
+
+    const auto tp_1 = std::chrono::steady_clock::now();
+    const auto timestamp = std::chrono::duration_cast<std::chrono::duration<double>>(tp_1 - tp_0_).count();
+
+    // input the current frame and estimate the camera pose
+    SLAM_.feed_RGBD_frame(colorcv, depthcv, timestamp, mask_);
+
+    const auto tp_2 = std::chrono::steady_clock::now();
+
+    const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
+    track_times_.push_back(track_time);
+}
 } // namespace openvslam_ros
