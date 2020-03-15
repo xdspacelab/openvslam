@@ -19,8 +19,7 @@ void mono::callback(const sensor_msgs::ImageConstPtr& msg) {
     const auto timestamp = std::chrono::duration_cast<std::chrono::duration<double>>(tp_1 - tp_0_).count();
 
     // input the current frame and estimate the camera pose
-    auto encoding = (cfg_->camera_->color_order_ == openvslam::camera::color_order_t::Gray) ? "mono8" : "bgr8";
-    SLAM_.feed_monocular_frame(cv_bridge::toCvShare(msg, encoding)->image, timestamp, mask_);
+    SLAM_.feed_monocular_frame(cv_bridge::toCvShare(msg)->image, timestamp, mask_);
 
     const auto tp_2 = std::chrono::steady_clock::now();
 
@@ -39,9 +38,8 @@ stereo::stereo(const std::shared_ptr<openvslam::config>& cfg, const std::string&
 }
 
 void stereo::callback(const sensor_msgs::ImageConstPtr& left, const sensor_msgs::ImageConstPtr& right) {
-    auto encoding = (cfg_->camera_->color_order_ == openvslam::camera::color_order_t::Gray) ? "mono8" : "bgr8";
-    auto leftcv = cv_bridge::toCvShare(left, encoding)->image;
-    auto rightcv = cv_bridge::toCvShare(right, encoding)->image;
+    auto leftcv = cv_bridge::toCvShare(left)->image;
+    auto rightcv = cv_bridge::toCvShare(right)->image;
     if (leftcv.empty() || rightcv.empty()) {
         return;
     }
