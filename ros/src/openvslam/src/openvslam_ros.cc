@@ -31,8 +31,8 @@ stereo::stereo(const std::shared_ptr<openvslam::config>& cfg, const std::string&
                const bool rectify)
     : system(cfg, vocab_file_path, mask_img_path),
       rectifier_(rectify ? std::make_shared<openvslam::util::stereo_rectifier>(cfg) : nullptr),
-      left_sf_(image_transport::SubscriberFilter(it_, "/camera/left/image_raw", 1)),
-      right_sf_(image_transport::SubscriberFilter(it_, "/camera/right/image_raw", 1)),
+      left_sf_(image_transport::SubscriberFilter(it_, "camera/left/image_raw", 1)),
+      right_sf_(image_transport::SubscriberFilter(it_, "camera/right/image_raw", 1)),
       sync_(message_filters::Synchronizer(SyncPolicy(10), left_sf_, right_sf_)) {
     sync_.registerCallback(boost::bind<void>(&stereo::callback, this, _1, _2));
 }
@@ -62,8 +62,8 @@ void stereo::callback(const sensor_msgs::ImageConstPtr& left, const sensor_msgs:
 
 rgbd::rgbd(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path, const std::string& mask_img_path)
     : system(cfg, vocab_file_path, mask_img_path),
-      color_sf_(image_transport::SubscriberFilter(it_, "/camera/color/image_raw", 1)),
-      depth_sf_(image_transport::SubscriberFilter(it_, "/camera/depth/image_raw", 1)),
+      color_sf_(image_transport::SubscriberFilter(it_, "camera/color/image_raw", 1)),
+      depth_sf_(image_transport::SubscriberFilter(it_, "camera/depth/image_raw", 1)),
       sync_(message_filters::Synchronizer(SyncPolicy(10), color_sf_, depth_sf_)) {
     sync_.registerCallback(boost::bind<void>(&rgbd::callback, this, _1, _2));
 }
