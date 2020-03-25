@@ -61,13 +61,19 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
     double timestamp = 0.0;
 
     unsigned int num_frame = 0;
-
+    unsigned int empty_frame = 0;
     bool is_not_end = true;
     // run the SLAM in another thread
     std::thread thread([&]() {
         while (is_not_end) {
             is_not_end = video.read(frame);
-
+            if (!is_not_end) {
+                ++empty_frame;
+                is_not_end = true;
+                if (empty_frame > 500) {
+                    is_not_end = false;
+                }
+            }
             const auto tp_1 = std::chrono::steady_clock::now();
 
             if (!frame.empty() && (num_frame % frame_skip == 0)) {

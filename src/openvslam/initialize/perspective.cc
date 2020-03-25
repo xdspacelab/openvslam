@@ -127,6 +127,11 @@ Mat33_t perspective::get_camera_matrix(camera::base* camera) {
             auto c = static_cast<camera::fisheye*>(camera);
             return c->eigen_cam_matrix_;
         }
+        case camera::model_type_t::DivisionUndistortion: {
+            auto c = static_cast<camera::division_undistortion*>(cur_frm.camera_);
+            cur_cam_matrix_ = c->eigen_cam_matrix_;
+            break;
+        }
         default: {
             throw std::runtime_error("Cannot get a camera matrix from the camera model");
         }

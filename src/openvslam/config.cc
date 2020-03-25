@@ -2,6 +2,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
+#include "openvslam/camera/division_undistortion.h"
 
 #include <iostream>
 #include <memory>
@@ -41,6 +42,10 @@ config::config(const YAML::Node& yaml_node, const std::string& config_file_path)
                 camera_ = new camera::equirectangular(yaml_node_);
                 break;
             }
+            case camera::model_type_t::DivisionUndistortion: {
+                camera_ = new camera::division_undistortion(yaml_node_);
+                break;
+        }
         }
     }
     catch (const std::exception& e) {
@@ -89,6 +94,11 @@ config::config(const YAML::Node& yaml_node, const std::string& config_file_path)
             }
             case camera::model_type_t::Equirectangular: {
                 throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
+            }
+            case camera::model_type_t::DivisionUndistortion: {
+                auto camera = static_cast<camera::division_undistortion*>(camera_);
+                true_depth_thr_ = camera->true_baseline_ * depth_thr_factor;
+                break;
             }
         }
     }

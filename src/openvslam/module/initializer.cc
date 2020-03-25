@@ -117,6 +117,7 @@ void initializer::create_initializer(data::frame& curr_frm) {
     initializer_.reset(nullptr);
     switch (init_frm_.camera_->model_type_) {
         case camera::model_type_t::Perspective:
+        case camera::model_type_t::DivisionUndistortion:
         case camera::model_type_t::Fisheye: {
             initializer_ = std::unique_ptr<initialize::perspective>(new initialize::perspective(init_frm_,
                                                                                                 num_ransac_iters_, min_num_triangulated_,

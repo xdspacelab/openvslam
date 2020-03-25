@@ -1,6 +1,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
+#include "openvslam/camera/division_undistortion.h"
 #include "openvslam/data/common.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
@@ -232,6 +233,24 @@ Vec3_t frame::triangulate_stereo(const unsigned int idx) const {
                 const Vec3_t pos_c{unproj_x, unproj_y, depth};
 
                 // Convert from camera coordinates to world coordinates
+                return rot_wc_ * pos_c + cam_center_;
+            }
+            else {
+                return Vec3_t::Zero();
+            }
+        }
+        case camera::model_type_t::DivisionUndistortion: {
+            auto camera = static_cast<camera::division_undistortion*>(camera_);
+
+            const float depth = depths_.at(idx);
+            if (0.0 < depth) {
+                const float x = keypts_.at(idx).pt.x;
+                const float y = keypts_.at(idx).pt.y;
+                const float unproj_x = (x - camera->cx_) * depth * camera->fx_inv_;
+                const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
+                const Vec3_t pos_c{unproj_x, unproj_y, depth};
+
+                // camera座標 -> world座標
                 return rot_wc_ * pos_c + cam_center_;
             }
             else {

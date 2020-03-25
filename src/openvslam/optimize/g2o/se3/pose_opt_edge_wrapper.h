@@ -4,6 +4,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
+#include "openvslam/camera/division_undistortion.h"
 #include "openvslam/optimize/g2o/se3/perspective_pose_opt_edge.h"
 #include "openvslam/optimize/g2o/se3/equirectangular_pose_opt_edge.h"
 
@@ -145,6 +146,47 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
             }
             break;
         }
+        case camera::model_type_t::DivisionUndistortion: {
+            auto c = static_cast<camera::division_undistortion*>(camera_);
+            if (is_monocular_) {
+                auto edge = new mono_perspective_pose_opt_edge();
+
+                const Vec2_t obs{obs_x, obs_y};
+                edge->setMeasurement(obs);
+                edge->setInformation(Mat22_t::Identity() * inv_sigma_sq);
+
+                edge->fx_ = c->fx_;
+                edge->fy_ = c->fy_;
+                edge->cx_ = c->cx_;
+                edge->cy_ = c->cy_;
+
+                edge->pos_w_ = pos_w;
+
+                edge->setVertex(0, shot_vtx);
+
+                edge_ = edge;
+            }
+            else {
+                auto edge = new stereo_perspective_pose_opt_edge();
+
+                const Vec3_t obs{obs_x, obs_y, obs_x_right};
+                edge->setMeasurement(obs);
+                edge->setInformation(Mat33_t::Identity() * inv_sigma_sq);
+
+                edge->fx_ = c->fx_;
+                edge->fy_ = c->fy_;
+                edge->cx_ = c->cx_;
+                edge->cy_ = c->cy_;
+                edge->focal_x_baseline_ = camera_->focal_x_baseline_;
+
+                edge->pos_w_ = pos_w;
+
+                edge->setVertex(0, shot_vtx);
+
+                edge_ = edge;
+            }
+            break;
+        }
         case camera::model_type_t::Equirectangular: {
             assert(is_monocular_);
 
@@ -187,6 +229,14 @@ bool pose_opt_edge_wrapper<T>::depth_is_positive() const {
             }
         }
         case camera::model_type_t::Fisheye: {
+            if (is_monocular_) {
+                return static_cast<mono_perspective_pose_opt_edge*>(edge_)->mono_perspective_pose_opt_edge::depth_is_positive();
+            }
+            else {
+                return static_cast<stereo_perspective_pose_opt_edge*>(edge_)->stereo_perspective_pose_opt_edge::depth_is_positive();
+            }
+        }
+        case camera::model_type_t::DivisionUndistortion: {
             if (is_monocular_) {
                 return static_cast<mono_perspective_pose_opt_edge*>(edge_)->mono_perspective_pose_opt_edge::depth_is_positive();
             }

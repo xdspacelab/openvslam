@@ -56,7 +56,9 @@ model_type_t base::load_model_type(const YAML::Node& yaml_node) {
     else if (model_type_str == "equirectangular") {
         return camera::model_type_t::Equirectangular;
     }
-
+    else if (model_type_str == "division_undistortion") {
+        return camera::model_type_t::DivisionUndistortion;
+    }
     throw std::runtime_error("Invalid camera model: " + model_type_str);
 }
 
