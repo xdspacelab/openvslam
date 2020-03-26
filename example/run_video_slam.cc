@@ -11,6 +11,7 @@
 #include <chrono>
 #include <numeric>
 
+#include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/videoio.hpp>
@@ -66,7 +67,6 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
                 }
             }
             const auto tp_1 = std::chrono::steady_clock::now();
-
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
                 SLAM.feed_monocular_frame(frame, timestamp, mask);

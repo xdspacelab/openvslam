@@ -1,10 +1,10 @@
-# EuRoC monocular model
+# GoPro monocular model
 
 #==============#
 # Camera Model #
 #==============#
 
-Camera.name: "EuRoC monocular"
+Camera.name: "GoPro monocular"
 Camera.setup: "monocular"
 Camera.model: "division_undistortion"
 
@@ -13,19 +13,19 @@ Camera.fy: 4.9080366904140129e+02
 Camera.cx: 4.7545226681892501e+02
 Camera.cy: 3.5881858569194952e+02
 
-Camera.distortion: -3.0687873428823420e-01
+Camera.distortion: -3.0687873428823420e-01 # -0.00000127394 #
 
 Camera.fps: 60.0
 Camera.cols: 960
 Camera.rows: 720
 
-Camera.color_order: "Gray"
+Camera.color_order: "RGB"
 
 #================#
 # ORB Parameters #
 #================#
 
-Feature.max_num_keypoints: 1200
+Feature.max_num_keypoints: 1500
 Feature.scale_factor: 1.2
 Feature.num_levels: 8
 Feature.ini_fast_threshold: 10

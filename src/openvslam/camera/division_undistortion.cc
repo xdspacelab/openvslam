@@ -2,7 +2,10 @@
 
 #include "openvslam/camera/division_undistortion.h"
 
+#include <iostream>
+
 #include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 namespace openvslam {
 namespace camera {
@@ -20,10 +23,8 @@ division_undistortion::division_undistortion(const std::string& name, const setu
 
     eigen_cam_matrix_ << fx_, 0, cx_, 0, fy_, cy_, 0, 0, 1;
 
-    // 画像の最大範囲を計算
     img_bounds_ = compute_image_bounds();
 
-    // セルサイズの逆数を計算しておく
     inv_cell_width_ = static_cast<double>(num_grid_cols_) / (img_bounds_.max_x_ - img_bounds_.min_x_);
     inv_cell_height_ = static_cast<double>(num_grid_rows_) / (img_bounds_.max_y_ - img_bounds_.min_y_);
 }
@@ -113,21 +114,17 @@ void division_undistortion::convert_bearings_to_keypoints(const eigen_alloc_vect
 }
 
 bool division_undistortion::reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const {
-    // カメラ基準の座標に変換
     const Vec3_t pos_c = rot_cw * pos_w + trans_cw;
 
-    // カメラの正面になければ不可視
     if (pos_c(2) <= 0.0) {
         return false;
     }
 
-    // 画像上に投影
     const auto z_inv = 1.0 / pos_c(2);
     reproj(0) = fx_ * pos_c(0) * z_inv + cx_;
     reproj(1) = fy_ * pos_c(1) * z_inv + cy_;
     x_right = reproj(0) - focal_x_baseline_ * z_inv;
 
-    // 画像内であることを確認
     if (reproj(0) < img_bounds_.min_x_ || reproj(0) > img_bounds_.max_x_) {
         return false;
     }
@@ -139,20 +136,16 @@ bool division_undistortion::reproject_to_image(const Mat33_t& rot_cw, const Vec3
 }
 
 bool division_undistortion::reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const {
-    // カメラ基準の座標に変換
     reproj = rot_cw * pos_w + trans_cw;
 
-    // カメラの正面になければ不可視
     if (reproj(2) <= 0.0) {
         return false;
     }
 
-    // 画像上に投影
     const auto z_inv = 1.0 / reproj(2);
     const auto x = fx_ * reproj(0) * z_inv + cx_;
     const auto y = fy_ * reproj(1) * z_inv + cy_;
 
-    // 画像内であることを確認
     if (x < img_bounds_.min_x_ || x > img_bounds_.max_x_) {
         return false;
     }
@@ -160,7 +153,6 @@ bool division_undistortion::reproject_to_bearing(const Mat33_t& rot_cw, const Ve
         return false;
     }
 
-    // bearingにする
     reproj.normalize();
 
     return true;

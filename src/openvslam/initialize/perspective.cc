@@ -1,4 +1,5 @@
 #include "openvslam/camera/perspective.h"
+#include "openvslam/camera/division_undistortion.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/initialize/perspective.h"
@@ -128,9 +129,8 @@ Mat33_t perspective::get_camera_matrix(camera::base* camera) {
             return c->eigen_cam_matrix_;
         }
         case camera::model_type_t::DivisionUndistortion: {
-            auto c = static_cast<camera::division_undistortion*>(cur_frm.camera_);
-            cur_cam_matrix_ = c->eigen_cam_matrix_;
-            break;
+            auto c = static_cast<camera::division_undistortion*>(camera);
+            return c->eigen_cam_matrix_;
         }
         default: {
             throw std::runtime_error("Cannot get a camera matrix from the camera model");
