@@ -59,6 +59,8 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     std::thread thread([&]() {
         while (is_not_end) {
             is_not_end = video.read(frame);
+            // this is necessary as sometimes frames are missing from e.g. gopro videos
+            // and the feed would crash
             if (!is_not_end) {
                 ++empty_frame;
                 is_not_end = true;
@@ -69,6 +71,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
             }
             const auto tp_1 = std::chrono::steady_clock::now();
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
+                cv::resize(frame, frame, cv::Size(960,720));
                 // input the current frame and estimate the camera pose
                 SLAM.feed_monocular_frame(frame, timestamp, mask);
             }
