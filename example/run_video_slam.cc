@@ -71,7 +71,6 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
             }
             const auto tp_1 = std::chrono::steady_clock::now();
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
-                cv::resize(frame, frame, cv::Size(960,720));
                 // input the current frame and estimate the camera pose
                 SLAM.feed_monocular_frame(frame, timestamp, mask);
             }
