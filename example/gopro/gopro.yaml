@@ -13,7 +13,7 @@ Camera.fy: 4.9080366904140129e+02
 Camera.cx: 4.7545226681892501e+02
 Camera.cy: 3.5881858569194952e+02
 
-Camera.distortion: -3.0687873428823420e-01 # -0.00000127394 #
+Camera.distortion: -3.0687873428823420e-01 
 
 Camera.fps: 60.0
 Camera.cols: 960

@@ -6,6 +6,14 @@
 namespace openvslam {
 namespace camera {
 
+// This class implements the camera model presented in:
+//
+//   "Simultaneous linear estimation of multiple view geometry and lens
+//   distortion" by Andrew Fitzgibbon, CVPR 2001.
+//
+// The model is easy to implement and fast to evaluate.
+// It is well suited for wide angle lenses like used in action cameras
+// implemented by Steffen Urban, March 2020 (urbste@googlemail.com)
 class division_undistortion final : public base {
 public:
     division_undistortion(const std::string& name, const setup_type_t& setup_type, const color_order_t& color_order,
@@ -33,8 +41,8 @@ public:
 
 
         cv::KeyPoint undist_keypt;
-        undist_keypt.pt.x = undistorted_pt_x*fx_+cx_;
-        undist_keypt.pt.y = undistorted_pt_y*fy_+cy_;
+        undist_keypt.pt.x = undistorted_pt_x * fx_ + cx_;
+        undist_keypt.pt.y = undistorted_pt_y * fy_ + cy_;
         undist_keypt.angle = dist_keypt.pt.x;
         undist_keypt.size = dist_keypt.size;
         undist_keypt.octave = dist_keypt.octave;
@@ -44,6 +52,7 @@ public:
 
     void undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const override final;
 
+    // if we would use normalized kpts
 //    inline Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
 //        const auto l2_norm = std::sqrt(undist_keypt.pt.x * undist_keypt.pt.x +
 //                                       undist_keypt.pt.y * undist_keypt.pt.y + 1.0);

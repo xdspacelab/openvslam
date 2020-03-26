@@ -65,6 +65,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
                 if (empty_frame > 500) {
                     is_not_end = false;
                 }
+                spdlog::debug("VIDEO: empty image nr "+std::to_string(empty_frame)+" in video.");
             }
             const auto tp_1 = std::chrono::steady_clock::now();
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
