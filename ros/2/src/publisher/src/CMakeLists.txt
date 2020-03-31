@@ -12,11 +12,11 @@ set_target_properties(image_publisher PROPERTIES OUTPUT_NAME image PREFIX "")
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # build
     target_include_directories(${EXECUTABLE_TARGET}
-                               PRIVATE ${rclcpp_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+                               PRIVATE rclcpp_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
     target_link_libraries(${EXECUTABLE_TARGET}
                           PRIVATE ${rclcpp_LIBRARIES} ${OpenCV_LIBRARIES})
     ament_target_dependencies(${EXECUTABLE_TARGET}
-                              PRIVATE rclcpp cv_bridge image_transport rcutils)
+                              PUBLIC rclcpp cv_bridge image_transport rcutils)
     install(TARGETS ${EXECUTABLE_TARGET}
             DESTINATION lib/${PROJECT_NAME})
 endforeach()

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.1)
 project(openvslam LANGUAGES CXX C)
 
 if(POLICY CMP0042)
@@ -10,6 +10,7 @@ endif()
 
 # digging into the root directory of OpenVSLAM
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
+get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
 get_filename_component(DEFAULT_OpenVSLAM_DIR ${DEFAULT_OpenVSLAM_DIR} DIRECTORY)
 
@@ -126,10 +127,9 @@ endif()
 # Find packages #
 #################
 
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(cv_bridge REQUIRED)
-find_package(image_transport REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+        cv_bridge
+        image_transport)
 
 # thread library
 find_package(Threads REQUIRED)
@@ -149,7 +149,7 @@ message(STATUS "Use OpenCV ${OpenCV_VERSION}")
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Eigen
-find_package(Eigen3 3.3 REQUIRED)
+find_package(Eigen3 3.2 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # spdlog
@@ -184,6 +184,14 @@ if(USE_SOCKET_PUBLISHER)
     include_directories(${SIOCLIENT_INCLUDE_DIR} ${PROTOBUF_INCLUDE_DIRS})
 endif()
 
+#################################
+# catkin specific configuration #
+#################################
+
+catkin_package(CATKIN_DEPENDS
+        cv_bridge
+        image_transport)
+
 #################
 # BoW framework #
 #################
@@ -210,6 +218,12 @@ message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 # Build #
 #########
 
-add_subdirectory(src)
+include_directories(
+        ${catkin_INCLUDE_DIRS}
+        ${OpenVSLAM_SRC_DIR})
 
-ament_package()
+link_libraries(
+        ${catkin_LIBRARIES}
+        ${OpenVSLAM_LIB})
+
+add_subdirectory(src)
