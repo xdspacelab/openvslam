@@ -6,8 +6,8 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
 
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
     popl::OptionParser op("Allowed options");
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
     auto video_file_path = op.add<popl::Value<std::string>>("m", "video", "video file path");
+
     try {
         op.parse(argc, argv);
     }
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]) {
 
     // load video file
     if (!video.open(video_file_path->value(), cv::CAP_FFMPEG)) {
-        std::cerr << "can't load video file" << std::endl;
+        std::cerr << "can't load the video file" << std::endl;
         std::cerr << std::endl;
         return EXIT_FAILURE;
     }
@@ -62,7 +63,6 @@ int main(int argc, char* argv[]) {
     exec.add_node(node);
 
     while (rclcpp::ok() && video.read(frame)) {
-        // send message
         msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
         publisher.publish(msg);
         exec.spin_some();

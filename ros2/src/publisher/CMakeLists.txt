@@ -102,14 +102,6 @@ find_package(rclcpp REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 
-set(dependencies
-  rclcpp
-  cv_bridge
-  image_transport
-  rcutils
-  OpenCV
-)
-
 # OpenCV
 find_package(OpenCV 3.3.1 QUIET)
 if(NOT OpenCV_FOUND)
@@ -129,15 +121,6 @@ include_directories(${popl_INCLUDE_DIR})
 # Build #
 #########
 
-include_directories(
-        ${rclcpp_INCLUDE_DIRS}
-        ${OpenCV_INCLUDE_DIRS})
-
-link_libraries(
-        ${rclcpp_LIBRARIES}
-        ${OpenCV_LIBRARIES})
-
 add_subdirectory(src)
-
 
 ament_package()

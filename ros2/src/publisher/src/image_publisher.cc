@@ -8,8 +8,8 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
 
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
@@ -62,14 +62,11 @@ int main(int argc, char* argv[]) {
 
     for (unsigned int i = 0; i < frames.size(); ++i) {
         const auto& frame = frames.at(i);
-        while (rclcpp::ok()) {
-            const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
-            msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", img).toImageMsg();
-            publisher.publish(msg);
-            exec.spin_some();
-            pub_rate.sleep();
-            break;
-        }
+        const auto img = cv::imread(frame.img_path_, cv::IMREAD_UNCHANGED);
+        msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", img).toImageMsg();
+        publisher.publish(msg);
+        exec.spin_some();
+        pub_rate.sleep();
     }
 
     rclcpp::shutdown();

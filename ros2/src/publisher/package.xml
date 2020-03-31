@@ -10,7 +10,7 @@
     <maintainer email="k.sakurada@aist.go.jp">Ken Sakurada</maintainer>
 
     <license>2-clause BSD</license>
-    <url type="website">https://openvslam.readthedocs.io/en/master/overview.html</url>
+    <url type="website">https://openvslam.readthedocs.io/</url>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
 

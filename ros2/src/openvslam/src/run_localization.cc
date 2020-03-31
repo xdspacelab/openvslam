@@ -16,7 +16,8 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/opencv.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <spdlog/spdlog.h>
 #include <popl.hpp>
 
@@ -86,7 +87,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg, const std:
         exec.spin();
     });
 
-    // run the viewer in another thread
+    // run the viewer in this thread
 #ifdef USE_PANGOLIN_VIEWER
     viewer.run();
     if (SLAM.terminate_is_requested()) {

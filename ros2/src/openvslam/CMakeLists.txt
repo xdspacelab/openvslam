@@ -131,14 +131,6 @@ find_package(rclcpp REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 
-set(dependencies
-  rclcpp
-  cv_bridge
-  image_transport
-  rcutils
-  OpenCV
-)
-
 # thread library
 find_package(Threads REQUIRED)
 
@@ -218,21 +210,6 @@ message(STATUS "BoW framework: ${BOW_FRAMEWORK} (found in ${BOW_INCLUDE_DIRS})")
 # Build #
 #########
 
-include_directories(
-        ${rclcpp_INCLUDE_DIRS}
-        ${OpenVSLAM_SRC_DIR}
-        )
-
-link_libraries(
-        ${rclcpp_LIBRARIES}
-        ${OpenVSLAM_LIB})
-
 add_subdirectory(src)
-
-install(TARGETS
-  run_slam
-  run_localization
-DESTINATION lib/${PROJECT_NAME})
-
 
 ament_package()
