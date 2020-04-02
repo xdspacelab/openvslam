@@ -199,6 +199,7 @@ void keyframe::erase_landmark_with_index(const unsigned int idx) {
 }
 
 void keyframe::erase_landmark(landmark* lm) {
+    std::lock_guard<std::mutex> lock(mtx_observations_);
     int idx = lm->get_index_in_keyframe(this);
     if (0 <= idx) {
         landmarks_.at(static_cast<unsigned int>(idx)) = nullptr;
@@ -206,6 +207,7 @@ void keyframe::erase_landmark(landmark* lm) {
 }
 
 void keyframe::replace_landmark(landmark* lm, const unsigned int idx) {
+    std::lock_guard<std::mutex> lock(mtx_observations_);
     landmarks_.at(idx) = lm;
 }
 
@@ -379,11 +381,14 @@ void keyframe::prepare_for_erasing() {
 
     // 2. remove associations between keypoints and landmarks
 
-    for (const auto lm : landmarks_) {
-        if (!lm) {
-            continue;
+    {
+        std::lock_guard<std::mutex> lock(mtx_observations_);
+        for (const auto lm : landmarks_) {
+            if (!lm) {
+                continue;
+            }
+            lm->erase_observation(this);
         }
-        lm->erase_observation(this);
     }
 
     // 3. recover covisibility graph and spanning tree
