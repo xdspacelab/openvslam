@@ -21,7 +21,7 @@ public:
     std::shared_ptr<openvslam::config> cfg_;
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;
-    decltype(std::chrono::steady_clock::now()) tp_0_;
+    std::chrono::steady_clock::time_point tp_0_;
     cv::Mat mask_;
     std::vector<double> track_times_;
 };
