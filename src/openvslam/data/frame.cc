@@ -239,27 +239,27 @@ Vec3_t frame::triangulate_stereo(const unsigned int idx) const {
                 return Vec3_t::Zero();
             }
         }
-        case camera::model_type_t::RadialDivision: {
-            auto camera = static_cast<camera::radial_division*>(camera_);
-
-            const float depth = depths_.at(idx);
-            if (0.0 < depth) {
-                const float x = keypts_.at(idx).pt.x;
-                const float y = keypts_.at(idx).pt.y;
-                const float unproj_x = (x - camera->cx_) * depth * camera->fx_inv_;
-                const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
-                const Vec3_t pos_c{unproj_x, unproj_y, depth};
-
-                // camera座標 -> world座標
-                return rot_wc_ * pos_c + cam_center_;
-            }
-            else {
-                return Vec3_t::Zero();
-            }
-        }
         case camera::model_type_t::Equirectangular: {
             throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
         }
+        case camera::model_type_t::RadialDivision: {
+        auto camera = static_cast<camera::radial_division*>(camera_);
+
+        const float depth = depths_.at(idx);
+        if (0.0 < depth) {
+            const float x = keypts_.at(idx).pt.x;
+            const float y = keypts_.at(idx).pt.y;
+            const float unproj_x = (x - camera->cx_) * depth * camera->fx_inv_;
+            const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
+            const Vec3_t pos_c{unproj_x, unproj_y, depth};
+
+            // camera座標 -> world座標
+            return rot_wc_ * pos_c + cam_center_;
+        }
+        else {
+            return Vec3_t::Zero();
+        }
+    }
     }
 
     return Vec3_t::Zero();
