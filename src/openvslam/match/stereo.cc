@@ -189,8 +189,8 @@ bool stereo::compute_subpixel_disparity(const cv::KeyPoint& keypt_left, const cv
     // パッチの移動範囲を計算し，範囲外であれば破棄
     constexpr int win_size = 5;
     constexpr int slide_width = 5;
-    const int ini_x = scaled_x_right + slide_width - win_size;
-    const int end_x = scaled_x_right + slide_width + win_size + 1;
+    const int ini_x = scaled_x_right - slide_width - win_size;
+    const int end_x = scaled_x_right + slide_width + win_size;
     if (ini_x < 0 || right_image_pyramid_.at(keypt_left.octave).cols <= end_x) {
         return false;
     }
