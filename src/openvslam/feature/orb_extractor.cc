@@ -73,6 +73,7 @@ void orb_extractor::extract(const cv::_InputArray& in_image, const cv::_InputArr
 
     // get cv::Mat of image
     const auto image = in_image.getMat();
+    assert(image.type() == CV_8UC1);
 
     // build image pyramid
     compute_image_pyramid(image);

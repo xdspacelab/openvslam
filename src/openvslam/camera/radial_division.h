@@ -1,5 +1,5 @@
-#ifndef OPENVSLAM_CAMERA_DIVISION_UNDISTORTION_H
-#define OPENVSLAM_CAMERA_DIVISION_UNDISTORTION_H
+#ifndef OPENVSLAM_CAMERA_RADIAL_DIVISION_H
+#define OPENVSLAM_CAMERA_RADIAL_DIVISION_H
 
 #include "openvslam/camera/base.h"
 
@@ -14,16 +14,16 @@ namespace camera {
 // The model is easy to implement and fast to evaluate.
 // It is well suited for wide angle lenses like used in action cameras
 // implemented by Steffen Urban, March 2020 (urbste@googlemail.com)
-class division_undistortion final : public base {
+class radial_division final : public base {
 public:
-    division_undistortion(const std::string& name, const setup_type_t& setup_type, const color_order_t& color_order,
-                const unsigned int cols, const unsigned int rows, const double fps,
-                const double fx, const double fy, const double cx, const double cy,
-                const double distortion, const double focal_x_baseline = 0.0);
+    radial_division(const std::string& name, const setup_type_t& setup_type, const color_order_t& color_order,
+                    const unsigned int cols, const unsigned int rows, const double fps,
+                    const double fx, const double fy, const double cx, const double cy,
+                    const double distortion, const double focal_x_baseline = 0.0);
 
-    division_undistortion(const YAML::Node& yaml_node);
+    radial_division(const YAML::Node& yaml_node);
 
-    ~division_undistortion() override;
+    ~radial_division() override;
 
     void show_parameters() const override final;
 
@@ -39,7 +39,6 @@ public:
         const double undistorted_pt_x = pixel_x / undistortion;
         const double undistorted_pt_y = pixel_y / undistortion;
 
-
         cv::KeyPoint undist_keypt;
         undist_keypt.pt.x = undistorted_pt_x * fx_ + cx_;
         undist_keypt.pt.y = undistorted_pt_y * fy_ + cy_;
@@ -53,11 +52,11 @@ public:
     void undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const override final;
 
     // if we would use normalized kpts
-//    inline Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
-//        const auto l2_norm = std::sqrt(undist_keypt.pt.x * undist_keypt.pt.x +
-//                                       undist_keypt.pt.y * undist_keypt.pt.y + 1.0);
-//        return Vec3_t{undist_keypt.pt.x / l2_norm, undist_keypt.pt.y / l2_norm, 1.0 / l2_norm};
-//    }
+    //    inline Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
+    //        const auto l2_norm = std::sqrt(undist_keypt.pt.x * undist_keypt.pt.x +
+    //                                       undist_keypt.pt.y * undist_keypt.pt.y + 1.0);
+    //        return Vec3_t{undist_keypt.pt.x / l2_norm, undist_keypt.pt.y / l2_norm, 1.0 / l2_norm};
+    //    }
     Vec3_t convert_keypoint_to_bearing(const cv::KeyPoint& undist_keypt) const override final {
         const auto x_normalized = (undist_keypt.pt.x - cx_) / fx_;
         const auto y_normalized = (undist_keypt.pt.y - cy_) / fy_;
@@ -101,7 +100,6 @@ public:
     cv::Mat cv_cam_matrix_;
     //! camera matrix in Eigen format
     Mat33_t eigen_cam_matrix_;
-
 };
 
 } // namespace camera

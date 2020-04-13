@@ -2,7 +2,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
-#include "openvslam/camera/division_undistortion.h"
+#include "openvslam/camera/radial_division.h"
 #include "openvslam/data/camera_database.h"
 
 #include <spdlog/spdlog.h>
@@ -97,17 +97,17 @@ void camera_database::from_json(const nlohmann::json& json_cameras) {
                                              json_camera.at("focal_x_baseline").get<double>());
                 break;
             }
-            case camera::model_type_t::DivisionUndistortion: {
-                camera = new camera::division_undistortion(camera_name, setup_type, color_order,
-                                             json_camera.at("cols").get<unsigned int>(),
-                                             json_camera.at("rows").get<unsigned int>(),
-                                             json_camera.at("fps").get<double>(),
-                                             json_camera.at("fx").get<double>(),
-                                             json_camera.at("fy").get<double>(),
-                                             json_camera.at("cx").get<double>(),
-                                             json_camera.at("cy").get<double>(),
-                                             json_camera.at("distortion").get<double>(),
-                                             json_camera.at("focal_x_baseline").get<double>());
+            case camera::model_type_t::RadialDivision: {
+                camera = new camera::radial_division(camera_name, setup_type, color_order,
+                                                     json_camera.at("cols").get<unsigned int>(),
+                                                     json_camera.at("rows").get<unsigned int>(),
+                                                     json_camera.at("fps").get<double>(),
+                                                     json_camera.at("fx").get<double>(),
+                                                     json_camera.at("fy").get<double>(),
+                                                     json_camera.at("cx").get<double>(),
+                                                     json_camera.at("cy").get<double>(),
+                                                     json_camera.at("distortion").get<double>(),
+                                                     json_camera.at("focal_x_baseline").get<double>());
                 break;
             }
             case camera::model_type_t::Equirectangular: {

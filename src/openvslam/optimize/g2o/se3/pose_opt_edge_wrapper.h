@@ -4,7 +4,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
-#include "openvslam/camera/division_undistortion.h"
+#include "openvslam/camera/radial_division.h"
 #include "openvslam/optimize/g2o/se3/perspective_pose_opt_edge.h"
 #include "openvslam/optimize/g2o/se3/equirectangular_pose_opt_edge.h"
 
@@ -146,8 +146,8 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
             }
             break;
         }
-        case camera::model_type_t::DivisionUndistortion: {
-            auto c = static_cast<camera::division_undistortion*>(camera_);
+        case camera::model_type_t::RadialDivision: {
+            auto c = static_cast<camera::radial_division*>(camera_);
             if (is_monocular_) {
                 auto edge = new mono_perspective_pose_opt_edge();
 
@@ -236,7 +236,7 @@ bool pose_opt_edge_wrapper<T>::depth_is_positive() const {
                 return static_cast<stereo_perspective_pose_opt_edge*>(edge_)->stereo_perspective_pose_opt_edge::depth_is_positive();
             }
         }
-        case camera::model_type_t::DivisionUndistortion: {
+        case camera::model_type_t::RadialDivision: {
             if (is_monocular_) {
                 return static_cast<mono_perspective_pose_opt_edge*>(edge_)->mono_perspective_pose_opt_edge::depth_is_positive();
             }

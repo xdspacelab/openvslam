@@ -4,7 +4,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
-#include "openvslam/camera/division_undistortion.h"
+#include "openvslam/camera/radial_division.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/optimize/g2o/sim3/forward_reproj_edge.h"
 #include "openvslam/optimize/g2o/sim3/backward_reproj_edge.h"
@@ -118,8 +118,8 @@ mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int i
                 edge_12_ = edge_12;
                 break;
             }
-            case camera::model_type_t::DivisionUndistortion: {
-                auto c = static_cast<camera::division_undistortion*>(camera1);
+            case camera::model_type_t::RadialDivision: {
+                auto c = static_cast<camera::radial_division*>(camera1);
 
                 // 3次元点はkeyfrm_2で観測しているもの，カメラモデルと特徴点はkeyfrm_1のもの
                 auto edge_12 = new g2o::sim3::perspective_forward_reproj_edge();
@@ -225,8 +225,8 @@ mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int i
                 edge_21_ = edge_21;
                 break;
             }
-            case camera::model_type_t::DivisionUndistortion: {
-                auto c = static_cast<camera::division_undistortion*>(camera2);
+            case camera::model_type_t::RadialDivision: {
+                auto c = static_cast<camera::radial_division*>(camera2);
 
                 // 3次元点はkeyfrm_1で観測しているもの，カメラモデルと特徴点はkeyfrm_2のもの
                 auto edge_21 = new g2o::sim3::perspective_backward_reproj_edge();

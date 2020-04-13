@@ -1,6 +1,6 @@
 // Created by Steffen Urban June 2019, urbste@googlemail.com, github.com/urbste
 
-#include "openvslam/camera/division_undistortion.h"
+#include "openvslam/camera/radial_division.h"
 
 #include <iostream>
 
@@ -10,14 +10,14 @@
 namespace openvslam {
 namespace camera {
 
-division_undistortion::division_undistortion(const std::string& name, const setup_type_t& setup_type, const color_order_t& color_order,
-                         const unsigned int cols, const unsigned int rows, const double fps,
-                         const double fx, const double fy, const double cx, const double cy,
-                         const double distortion, const double focal_x_baseline)
-        : base(name, setup_type, model_type_t::DivisionUndistortion, color_order, cols, rows, fps, focal_x_baseline, focal_x_baseline / fx),
-          fx_(fx), fy_(fy), cx_(cx), cy_(cy), fx_inv_(1.0 / fx), fy_inv_(1.0 / fy),
-          distortion_(distortion) {
-    spdlog::debug("CONSTRUCT: camera::division_undistortion");
+radial_division::radial_division(const std::string& name, const setup_type_t& setup_type, const color_order_t& color_order,
+                                 const unsigned int cols, const unsigned int rows, const double fps,
+                                 const double fx, const double fy, const double cx, const double cy,
+                                 const double distortion, const double focal_x_baseline)
+    : base(name, setup_type, model_type_t::RadialDivision, color_order, cols, rows, fps, focal_x_baseline, focal_x_baseline / fx),
+      fx_(fx), fy_(fy), cx_(cx), cy_(cy), fx_inv_(1.0 / fx), fy_inv_(1.0 / fy),
+      distortion_(distortion) {
+    spdlog::debug("CONSTRUCT: camera::radial_division");
 
     cv_cam_matrix_ = (cv::Mat_<float>(3, 3) << fx_, 0, cx_, 0, fy_, cy_, 0, 0, 1);
 
@@ -29,8 +29,8 @@ division_undistortion::division_undistortion(const std::string& name, const setu
     inv_cell_height_ = static_cast<double>(num_grid_rows_) / (img_bounds_.max_y_ - img_bounds_.min_y_);
 }
 
-division_undistortion::division_undistortion(const YAML::Node& yaml_node)
-        : division_undistortion(yaml_node["Camera.name"].as<std::string>(),
+radial_division::radial_division(const YAML::Node& yaml_node)
+    : radial_division(yaml_node["Camera.name"].as<std::string>(),
                       load_setup_type(yaml_node),
                       load_color_order(yaml_node),
                       yaml_node["Camera.cols"].as<unsigned int>(),
@@ -43,11 +43,11 @@ division_undistortion::division_undistortion(const YAML::Node& yaml_node)
                       yaml_node["Camera.distortion"].as<double>(),
                       yaml_node["Camera.focal_x_baseline"].as<double>(0.0)) {}
 
-division_undistortion::~division_undistortion() {
-    spdlog::debug("DESTRUCT: camera::division_undistortion");
+radial_division::~radial_division() {
+    spdlog::debug("DESTRUCT: camera::radial_division");
 }
 
-void division_undistortion::show_parameters() const {
+void radial_division::show_parameters() const {
     show_common_parameters();
     std::cout << "  - fx: " << fx_ << std::endl;
     std::cout << "  - fy: " << fy_ << std::endl;
@@ -60,17 +60,17 @@ void division_undistortion::show_parameters() const {
     std::cout << "  - max y: " << img_bounds_.max_y_ << std::endl;
 }
 
-image_bounds division_undistortion::compute_image_bounds() const {
+image_bounds radial_division::compute_image_bounds() const {
     spdlog::debug("compute image bounds");
 
     if (distortion_ == 0.0) {
         return image_bounds{0.0, cols_, 0.0, rows_};
     }
     else {
-        const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0), // 左上
-                                                cv::KeyPoint(cols_, 0.0, 1.0), // 右上
-                                                cv::KeyPoint(0.0, rows_, 1.0), // 左下
-                                                cv::KeyPoint(cols_, rows_, 1.0)}; // 右下
+        const std::vector<cv::KeyPoint> corners{cv::KeyPoint(0.0, 0.0, 1.0),
+                                                cv::KeyPoint(cols_, 0.0, 1.0),
+                                                cv::KeyPoint(0.0, rows_, 1.0),
+                                                cv::KeyPoint(cols_, rows_, 1.0)};
 
         std::vector<cv::KeyPoint> undist_corners;
         undistort_keypoints(corners, undist_corners);
@@ -82,7 +82,7 @@ image_bounds division_undistortion::compute_image_bounds() const {
     }
 }
 
-void division_undistortion::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const {
+void radial_division::undistort_keypoints(const std::vector<cv::KeyPoint>& dist_keypts, std::vector<cv::KeyPoint>& undist_keypts) const {
     // fill cv::Mat with distorted keypoints
     undist_keypts.resize(dist_keypts.size());
     for (unsigned long idx = 0; idx < dist_keypts.size(); ++idx) {
@@ -93,7 +93,7 @@ void division_undistortion::undistort_keypoints(const std::vector<cv::KeyPoint>&
     }
 }
 
-void division_undistortion::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const {
+void radial_division::convert_keypoints_to_bearings(const std::vector<cv::KeyPoint>& undist_keypts, eigen_alloc_vector<Vec3_t>& bearings) const {
     bearings.resize(undist_keypts.size());
 #ifdef USE_OPENMP
 #pragma omp parallel for
@@ -103,7 +103,7 @@ void division_undistortion::convert_keypoints_to_bearings(const std::vector<cv::
     }
 }
 
-void division_undistortion::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const {
+void radial_division::convert_bearings_to_keypoints(const eigen_alloc_vector<Vec3_t>& bearings, std::vector<cv::KeyPoint>& undist_keypts) const {
     undist_keypts.resize(bearings.size());
 #ifdef USE_OPENMP
 #pragma omp parallel for
@@ -113,7 +113,7 @@ void division_undistortion::convert_bearings_to_keypoints(const eigen_alloc_vect
     }
 }
 
-bool division_undistortion::reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const {
+bool radial_division::reproject_to_image(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec2_t& reproj, float& x_right) const {
     const Vec3_t pos_c = rot_cw * pos_w + trans_cw;
 
     if (pos_c(2) <= 0.0) {
@@ -135,7 +135,7 @@ bool division_undistortion::reproject_to_image(const Mat33_t& rot_cw, const Vec3
     return true;
 }
 
-bool division_undistortion::reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const {
+bool radial_division::reproject_to_bearing(const Mat33_t& rot_cw, const Vec3_t& trans_cw, const Vec3_t& pos_w, Vec3_t& reproj) const {
     reproj = rot_cw * pos_w + trans_cw;
 
     if (reproj(2) <= 0.0) {
@@ -158,21 +158,23 @@ bool division_undistortion::reproject_to_bearing(const Mat33_t& rot_cw, const Ve
     return true;
 }
 
-nlohmann::json division_undistortion::to_json() const {
-    return {{"model_type", get_model_type_string()},
-            {"setup_type", get_setup_type_string()},
-            {"color_order", get_color_order_string()},
-            {"cols", cols_},
-            {"rows", rows_},
-            {"fps", fps_},
-            {"focal_x_baseline", focal_x_baseline_},
-            {"num_grid_cols", num_grid_cols_},
-            {"num_grid_rows", num_grid_rows_},
-            {"fx", fx_},
-            {"fy", fy_},
-            {"cx", cx_},
-            {"cy", cy_},
-            {"distortion", distortion_},};
+nlohmann::json radial_division::to_json() const {
+    return {
+        {"model_type", get_model_type_string()},
+        {"setup_type", get_setup_type_string()},
+        {"color_order", get_color_order_string()},
+        {"cols", cols_},
+        {"rows", rows_},
+        {"fps", fps_},
+        {"focal_x_baseline", focal_x_baseline_},
+        {"num_grid_cols", num_grid_cols_},
+        {"num_grid_rows", num_grid_rows_},
+        {"fx", fx_},
+        {"fy", fy_},
+        {"cx", cx_},
+        {"cy", cy_},
+        {"distortion", distortion_},
+    };
 }
 
 } // namespace camera

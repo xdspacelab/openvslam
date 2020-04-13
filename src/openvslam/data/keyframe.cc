@@ -1,7 +1,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
-#include "openvslam/camera/division_undistortion.h"
+#include "openvslam/camera/radial_division.h"
 #include "openvslam/data/common.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
@@ -316,8 +316,8 @@ Vec3_t keyframe::triangulate_stereo(const unsigned int idx) const {
                 return Vec3_t::Zero();
             }
         }
-        case camera::model_type_t::DivisionUndistortion: {
-            auto camera = static_cast<camera::division_undistortion*>(camera_);
+        case camera::model_type_t::RadialDivision: {
+            auto camera = static_cast<camera::radial_division*>(camera_);
 
             const float depth = depths_.at(idx);
             if (0.0 < depth) {

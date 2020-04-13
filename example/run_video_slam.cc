@@ -11,7 +11,6 @@
 #include <chrono>
 #include <numeric>
 
-#include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/videoio.hpp>
@@ -53,22 +52,12 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     double timestamp = 0.0;
 
     unsigned int num_frame = 0;
-    unsigned int empty_frame = 0;
     bool is_not_end = true;
     // run the SLAM in another thread
     std::thread thread([&]() {
         while (is_not_end) {
             is_not_end = video.read(frame);
-            // this is necessary as sometimes frames are missing from e.g. gopro videos
-            // and the feed would crash
-            if (!is_not_end) {
-                ++empty_frame;
-                is_not_end = true;
-                if (empty_frame > 500) {
-                    is_not_end = false;
-                }
-                spdlog::debug("VIDEO: empty image nr "+std::to_string(empty_frame)+" in video.");
-            }
+
             const auto tp_1 = std::chrono::steady_clock::now();
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
