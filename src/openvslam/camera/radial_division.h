@@ -105,4 +105,4 @@ public:
 } // namespace camera
 } // namespace openvslam
 
-#endif // OPENVSLAM_CAMERA_PERSPECTIVE_H
+#endif // OPENVSLAM_CAMERA_RADIAL_DIVISION_H
