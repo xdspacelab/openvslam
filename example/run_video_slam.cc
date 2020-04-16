@@ -52,7 +52,6 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     double timestamp = 0.0;
 
     unsigned int num_frame = 0;
-
     bool is_not_end = true;
     // run the SLAM in another thread
     std::thread thread([&]() {
@@ -60,7 +59,6 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
             is_not_end = video.read(frame);
 
             const auto tp_1 = std::chrono::steady_clock::now();
-
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
                 // input the current frame and estimate the camera pose
                 SLAM.feed_monocular_frame(frame, timestamp, mask);

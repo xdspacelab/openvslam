@@ -1,4 +1,5 @@
 #include "openvslam/camera/perspective.h"
+#include "openvslam/camera/radial_division.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/initialize/perspective.h"
@@ -125,6 +126,10 @@ Mat33_t perspective::get_camera_matrix(camera::base* camera) {
         }
         case camera::model_type_t::Fisheye: {
             auto c = static_cast<camera::fisheye*>(camera);
+            return c->eigen_cam_matrix_;
+        }
+        case camera::model_type_t::RadialDivision: {
+            auto c = static_cast<camera::radial_division*>(camera);
             return c->eigen_cam_matrix_;
         }
         default: {
