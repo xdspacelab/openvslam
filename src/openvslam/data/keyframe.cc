@@ -318,6 +318,9 @@ Vec3_t keyframe::triangulate_stereo(const unsigned int idx) const {
                 return Vec3_t::Zero();
             }
         }
+        case camera::model_type_t::Equirectangular: {
+            throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
+        }
         case camera::model_type_t::RadialDivision: {
             auto camera = static_cast<camera::radial_division*>(camera_);
 
@@ -336,9 +339,6 @@ Vec3_t keyframe::triangulate_stereo(const unsigned int idx) const {
             else {
                 return Vec3_t::Zero();
             }
-        }
-        case camera::model_type_t::Equirectangular: {
-            throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
         }
     }
 

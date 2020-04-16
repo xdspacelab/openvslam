@@ -118,6 +118,28 @@ mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int i
                 edge_12_ = edge_12;
                 break;
             }
+            case camera::model_type_t::Equirectangular: {
+                auto c = static_cast<camera::equirectangular*>(camera1);
+
+                // 3次元点はkeyfrm_2で観測しているもの，カメラモデルと特徴点はkeyfrm_1のもの
+                auto edge_12 = new g2o::sim3::equirectangular_forward_reproj_edge();
+                // 特徴点情報と再投影誤差分散をセット
+                const auto& undist_keypt_1 = shot1->undist_keypts_.at(idx1);
+                const Vec2_t obs_1{undist_keypt_1.pt.x, undist_keypt_1.pt.y};
+                const float inv_sigma_sq_1 = shot1->inv_level_sigma_sq_.at(undist_keypt_1.octave);
+                edge_12->setMeasurement(obs_1);
+                edge_12->setInformation(Mat22_t::Identity() * inv_sigma_sq_1);
+                // 3次元点をセット
+                edge_12->pos_w_ = lm2->get_pos_in_world();
+                // カメラモデルをセット
+                edge_12->cols_ = c->cols_;
+                edge_12->rows_ = c->rows_;
+
+                edge_12->setVertex(0, Sim3_12_vtx);
+
+                edge_12_ = edge_12;
+                break;
+            }
             case camera::model_type_t::RadialDivision: {
                 auto c = static_cast<camera::radial_division*>(camera1);
 
@@ -136,28 +158,6 @@ mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int i
                 edge_12->fy_ = c->fy_;
                 edge_12->cx_ = c->cx_;
                 edge_12->cy_ = c->cy_;
-
-                edge_12->setVertex(0, Sim3_12_vtx);
-
-                edge_12_ = edge_12;
-                break;
-            }
-            case camera::model_type_t::Equirectangular: {
-                auto c = static_cast<camera::equirectangular*>(camera1);
-
-                // 3次元点はkeyfrm_2で観測しているもの，カメラモデルと特徴点はkeyfrm_1のもの
-                auto edge_12 = new g2o::sim3::equirectangular_forward_reproj_edge();
-                // 特徴点情報と再投影誤差分散をセット
-                const auto& undist_keypt_1 = shot1->undist_keypts_.at(idx1);
-                const Vec2_t obs_1{undist_keypt_1.pt.x, undist_keypt_1.pt.y};
-                const float inv_sigma_sq_1 = shot1->inv_level_sigma_sq_.at(undist_keypt_1.octave);
-                edge_12->setMeasurement(obs_1);
-                edge_12->setInformation(Mat22_t::Identity() * inv_sigma_sq_1);
-                // 3次元点をセット
-                edge_12->pos_w_ = lm2->get_pos_in_world();
-                // カメラモデルをセット
-                edge_12->cols_ = c->cols_;
-                edge_12->rows_ = c->rows_;
 
                 edge_12->setVertex(0, Sim3_12_vtx);
 
@@ -225,6 +225,28 @@ mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int i
                 edge_21_ = edge_21;
                 break;
             }
+            case camera::model_type_t::Equirectangular: {
+                auto c = static_cast<camera::equirectangular*>(camera2);
+
+                // 3次元点はkeyfrm_1で観測しているもの，カメラモデルと特徴点はkeyfrm_2のもの
+                auto edge_21 = new g2o::sim3::equirectangular_backward_reproj_edge();
+                // 特徴点情報と再投影誤差分散をセット
+                const auto& undist_keypt_2 = shot2->undist_keypts_.at(idx2);
+                const Vec2_t obs_2{undist_keypt_2.pt.x, undist_keypt_2.pt.y};
+                const float inv_sigma_sq_2 = shot2->inv_level_sigma_sq_.at(undist_keypt_2.octave);
+                edge_21->setMeasurement(obs_2);
+                edge_21->setInformation(Mat22_t::Identity() * inv_sigma_sq_2);
+                // 3次元点をセット
+                edge_21->pos_w_ = lm1->get_pos_in_world();
+                // カメラモデルをセット
+                edge_21->cols_ = c->cols_;
+                edge_21->rows_ = c->rows_;
+
+                edge_21->setVertex(0, Sim3_12_vtx);
+
+                edge_21_ = edge_21;
+                break;
+            }
             case camera::model_type_t::RadialDivision: {
                 auto c = static_cast<camera::radial_division*>(camera2);
 
@@ -243,28 +265,6 @@ mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int i
                 edge_21->fy_ = c->fy_;
                 edge_21->cx_ = c->cx_;
                 edge_21->cy_ = c->cy_;
-
-                edge_21->setVertex(0, Sim3_12_vtx);
-
-                edge_21_ = edge_21;
-                break;
-            }
-            case camera::model_type_t::Equirectangular: {
-                auto c = static_cast<camera::equirectangular*>(camera2);
-
-                // 3次元点はkeyfrm_1で観測しているもの，カメラモデルと特徴点はkeyfrm_2のもの
-                auto edge_21 = new g2o::sim3::equirectangular_backward_reproj_edge();
-                // 特徴点情報と再投影誤差分散をセット
-                const auto& undist_keypt_2 = shot2->undist_keypts_.at(idx2);
-                const Vec2_t obs_2{undist_keypt_2.pt.x, undist_keypt_2.pt.y};
-                const float inv_sigma_sq_2 = shot2->inv_level_sigma_sq_.at(undist_keypt_2.octave);
-                edge_21->setMeasurement(obs_2);
-                edge_21->setInformation(Mat22_t::Identity() * inv_sigma_sq_2);
-                // 3次元点をセット
-                edge_21->pos_w_ = lm1->get_pos_in_world();
-                // カメラモデルをセット
-                edge_21->cols_ = c->cols_;
-                edge_21->rows_ = c->rows_;
 
                 edge_21->setVertex(0, Sim3_12_vtx);
 

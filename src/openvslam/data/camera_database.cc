@@ -97,6 +97,13 @@ void camera_database::from_json(const nlohmann::json& json_cameras) {
                                              json_camera.at("focal_x_baseline").get<double>());
                 break;
             }
+            case camera::model_type_t::Equirectangular: {
+                camera = new camera::equirectangular(camera_name, color_order,
+                                                     json_camera.at("cols").get<unsigned int>(),
+                                                     json_camera.at("rows").get<unsigned int>(),
+                                                     json_camera.at("fps").get<double>());
+                break;
+            }
             case camera::model_type_t::RadialDivision: {
                 camera = new camera::radial_division(camera_name, setup_type, color_order,
                                                      json_camera.at("cols").get<unsigned int>(),
@@ -108,13 +115,6 @@ void camera_database::from_json(const nlohmann::json& json_cameras) {
                                                      json_camera.at("cy").get<double>(),
                                                      json_camera.at("distortion").get<double>(),
                                                      json_camera.at("focal_x_baseline").get<double>());
-                break;
-            }
-            case camera::model_type_t::Equirectangular: {
-                camera = new camera::equirectangular(camera_name, color_order,
-                                                     json_camera.at("cols").get<unsigned int>(),
-                                                     json_camera.at("rows").get<unsigned int>(),
-                                                     json_camera.at("fps").get<double>());
                 break;
             }
         }

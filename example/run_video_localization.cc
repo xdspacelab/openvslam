@@ -61,6 +61,7 @@ void mono_localization(const std::shared_ptr<openvslam::config>& cfg,
     double timestamp = 0.0;
 
     unsigned int num_frame = 0;
+
     bool is_not_end = true;
     // run the SLAM in another thread
     std::thread thread([&]() {

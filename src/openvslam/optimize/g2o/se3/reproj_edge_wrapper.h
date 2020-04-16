@@ -145,6 +145,27 @@ reproj_edge_wrapper<T>::reproj_edge_wrapper(T* shot, shot_vertex* shot_vtx,
             }
             break;
         }
+        case camera::model_type_t::Equirectangular: {
+            assert(is_monocular_);
+
+            auto c = static_cast<camera::equirectangular*>(camera_);
+
+            auto edge = new equirectangular_reproj_edge();
+
+            const Vec2_t obs{obs_x, obs_y};
+            edge->setMeasurement(obs);
+            edge->setInformation(Mat22_t::Identity() * inv_sigma_sq);
+
+            edge->cols_ = c->cols_;
+            edge->rows_ = c->rows_;
+
+            edge->setVertex(0, lm_vtx);
+            edge->setVertex(1, shot_vtx);
+
+            edge_ = edge;
+
+            break;
+        }
         case camera::model_type_t::RadialDivision: {
             auto c = static_cast<camera::radial_division*>(camera_);
             if (is_monocular_) {
@@ -184,27 +205,6 @@ reproj_edge_wrapper<T>::reproj_edge_wrapper(T* shot, shot_vertex* shot_vtx,
             }
             break;
         }
-        case camera::model_type_t::Equirectangular: {
-            assert(is_monocular_);
-
-            auto c = static_cast<camera::equirectangular*>(camera_);
-
-            auto edge = new equirectangular_reproj_edge();
-
-            const Vec2_t obs{obs_x, obs_y};
-            edge->setMeasurement(obs);
-            edge->setInformation(Mat22_t::Identity() * inv_sigma_sq);
-
-            edge->cols_ = c->cols_;
-            edge->rows_ = c->rows_;
-
-            edge->setVertex(0, lm_vtx);
-            edge->setVertex(1, shot_vtx);
-
-            edge_ = edge;
-
-            break;
-        }
     }
 
     // loss functionを設定
@@ -234,6 +234,9 @@ bool reproj_edge_wrapper<T>::depth_is_positive() const {
                 return static_cast<stereo_perspective_reproj_edge*>(edge_)->stereo_perspective_reproj_edge::depth_is_positive();
             }
         }
+        case camera::model_type_t::Equirectangular: {
+            return true;
+        }
         case camera::model_type_t::RadialDivision: {
             if (is_monocular_) {
                 return static_cast<mono_perspective_reproj_edge*>(edge_)->mono_perspective_reproj_edge::depth_is_positive();
@@ -241,9 +244,6 @@ bool reproj_edge_wrapper<T>::depth_is_positive() const {
             else {
                 return static_cast<stereo_perspective_reproj_edge*>(edge_)->stereo_perspective_reproj_edge::depth_is_positive();
             }
-        }
-        case camera::model_type_t::Equirectangular: {
-            return true;
         }
     }
 
