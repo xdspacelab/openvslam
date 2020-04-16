@@ -24,10 +24,11 @@ const std::array<std::string, 3> setup_type_to_string = {{"Monocular", "Stereo",
 enum class model_type_t {
     Perspective = 0,
     Fisheye = 1,
-    Equirectangular = 2
+    Equirectangular = 2,
+    RadialDivision = 3
 };
 
-const std::array<std::string, 3> model_type_to_string = {{"Perspective", "Fisheye", "Equirectangular"}};
+const std::array<std::string, 4> model_type_to_string = {{"Perspective", "Fisheye", "Equirectangular", "RadialDivision"}};
 
 enum class color_order_t {
     Gray = 0,
