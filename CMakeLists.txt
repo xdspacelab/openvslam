@@ -17,15 +17,17 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Release")
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+option(BUILD_SHARED_LIBS "Build OpenVSLAM as a shared library" OFF)
 
 # ----- Set options for debugging -----
 
 set(USE_CCACHE ON CACHE BOOL "Use ccache to accelerate build")
 find_program(CCACHE_EXE ccache)
-if(USE_CCACHE AND CCACHE_EXE)
+if(USE_CCACHE AND CCACHE_EXE AND NOT MSVC)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_EXE}")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_EXE}")
     message(STATUS "ccache: Enabled")
@@ -35,10 +37,10 @@ else()
 endif()
 
 set(USE_SANITIZER OFF CACHE BOOL "Enable Address/Memory sanitizer (set env as ASAN_OPTIONS=detect_leaks=1)")
-if(USE_SANITIZER)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+if(USE_SANITIZER AND NOT MSVC)
+    add_compile_options(-fno-omit-frame-pointer -fsanitize=address)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
     message(STATUS "Address/Memory sanitizer: ENABLED")
 else()
@@ -47,24 +49,22 @@ endif()
 
 # ----- Set compiler options -----
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
-
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math")
-
-set(BUILD_WITH_MARCH_NATIVE OFF CACHE BOOL "Enable architecture-aware optimization (-march=native)")
-if(BUILD_WITH_MARCH_NATIVE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=native -march=native")
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -mtune=native -march=native")
-    message(STATUS "Architecture-aware optimization (-march=native): ENABLED")
+# Note: add_compile_options() accepts only "simple" generator-expressions :-(
+if(MSVC)
+    # C4251: DLL export, C4244: floating->integer, C4305: double->float, C4267: size_t->any
+    add_compile_options(/W4 /MT /source-charset:utf-8 /execution-charset:utf-8 /wd4251 /wd4244 /wd4305 /wd4267)
+    add_compile_options("$<$<CONFIG:Debug>:/Zo>;$<$<CONFIG:Release>:/O2>")
 else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=native")
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -mtune=native")
-    message(STATUS "Architecture-aware optimization (-march=native): DISABLED")
+    add_compile_options(-Wall -Wextra -pedantic)
+    add_compile_options("$<$<CONFIG:Debug>:-Og>;$<$<CONFIG:Release>:-O3;-ffast-math>")
+endif()
+
+set(BUILD_WITH_MARCH_NATIVE OFF CACHE BOOL "Enable architecture-aware optimization")
+if(BUILD_WITH_MARCH_NATIVE AND NOT MSVC)
+    add_compile_options(-mtune=native -march=native)
+    message(STATUS "Architecture-aware optimization: ENABLED")
+else()
+    message(STATUS "Architecture-aware optimization: DISABLED")
 endif()
 
 # ----- Find dependencies -----
@@ -103,7 +103,7 @@ set(OPENVSLAM_PROJECT_CONFIG ${OPENVSLAM_GENERATED_DIR}/${PROJECT_NAME}Config.cm
 set(OPENVSLAM_TARGETS_EXPORT_NAME ${PROJECT_NAME}Targets)
 set(OPENVSLAM_CONFIG_INSTALL_DIR lib/cmake/${PROJECT_NAME})
 set(OPENVSLAM_NAMESPACE "${PROJECT_NAME}::")
-set(OPENVSLAM_VERSION 0.0.1)
+set(OPENVSLAM_VERSION 1.0.0)
 
 # Create a version config file
 write_basic_package_version_file(${OPENVSLAM_VERSION_CONFIG}
