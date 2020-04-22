@@ -1,6 +1,7 @@
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
+#include "openvslam/camera/radial_division.h"
 #include "openvslam/data/common.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
@@ -199,6 +200,7 @@ void keyframe::erase_landmark_with_index(const unsigned int idx) {
 }
 
 void keyframe::erase_landmark(landmark* lm) {
+    std::lock_guard<std::mutex> lock(mtx_observations_);
     int idx = lm->get_index_in_keyframe(this);
     if (0 <= idx) {
         landmarks_.at(static_cast<unsigned int>(idx)) = nullptr;
@@ -206,6 +208,7 @@ void keyframe::erase_landmark(landmark* lm) {
 }
 
 void keyframe::replace_landmark(landmark* lm, const unsigned int idx) {
+    std::lock_guard<std::mutex> lock(mtx_observations_);
     landmarks_.at(idx) = lm;
 }
 
@@ -318,6 +321,25 @@ Vec3_t keyframe::triangulate_stereo(const unsigned int idx) const {
         case camera::model_type_t::Equirectangular: {
             throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
         }
+        case camera::model_type_t::RadialDivision: {
+            auto camera = static_cast<camera::radial_division*>(camera_);
+
+            const float depth = depths_.at(idx);
+            if (0.0 < depth) {
+                const float x = keypts_.at(idx).pt.x;
+                const float y = keypts_.at(idx).pt.y;
+                const float unproj_x = (x - camera->cx_) * depth * camera->fx_inv_;
+                const float unproj_y = (y - camera->cy_) * depth * camera->fy_inv_;
+                const Vec3_t pos_c{unproj_x, unproj_y, depth};
+
+                std::lock_guard<std::mutex> lock(mtx_pose_);
+                // camera座標 -> world座標
+                return cam_pose_wc_.block<3, 3>(0, 0) * pos_c + cam_pose_wc_.block<3, 1>(0, 3);
+            }
+            else {
+                return Vec3_t::Zero();
+            }
+        }
     }
 
     return Vec3_t::Zero();
@@ -379,11 +401,14 @@ void keyframe::prepare_for_erasing() {
 
     // 2. remove associations between keypoints and landmarks
 
-    for (const auto lm : landmarks_) {
-        if (!lm) {
-            continue;
+    {
+        std::lock_guard<std::mutex> lock(mtx_observations_);
+        for (const auto lm : landmarks_) {
+            if (!lm) {
+                continue;
+            }
+            lm->erase_observation(this);
         }
-        lm->erase_observation(this);
     }
 
     // 3. recover covisibility graph and spanning tree

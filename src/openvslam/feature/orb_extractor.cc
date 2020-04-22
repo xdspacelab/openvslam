@@ -616,7 +616,7 @@ float orb_extractor::ic_angle(const cv::Mat& image, const cv::Point2f& point) co
 
     const auto step = static_cast<int>(image.step1());
     for (int v = 1; v <= fast_half_patch_size_; ++v) {
-        unsigned int v_sum = 0;
+        int v_sum = 0;
         const int d = u_max_.at(v);
         for (int u = -d; u <= d; ++u) {
             const int val_plus = center[u + v * step];

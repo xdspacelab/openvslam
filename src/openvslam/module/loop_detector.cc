@@ -63,7 +63,7 @@ bool loop_detector::detect_loop_candidates() {
 
     // 2. From now on, we treat each of the candidates as "keyframe set" in order to improve robustness of loop detection
     //    the number of each of the candidate keyframe sets that detected are counted every time when this member functions is called
-    //    if the keyframe sets were detected at the previous call, is is contained in `cont_detected_keyfrm_sets_`
+    //    if the keyframe sets were detected at the previous call, it is contained in `cont_detected_keyfrm_sets_`
     //    (note that "match of two keyframe sets" means the intersection of the two sets is NOT empty)
 
     const auto curr_cont_detected_keyfrm_sets = find_continuously_detected_keyframe_sets(cont_detected_keyfrm_sets_, init_loop_candidates);
