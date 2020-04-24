@@ -2,18 +2,18 @@
 #define OPENVSLAM_OPTIMIZER_G2O_SE3_PERSPECTIVE_POSE_OPT_EDGE_H
 
 #include "openvslam/type.h"
-#include "openvslam/optimize/g2o/landmark_vertex.h"
-#include "openvslam/optimize/g2o/se3/shot_vertex.h"
+#include "openvslam/optimize/internal/landmark_vertex.h"
+#include "openvslam/optimize/internal/se3/shot_vertex.h"
 
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/core/base_unary_edge.h>
 
 namespace openvslam {
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace se3 {
 
-class mono_perspective_pose_opt_edge final : public ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex> {
+class mono_perspective_pose_opt_edge final : public g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -36,7 +36,7 @@ public:
 };
 
 inline mono_perspective_pose_opt_edge::mono_perspective_pose_opt_edge()
-    : ::g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
+    : g2o::BaseUnaryEdge<2, Vec2_t, shot_vertex>() {}
 
 inline bool mono_perspective_pose_opt_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
@@ -73,7 +73,7 @@ inline void mono_perspective_pose_opt_edge::computeError() {
 
 inline void mono_perspective_pose_opt_edge::linearizeOplus() {
     auto vi = static_cast<shot_vertex*>(_vertices.at(0));
-    const ::g2o::SE3Quat& cam_pose_cw = vi->shot_vertex::estimate();
+    const g2o::SE3Quat& cam_pose_cw = vi->shot_vertex::estimate();
     const Vec3_t pos_c = cam_pose_cw.map(pos_w_);
 
     const auto x = pos_c(0);
@@ -105,7 +105,7 @@ inline Vec2_t mono_perspective_pose_opt_edge::cam_project(const Vec3_t& pos_c) c
     return {fx_ * pos_c(0) / pos_c(2) + cx_, fy_ * pos_c(1) / pos_c(2) + cy_};
 }
 
-class stereo_perspective_pose_opt_edge : public ::g2o::BaseUnaryEdge<3, Vec3_t, shot_vertex> {
+class stereo_perspective_pose_opt_edge : public g2o::BaseUnaryEdge<3, Vec3_t, shot_vertex> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -128,7 +128,7 @@ public:
 };
 
 inline stereo_perspective_pose_opt_edge::stereo_perspective_pose_opt_edge()
-    : ::g2o::BaseUnaryEdge<3, Vec3_t, shot_vertex>() {}
+    : g2o::BaseUnaryEdge<3, Vec3_t, shot_vertex>() {}
 
 inline bool stereo_perspective_pose_opt_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 3; ++i) {
@@ -165,7 +165,7 @@ inline void stereo_perspective_pose_opt_edge::computeError() {
 
 inline void stereo_perspective_pose_opt_edge::linearizeOplus() {
     auto vi = static_cast<shot_vertex*>(_vertices.at(0));
-    const ::g2o::SE3Quat& cam_pose_cw = vi->shot_vertex::estimate();
+    const g2o::SE3Quat& cam_pose_cw = vi->shot_vertex::estimate();
     const Vec3_t pos_c = cam_pose_cw.map(pos_w_);
 
     const auto x = pos_c(0);
@@ -206,7 +206,7 @@ inline Vec3_t stereo_perspective_pose_opt_edge::cam_project(const Vec3_t& pos_c)
 }
 
 } // namespace se3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 

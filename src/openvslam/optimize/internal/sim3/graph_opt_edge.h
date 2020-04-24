@@ -2,16 +2,16 @@
 #define OPENVSLAM_OPTIMIZER_G2O_SIM3_GRAPH_OPT_EDGE_H
 
 #include "openvslam/type.h"
-#include "openvslam/optimize/g2o/sim3/shot_vertex.h"
+#include "openvslam/optimize/internal/sim3/shot_vertex.h"
 
 #include <g2o/core/base_binary_edge.h>
 
 namespace openvslam {
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace sim3 {
 
-class graph_opt_edge final : public ::g2o::BaseBinaryEdge<7, ::g2o::Sim3, shot_vertex, shot_vertex> {
+class graph_opt_edge final : public g2o::BaseBinaryEdge<7, g2o::Sim3, shot_vertex, shot_vertex> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -23,20 +23,20 @@ public:
 
     void computeError() override;
 
-    double initialEstimatePossible(const ::g2o::OptimizableGraph::VertexSet&, ::g2o::OptimizableGraph::Vertex*) override;
+    double initialEstimatePossible(const g2o::OptimizableGraph::VertexSet&, g2o::OptimizableGraph::Vertex*) override;
 
-    void initialEstimate(const ::g2o::OptimizableGraph::VertexSet& from, ::g2o::OptimizableGraph::Vertex*) override;
+    void initialEstimate(const g2o::OptimizableGraph::VertexSet& from, g2o::OptimizableGraph::Vertex*) override;
 };
 
 inline graph_opt_edge::graph_opt_edge()
-    : ::g2o::BaseBinaryEdge<7, ::g2o::Sim3, shot_vertex, shot_vertex>() {}
+    : g2o::BaseBinaryEdge<7, g2o::Sim3, shot_vertex, shot_vertex>() {}
 
 inline bool graph_opt_edge::read(std::istream& is) {
     Vec7_t sim3_wc;
     for (unsigned int i = 0; i < 7; ++i) {
         is >> sim3_wc(i);
     }
-    const ::g2o::Sim3 Sim3_wc(sim3_wc);
+    const g2o::Sim3 Sim3_wc(sim3_wc);
     setMeasurement(Sim3_wc.inverse());
     for (unsigned int i = 0; i < 7; ++i) {
         for (unsigned int j = i; j < 7; ++j) {
@@ -50,7 +50,7 @@ inline bool graph_opt_edge::read(std::istream& is) {
 }
 
 inline bool graph_opt_edge::write(std::ostream& os) const {
-    ::g2o::Sim3 Sim3_wc(measurement().inverse());
+    g2o::Sim3 Sim3_wc(measurement().inverse());
     const auto sim3_wc = Sim3_wc.log();
     for (unsigned int i = 0; i < 7; ++i) {
         os << sim3_wc(i) << " ";
@@ -67,16 +67,16 @@ inline void graph_opt_edge::computeError() {
     const auto v1 = static_cast<const shot_vertex*>(_vertices.at(0));
     const auto v2 = static_cast<const shot_vertex*>(_vertices.at(1));
 
-    const ::g2o::Sim3 C(_measurement);
-    const ::g2o::Sim3 error_ = C * v1->estimate() * v2->estimate().inverse();
+    const g2o::Sim3 C(_measurement);
+    const g2o::Sim3 error_ = C * v1->estimate() * v2->estimate().inverse();
     _error = error_.log();
 }
 
-inline double graph_opt_edge::initialEstimatePossible(const ::g2o::OptimizableGraph::VertexSet&, ::g2o::OptimizableGraph::Vertex*) {
+inline double graph_opt_edge::initialEstimatePossible(const g2o::OptimizableGraph::VertexSet&, g2o::OptimizableGraph::Vertex*) {
     return 1.0;
 }
 
-inline void graph_opt_edge::initialEstimate(const ::g2o::OptimizableGraph::VertexSet& from, ::g2o::OptimizableGraph::Vertex*) {
+inline void graph_opt_edge::initialEstimate(const g2o::OptimizableGraph::VertexSet& from, g2o::OptimizableGraph::Vertex*) {
     auto v1 = static_cast<shot_vertex*>(_vertices[0]);
     auto v2 = static_cast<shot_vertex*>(_vertices[1]);
     if (0 < from.count(v1)) {
@@ -88,7 +88,7 @@ inline void graph_opt_edge::initialEstimate(const ::g2o::OptimizableGraph::Verte
 }
 
 } // namespace sim3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 

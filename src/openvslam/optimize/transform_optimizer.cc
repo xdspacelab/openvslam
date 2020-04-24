@@ -1,8 +1,8 @@
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/optimize/transform_optimizer.h"
-#include "openvslam/optimize/g2o/sim3/transform_vertex.h"
-#include "openvslam/optimize/g2o/sim3/mutual_reproj_edge_wrapper.h"
+#include "openvslam/optimize/internal/sim3/transform_vertex.h"
+#include "openvslam/optimize/internal/sim3/mutual_reproj_edge_wrapper.h"
 
 #include <g2o/core/solver.h>
 #include <g2o/core/block_solver.h>
@@ -19,21 +19,21 @@ transform_optimizer::transform_optimizer(const bool fix_scale, const unsigned in
 
 unsigned int transform_optimizer::optimize(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
                                            std::vector<data::landmark*>& matched_lms_in_keyfrm_2,
-                                           ::g2o::Sim3& g2o_Sim3_12, const float chi_sq) const {
+                                           g2o::Sim3& g2o_Sim3_12, const float chi_sq) const {
     const float sqrt_chi_sq = std::sqrt(chi_sq);
 
     // 1. optimizerを構築
 
-    auto linear_solver = ::g2o::make_unique<::g2o::LinearSolverEigen<::g2o::BlockSolverX::PoseMatrixType>>();
-    auto block_solver = ::g2o::make_unique<::g2o::BlockSolverX>(std::move(linear_solver));
-    auto algorithm = new ::g2o::OptimizationAlgorithmLevenberg(std::move(block_solver));
+    auto linear_solver = g2o::make_unique<g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>>();
+    auto block_solver = g2o::make_unique<g2o::BlockSolverX>(std::move(linear_solver));
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(block_solver));
 
-    ::g2o::SparseOptimizer optimizer;
+    g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(algorithm);
 
     // 1. Sim3 transformのvertexを作成
 
-    auto Sim3_12_vtx = new g2o::sim3::transform_vertex();
+    auto Sim3_12_vtx = new internal::sim3::transform_vertex();
     Sim3_12_vtx->setId(0);
     Sim3_12_vtx->setEstimate(g2o_Sim3_12);
     Sim3_12_vtx->setFixed(false);
@@ -49,7 +49,7 @@ unsigned int transform_optimizer::optimize(data::keyframe* keyfrm_1, data::keyfr
     // 以下の2つのedgeを包含するwrapper
     // - keyfrm_2で観測している3次元点をkeyfrm_1に再投影するconstraint edge(カメラモデルはkeyfrm_1のものに従う)
     // - keyfrm_1で観測している3次元点をkeyfrm_2に再投影するconstraint edge(カメラモデルはkeyfrm_2のものに従う)
-    using reproj_edge_wrapper = g2o::sim3::mutual_reproj_edge_wapper<data::keyframe>;
+    using reproj_edge_wrapper = internal::sim3::mutual_reproj_edge_wapper<data::keyframe>;
     std::vector<reproj_edge_wrapper> mutual_edges;
     // 対応数
     const unsigned int num_matches = matched_lms_in_keyfrm_2.size();

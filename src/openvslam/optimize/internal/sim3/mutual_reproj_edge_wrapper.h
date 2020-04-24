@@ -6,8 +6,8 @@
 #include "openvslam/camera/equirectangular.h"
 #include "openvslam/camera/radial_division.h"
 #include "openvslam/data/landmark.h"
-#include "openvslam/optimize/g2o/sim3/forward_reproj_edge.h"
-#include "openvslam/optimize/g2o/sim3/backward_reproj_edge.h"
+#include "openvslam/optimize/internal/sim3/forward_reproj_edge.h"
+#include "openvslam/optimize/internal/sim3/backward_reproj_edge.h"
 
 #include <g2o/core/robust_kernel_impl.h>
 
@@ -18,7 +18,7 @@ class landmark;
 } // namespace data
 
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace sim3 {
 
 template<typename T>
@@ -28,7 +28,7 @@ public:
 
     mutual_reproj_edge_wapper(T* shot1, unsigned int idx1, data::landmark* lm1,
                               T* shot2, unsigned int idx2, data::landmark* lm2,
-                              g2o::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq);
+                              internal::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq);
 
     bool is_inlier() const;
 
@@ -53,7 +53,7 @@ public:
 template<typename T>
 inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int idx1, data::landmark* lm1,
                                                                T* shot2, unsigned int idx2, data::landmark* lm2,
-                                                               g2o::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq)
+                                                               internal::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq)
     : shot1_(shot1), shot2_(shot2), idx1_(idx1), idx2_(idx2), lm1_(lm1), lm2_(lm2) {
     // 1. forward edgeを作成
     {
@@ -64,7 +64,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::perspective*>(camera1);
 
                 // 3次元点はkeyfrm_2で観測しているもの，カメラモデルと特徴点はkeyfrm_1のもの
-                auto edge_12 = new g2o::sim3::perspective_forward_reproj_edge();
+                auto edge_12 = new internal::sim3::perspective_forward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_1 = shot1->undist_keypts_.at(idx1);
                 const Vec2_t obs_1{undist_keypt_1.pt.x, undist_keypt_1.pt.y};
@@ -88,7 +88,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::fisheye*>(camera1);
 
                 // 3次元点はkeyfrm_2で観測しているもの，カメラモデルと特徴点はkeyfrm_1のもの
-                auto edge_12 = new g2o::sim3::perspective_forward_reproj_edge();
+                auto edge_12 = new internal::sim3::perspective_forward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_1 = shot1->undist_keypts_.at(idx1);
                 const Vec2_t obs_1{undist_keypt_1.pt.x, undist_keypt_1.pt.y};
@@ -112,7 +112,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::equirectangular*>(camera1);
 
                 // 3次元点はkeyfrm_2で観測しているもの，カメラモデルと特徴点はkeyfrm_1のもの
-                auto edge_12 = new g2o::sim3::equirectangular_forward_reproj_edge();
+                auto edge_12 = new internal::sim3::equirectangular_forward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_1 = shot1->undist_keypts_.at(idx1);
                 const Vec2_t obs_1{undist_keypt_1.pt.x, undist_keypt_1.pt.y};
@@ -134,7 +134,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::radial_division*>(camera1);
 
                 // 3次元点はkeyfrm_2で観測しているもの，カメラモデルと特徴点はkeyfrm_1のもの
-                auto edge_12 = new g2o::sim3::perspective_forward_reproj_edge();
+                auto edge_12 = new internal::sim3::perspective_forward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_1 = shot1->undist_keypts_.at(idx1);
                 const Vec2_t obs_1{undist_keypt_1.pt.x, undist_keypt_1.pt.y};
@@ -157,7 +157,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
         }
 
         // loss functionを設定
-        auto huber_kernel_12 = new ::g2o::RobustKernelHuber();
+        auto huber_kernel_12 = new g2o::RobustKernelHuber();
         huber_kernel_12->setDelta(sqrt_chi_sq);
         edge_12_->setRobustKernel(huber_kernel_12);
     }
@@ -171,7 +171,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::perspective*>(camera2);
 
                 // 3次元点はkeyfrm_1で観測しているもの，カメラモデルと特徴点はkeyfrm_2のもの
-                auto edge_21 = new g2o::sim3::perspective_backward_reproj_edge();
+                auto edge_21 = new internal::sim3::perspective_backward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_2 = shot2->undist_keypts_.at(idx2);
                 const Vec2_t obs_2{undist_keypt_2.pt.x, undist_keypt_2.pt.y};
@@ -195,7 +195,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::fisheye*>(camera2);
 
                 // 3次元点はkeyfrm_1で観測しているもの，カメラモデルと特徴点はkeyfrm_2のもの
-                auto edge_21 = new g2o::sim3::perspective_backward_reproj_edge();
+                auto edge_21 = new internal::sim3::perspective_backward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_2 = shot2->undist_keypts_.at(idx2);
                 const Vec2_t obs_2{undist_keypt_2.pt.x, undist_keypt_2.pt.y};
@@ -219,7 +219,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::equirectangular*>(camera2);
 
                 // 3次元点はkeyfrm_1で観測しているもの，カメラモデルと特徴点はkeyfrm_2のもの
-                auto edge_21 = new g2o::sim3::equirectangular_backward_reproj_edge();
+                auto edge_21 = new internal::sim3::equirectangular_backward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_2 = shot2->undist_keypts_.at(idx2);
                 const Vec2_t obs_2{undist_keypt_2.pt.x, undist_keypt_2.pt.y};
@@ -241,7 +241,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
                 auto c = static_cast<camera::radial_division*>(camera2);
 
                 // 3次元点はkeyfrm_1で観測しているもの，カメラモデルと特徴点はkeyfrm_2のもの
-                auto edge_21 = new g2o::sim3::perspective_backward_reproj_edge();
+                auto edge_21 = new internal::sim3::perspective_backward_reproj_edge();
                 // 特徴点情報と再投影誤差分散をセット
                 const auto& undist_keypt_2 = shot2->undist_keypts_.at(idx2);
                 const Vec2_t obs_2{undist_keypt_2.pt.x, undist_keypt_2.pt.y};
@@ -264,7 +264,7 @@ inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigne
         }
 
         // loss functionを設定
-        auto huber_kernel_21 = new ::g2o::RobustKernelHuber();
+        auto huber_kernel_21 = new g2o::RobustKernelHuber();
         huber_kernel_21->setDelta(sqrt_chi_sq);
         edge_21_->setRobustKernel(huber_kernel_21);
     }
@@ -293,7 +293,7 @@ inline void mutual_reproj_edge_wapper<T>::set_as_outlier() const {
 }
 
 } // namespace sim3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 

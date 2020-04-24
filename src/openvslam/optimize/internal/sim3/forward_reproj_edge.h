@@ -2,16 +2,16 @@
 #define OPENVSLAM_OPTIMIZE_G2O_FORWARD_REPROJ_EDGE_H
 
 #include "openvslam/type.h"
-#include "openvslam/optimize/g2o/sim3/transform_vertex.h"
+#include "openvslam/optimize/internal/sim3/transform_vertex.h"
 
 #include <g2o/core/base_unary_edge.h>
 
 namespace openvslam {
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace sim3 {
 
-class base_forward_reproj_edge : public ::g2o::BaseUnaryEdge<2, Vec2_t, transform_vertex> {
+class base_forward_reproj_edge : public g2o::BaseUnaryEdge<2, Vec2_t, transform_vertex> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -29,7 +29,7 @@ public:
 };
 
 inline base_forward_reproj_edge::base_forward_reproj_edge()
-    : ::g2o::BaseUnaryEdge<2, Vec2_t, transform_vertex>() {}
+    : g2o::BaseUnaryEdge<2, Vec2_t, transform_vertex>() {}
 
 inline bool base_forward_reproj_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
@@ -61,7 +61,7 @@ inline bool base_forward_reproj_edge::write(std::ostream& os) const {
 inline void base_forward_reproj_edge::computeError() {
     // vertexからSim3(2->1)を取り出す
     const auto v1 = static_cast<const transform_vertex*>(_vertices.at(0));
-    const ::g2o::Sim3& Sim3_12 = v1->estimate();
+    const g2o::Sim3& Sim3_12 = v1->estimate();
     // vertexからSE3(world->2)を取り出す
     const Mat33_t& rot_2w = v1->rot_2w_;
     const Vec3_t& trans_2w = v1->trans_2w_;
@@ -114,7 +114,7 @@ inline Vec2_t equirectangular_forward_reproj_edge::cam_project(const Vec3_t& pos
 }
 
 } // namespace sim3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 

@@ -11,4 +11,4 @@ target_sources(${PROJECT_NAME}
 # Install headers
 file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 install(FILES ${HEADERS}
-        DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/optimize/g2o/sim3)
+        DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/optimize/internal/sim3)

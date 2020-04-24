@@ -3,7 +3,7 @@
 
 #include "openvslam/type.h"
 #include "openvslam/data/landmark.h"
-#include "openvslam/optimize/g2o/landmark_vertex.h"
+#include "openvslam/optimize/internal/landmark_vertex.h"
 
 #include <unordered_map>
 
@@ -14,7 +14,7 @@ class landmark;
 } // namespace data
 
 namespace optimize {
-namespace g2o {
+namespace internal {
 
 class landmark_vertex_container {
 public:
@@ -148,7 +148,7 @@ inline landmark_vertex_container::const_iterator landmark_vertex_container::end(
     return vtx_container_.end();
 }
 
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 

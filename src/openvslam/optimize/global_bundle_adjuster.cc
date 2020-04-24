@@ -2,9 +2,9 @@
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/optimize/global_bundle_adjuster.h"
-#include "openvslam/optimize/g2o/landmark_vertex_container.h"
-#include "openvslam/optimize/g2o/se3/shot_vertex_container.h"
-#include "openvslam/optimize/g2o/se3/reproj_edge_wrapper.h"
+#include "openvslam/optimize/internal/landmark_vertex_container.h"
+#include "openvslam/optimize/internal/se3/shot_vertex_container.h"
+#include "openvslam/optimize/internal/se3/reproj_edge_wrapper.h"
 #include "openvslam/util/converter.h"
 
 #include <g2o/core/solver.h>
@@ -31,11 +31,11 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
 
     // 2. optimizerを構築
 
-    auto linear_solver = ::g2o::make_unique<::g2o::LinearSolverCSparse<::g2o::BlockSolver_6_3::PoseMatrixType>>();
-    auto block_solver = ::g2o::make_unique<::g2o::BlockSolver_6_3>(std::move(linear_solver));
-    auto algorithm = new ::g2o::OptimizationAlgorithmLevenberg(std::move(block_solver));
+    auto linear_solver = g2o::make_unique<g2o::LinearSolverCSparse<g2o::BlockSolver_6_3::PoseMatrixType>>();
+    auto block_solver = g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver));
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(block_solver));
 
-    ::g2o::SparseOptimizer optimizer;
+    g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(algorithm);
 
     if (force_stop_flag) {
@@ -45,7 +45,7 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
     // 3. keyframeをg2oのvertexに変換してoptimizerにセットする
 
     // shot vertexのcontainer
-    g2o::se3::shot_vertex_container keyfrm_vtx_container(0, keyfrms.size());
+    internal::se3::shot_vertex_container keyfrm_vtx_container(0, keyfrms.size());
 
     // keyframesをoptimizerにセット
     for (const auto keyfrm : keyfrms) {
@@ -63,10 +63,10 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
     // 4. keyframeとlandmarkのvertexをreprojection edgeで接続する
 
     // landmark vertexのcontainer
-    g2o::landmark_vertex_container lm_vtx_container(keyfrm_vtx_container.get_max_vertex_id() + 1, lms.size());
+    internal::landmark_vertex_container lm_vtx_container(keyfrm_vtx_container.get_max_vertex_id() + 1, lms.size());
 
     // reprojection edgeのcontainer
-    using reproj_edge_wrapper = g2o::se3::reproj_edge_wrapper<data::keyframe>;
+    using reproj_edge_wrapper = internal::se3::reproj_edge_wrapper<data::keyframe>;
     std::vector<reproj_edge_wrapper> reproj_edge_wraps;
     reproj_edge_wraps.reserve(10 * lms.size());
 

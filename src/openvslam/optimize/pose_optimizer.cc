@@ -1,7 +1,7 @@
 #include "openvslam/data/frame.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/optimize/pose_optimizer.h"
-#include "openvslam/optimize/g2o/se3/pose_opt_edge_wrapper.h"
+#include "openvslam/optimize/internal/se3/pose_opt_edge_wrapper.h"
 #include "openvslam/util/converter.h"
 
 #include <vector>
@@ -25,18 +25,18 @@ pose_optimizer::pose_optimizer(const unsigned int num_trials, const unsigned int
 unsigned int pose_optimizer::optimize(data::frame& frm) const {
     // 1. optimizerを構築
 
-    auto linear_solver = ::g2o::make_unique<::g2o::LinearSolverEigen<::g2o::BlockSolver_6_3::PoseMatrixType>>();
-    auto block_solver = ::g2o::make_unique<::g2o::BlockSolver_6_3>(std::move(linear_solver));
-    auto algorithm = new ::g2o::OptimizationAlgorithmLevenberg(std::move(block_solver));
+    auto linear_solver = g2o::make_unique<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>();
+    auto block_solver = g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver));
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(block_solver));
 
-    ::g2o::SparseOptimizer optimizer;
+    g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(algorithm);
 
     unsigned int num_init_obs = 0;
 
     // 2. frameをg2oのvertexに変換してoptimizerにセットする
 
-    auto frm_vtx = new g2o::se3::shot_vertex();
+    auto frm_vtx = new internal::se3::shot_vertex();
     frm_vtx->setId(frm.id_);
     frm_vtx->setEstimate(util::converter::to_g2o_SE3(frm.cam_pose_cw_));
     frm_vtx->setFixed(false);
@@ -47,7 +47,7 @@ unsigned int pose_optimizer::optimize(data::frame& frm) const {
     // 3. landmarkのvertexをreprojection edgeで接続する
 
     // reprojection edgeのcontainer
-    using pose_opt_edge_wrapper = g2o::se3::pose_opt_edge_wrapper<data::frame>;
+    using pose_opt_edge_wrapper = internal::se3::pose_opt_edge_wrapper<data::frame>;
     std::vector<pose_opt_edge_wrapper> pose_opt_edge_wraps;
     pose_opt_edge_wraps.reserve(num_keypts);
 

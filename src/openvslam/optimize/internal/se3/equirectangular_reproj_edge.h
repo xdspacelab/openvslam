@@ -2,17 +2,17 @@
 #define OPENVSLAM_OPTIMIZER_G2O_SE3_EQUIRECTANGULAR_REPROJ_EDGE_H
 
 #include "openvslam/type.h"
-#include "openvslam/optimize/g2o/landmark_vertex.h"
-#include "openvslam/optimize/g2o/se3/shot_vertex.h"
+#include "openvslam/optimize/internal/landmark_vertex.h"
+#include "openvslam/optimize/internal/se3/shot_vertex.h"
 
 #include <g2o/core/base_binary_edge.h>
 
 namespace openvslam {
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace se3 {
 
-class equirectangular_reproj_edge final : public ::g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex> {
+class equirectangular_reproj_edge final : public g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -32,7 +32,7 @@ public:
 };
 
 inline equirectangular_reproj_edge::equirectangular_reproj_edge()
-    : ::g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex>() {}
+    : g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex>() {}
 
 inline bool equirectangular_reproj_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
@@ -70,7 +70,7 @@ inline void equirectangular_reproj_edge::computeError() {
 
 inline void equirectangular_reproj_edge::linearizeOplus() {
     auto vj = static_cast<shot_vertex*>(_vertices.at(1));
-    const ::g2o::SE3Quat& cam_pose_cw = vj->shot_vertex::estimate();
+    const g2o::SE3Quat& cam_pose_cw = vj->shot_vertex::estimate();
     const Mat33_t rot_cw = cam_pose_cw.rotation().toRotationMatrix();
 
     auto vi = static_cast<landmark_vertex*>(_vertices.at(0));
@@ -134,7 +134,7 @@ inline Vec2_t equirectangular_reproj_edge::cam_project(const Vec3_t& pos_c) cons
 }
 
 } // namespace se3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 

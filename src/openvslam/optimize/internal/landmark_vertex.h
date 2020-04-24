@@ -7,9 +7,9 @@
 
 namespace openvslam {
 namespace optimize {
-namespace g2o {
+namespace internal {
 
-class landmark_vertex final : public ::g2o::BaseVertex<3, Vec3_t> {
+class landmark_vertex final : public g2o::BaseVertex<3, Vec3_t> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -25,7 +25,7 @@ public:
 };
 
 inline landmark_vertex::landmark_vertex()
-    : ::g2o::BaseVertex<3, Vec3_t>() {}
+    : g2o::BaseVertex<3, Vec3_t>() {}
 
 inline bool landmark_vertex::read(std::istream& is) {
     Vec3_t lv;
@@ -52,7 +52,7 @@ inline void landmark_vertex::oplusImpl(const double* update) {
     _estimate += v;
 }
 
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 

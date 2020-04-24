@@ -4,7 +4,7 @@
 #include "openvslam/type.h"
 #include "openvslam/data/frame.h"
 #include "openvslam/data/keyframe.h"
-#include "openvslam/optimize/g2o/se3/shot_vertex.h"
+#include "openvslam/optimize/internal/se3/shot_vertex.h"
 
 #include <unordered_map>
 
@@ -16,7 +16,7 @@ class keyframe;
 } // namespace data
 
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace se3 {
 
 class shot_vertex_container {
@@ -172,7 +172,7 @@ inline shot_vertex_container::const_iterator shot_vertex_container::end() const 
 }
 
 } // namespace se3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 
