@@ -15,36 +15,21 @@ class graph_opt_edge final : public ::g2o::BaseBinaryEdge<7, ::g2o::Sim3, shot_v
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    graph_opt_edge() : ::g2o::BaseBinaryEdge<7, ::g2o::Sim3, shot_vertex, shot_vertex>() {}
+    graph_opt_edge();
 
     bool read(std::istream& is) override;
 
     bool write(std::ostream& os) const override;
 
-    void computeError() override {
-        const auto v1 = static_cast<const shot_vertex*>(_vertices.at(0));
-        const auto v2 = static_cast<const shot_vertex*>(_vertices.at(1));
+    void computeError() override;
 
-        const ::g2o::Sim3 C(_measurement);
-        const ::g2o::Sim3 error_ = C * v1->estimate() * v2->estimate().inverse();
-        _error = error_.log();
-    }
+    double initialEstimatePossible(const ::g2o::OptimizableGraph::VertexSet&, ::g2o::OptimizableGraph::Vertex*) override;
 
-    double initialEstimatePossible(const ::g2o::OptimizableGraph::VertexSet&, ::g2o::OptimizableGraph::Vertex*) override {
-        return 1.0;
-    }
-
-    void initialEstimate(const ::g2o::OptimizableGraph::VertexSet& from, ::g2o::OptimizableGraph::Vertex*) override {
-        auto v1 = static_cast<shot_vertex*>(_vertices[0]);
-        auto v2 = static_cast<shot_vertex*>(_vertices[1]);
-        if (0 < from.count(v1)) {
-            v2->setEstimate(measurement() * v1->estimate());
-        }
-        else {
-            v1->setEstimate(measurement().inverse() * v2->estimate());
-        }
-    }
+    void initialEstimate(const ::g2o::OptimizableGraph::VertexSet& from, ::g2o::OptimizableGraph::Vertex*) override;
 };
+
+inline graph_opt_edge::graph_opt_edge()
+    : ::g2o::BaseBinaryEdge<7, ::g2o::Sim3, shot_vertex, shot_vertex>() {}
 
 inline bool graph_opt_edge::read(std::istream& is) {
     Vec7_t sim3_wc;
@@ -76,6 +61,30 @@ inline bool graph_opt_edge::write(std::ostream& os) const {
         }
     }
     return os.good();
+}
+
+inline void graph_opt_edge::computeError() {
+    const auto v1 = static_cast<const shot_vertex*>(_vertices.at(0));
+    const auto v2 = static_cast<const shot_vertex*>(_vertices.at(1));
+
+    const ::g2o::Sim3 C(_measurement);
+    const ::g2o::Sim3 error_ = C * v1->estimate() * v2->estimate().inverse();
+    _error = error_.log();
+}
+
+inline double graph_opt_edge::initialEstimatePossible(const ::g2o::OptimizableGraph::VertexSet&, ::g2o::OptimizableGraph::Vertex*) {
+    return 1.0;
+}
+
+inline void graph_opt_edge::initialEstimate(const ::g2o::OptimizableGraph::VertexSet& from, ::g2o::OptimizableGraph::Vertex*) {
+    auto v1 = static_cast<shot_vertex*>(_vertices[0]);
+    auto v2 = static_cast<shot_vertex*>(_vertices[1]);
+    if (0 < from.count(v1)) {
+        v2->setEstimate(measurement() * v1->estimate());
+    }
+    else {
+        v1->setEstimate(measurement().inverse() * v2->estimate());
+    }
 }
 
 } // namespace sim3

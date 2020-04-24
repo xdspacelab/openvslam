@@ -15,26 +15,15 @@ class transform_vertex final : public ::g2o::BaseVertex<7, ::g2o::Sim3> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    transform_vertex() : ::g2o::BaseVertex<7, ::g2o::Sim3>() {}
+    transform_vertex();
 
     bool read(std::istream& is) override;
 
     bool write(std::ostream& os) const override;
 
-    void setToOriginImpl() override {
-        _estimate = ::g2o::Sim3();
-    }
+    void setToOriginImpl() override;
 
-    void oplusImpl(const number_t* update_) override {
-        Eigen::Map<Vec7_t> update(const_cast<number_t*>(update_));
-
-        if (fix_scale_) {
-            update(6) = 0;
-        }
-
-        ::g2o::Sim3 s(update);
-        setEstimate(s * estimate());
-    }
+    void oplusImpl(const number_t* update_) override;
 
     bool fix_scale_;
 
@@ -43,6 +32,42 @@ public:
     Mat33_t rot_2w_;
     Vec3_t trans_2w_;
 };
+
+inline transform_vertex::transform_vertex()
+    : ::g2o::BaseVertex<7, ::g2o::Sim3>() {}
+
+inline bool transform_vertex::read(std::istream& is) {
+    Vec7_t g2o_sim3_wc;
+    for (int i = 0; i < 7; ++i) {
+        is >> g2o_sim3_wc(i);
+    }
+    setEstimate(::g2o::Sim3(g2o_sim3_wc).inverse());
+    return true;
+}
+
+inline bool transform_vertex::write(std::ostream& os) const {
+    ::g2o::Sim3 g2o_Sim3_wc(estimate().inverse());
+    const Vec7_t g2o_sim3_wc = g2o_Sim3_wc.log();
+    for (int i = 0; i < 7; ++i) {
+        os << g2o_sim3_wc(i) << " ";
+    }
+    return os.good();
+}
+
+inline void transform_vertex::setToOriginImpl() {
+    _estimate = ::g2o::Sim3();
+}
+
+inline void transform_vertex::oplusImpl(const number_t* update_) {
+    Eigen::Map<Vec7_t> update(const_cast<number_t*>(update_));
+
+    if (fix_scale_) {
+        update(6) = 0;
+    }
+
+    ::g2o::Sim3 s(update);
+    setEstimate(s * estimate());
+}
 
 } // namespace sim3
 } // namespace g2o

@@ -30,23 +30,13 @@ public:
                               T* shot2, unsigned int idx2, data::landmark* lm2,
                               g2o::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq);
 
-    inline bool is_inlier() const {
-        return edge_12_->level() == 0 && edge_21_->level() == 0;
-    }
+    bool is_inlier() const;
 
-    inline bool is_outlier() const {
-        return !is_inlier();
-    }
+    bool is_outlier() const;
 
-    inline void set_as_inlier() const {
-        edge_12_->setLevel(0);
-        edge_21_->setLevel(0);
-    }
+    void set_as_inlier() const;
 
-    inline void set_as_outlier() const {
-        edge_12_->setLevel(1);
-        edge_21_->setLevel(1);
-    }
+    void set_as_outlier() const;
 
     //! keyfrm_2で観測している3次元点をkeyfrm_1に再投影するconstraint edge
     //! (カメラモデルはkeyfrm_1のものに従う)
@@ -61,9 +51,9 @@ public:
 };
 
 template<typename T>
-mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int idx1, data::landmark* lm1,
-                                                        T* shot2, unsigned int idx2, data::landmark* lm2,
-                                                        g2o::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq)
+inline mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int idx1, data::landmark* lm1,
+                                                               T* shot2, unsigned int idx2, data::landmark* lm2,
+                                                               g2o::sim3::transform_vertex* Sim3_12_vtx, const float sqrt_chi_sq)
     : shot1_(shot1), shot2_(shot2), idx1_(idx1), idx2_(idx2), lm1_(lm1), lm2_(lm2) {
     // 1. forward edgeを作成
     {
@@ -278,6 +268,28 @@ mutual_reproj_edge_wapper<T>::mutual_reproj_edge_wapper(T* shot1, unsigned int i
         huber_kernel_21->setDelta(sqrt_chi_sq);
         edge_21_->setRobustKernel(huber_kernel_21);
     }
+}
+
+template<typename T>
+inline bool mutual_reproj_edge_wapper<T>::is_inlier() const {
+    return edge_12_->level() == 0 && edge_21_->level() == 0;
+}
+
+template<typename T>
+inline bool mutual_reproj_edge_wapper<T>::is_outlier() const {
+    return !is_inlier();
+}
+
+template<typename T>
+inline void mutual_reproj_edge_wapper<T>::set_as_inlier() const {
+    edge_12_->setLevel(0);
+    edge_21_->setLevel(0);
+}
+
+template<typename T>
+inline void mutual_reproj_edge_wapper<T>::set_as_outlier() const {
+    edge_12_->setLevel(1);
+    edge_21_->setLevel(1);
 }
 
 } // namespace sim3
