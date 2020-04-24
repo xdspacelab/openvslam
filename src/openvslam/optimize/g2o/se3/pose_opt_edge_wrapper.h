@@ -31,23 +31,15 @@ public:
 
     virtual ~pose_opt_edge_wrapper() = default;
 
-    inline bool is_inlier() const {
-        return edge_->level() == 0;
-    }
+    bool is_inlier() const;
 
-    inline bool is_outlier() const {
-        return edge_->level() != 0;
-    }
+    bool is_outlier() const;
 
-    inline void set_as_inlier() const {
-        edge_->setLevel(0);
-    }
+    void set_as_inlier() const;
 
-    inline void set_as_outlier() const {
-        edge_->setLevel(1);
-    }
+    void set_as_outlier() const;
 
-    inline bool depth_is_positive() const;
+    bool depth_is_positive() const;
 
     ::g2o::OptimizableGraph::Edge* edge_;
 
@@ -58,9 +50,9 @@ public:
 };
 
 template<typename T>
-pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, const Vec3_t& pos_w,
-                                                const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
-                                                const float inv_sigma_sq, const float sqrt_chi_sq)
+inline pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, const Vec3_t& pos_w,
+                                                      const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
+                                                      const float inv_sigma_sq, const float sqrt_chi_sq)
     : camera_(shot->camera_), shot_(shot), idx_(idx), is_monocular_(obs_x_right < 0) {
     // 拘束条件を設定
     switch (camera_->model_type_) {
@@ -218,7 +210,27 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
 }
 
 template<typename T>
-bool pose_opt_edge_wrapper<T>::depth_is_positive() const {
+inline bool pose_opt_edge_wrapper<T>::is_inlier() const {
+    return edge_->level() == 0;
+}
+
+template<typename T>
+inline bool pose_opt_edge_wrapper<T>::is_outlier() const {
+    return edge_->level() != 0;
+}
+
+template<typename T>
+inline void pose_opt_edge_wrapper<T>::set_as_inlier() const {
+    edge_->setLevel(0);
+}
+
+template<typename T>
+inline void pose_opt_edge_wrapper<T>::set_as_outlier() const {
+    edge_->setLevel(1);
+}
+
+template<typename T>
+inline bool pose_opt_edge_wrapper<T>::depth_is_positive() const {
     switch (camera_->model_type_) {
         case camera::model_type_t::Perspective: {
             if (is_monocular_) {
