@@ -18,124 +18,49 @@ namespace g2o {
 
 class landmark_vertex_container {
 public:
-    /**
-     * Constructor
-     * @param offset
-     * @param num_reserve
-     */
-    explicit landmark_vertex_container(const unsigned int offset, const unsigned int num_reserve = 200)
-        : offset_(offset) {
-        vtx_container_.reserve(num_reserve);
-    }
+    //! Constructor
+    explicit landmark_vertex_container(const unsigned int offset, const unsigned int num_reserve = 200);
 
-    /**
-     * Destructor
-     */
+    //! Destructor
     virtual ~landmark_vertex_container() = default;
 
-    /**
-     * Create and return the g2o vertex created from the specified landmark
-     * @param lm
-     * @param is_constant
-     * @return
-     */
-    landmark_vertex* create_vertex(data::landmark* lm, const bool is_constant) {
-        return create_vertex(lm->id_, lm->get_pos_in_world(), is_constant);
-    }
+    //! Create and return the g2o vertex created from the specified landmark
+    landmark_vertex* create_vertex(data::landmark* lm, const bool is_constant);
 
-    /**
-     * Create and return the g2o vertex created from the specified landmark
-     * @param id
-     * @param pos_w
-     * @param is_constant
-     * @return
-     */
+    //! Create and return the g2o vertex created from the specified landmark
     landmark_vertex* create_vertex(const unsigned int id, const Vec3_t& pos_w, const bool is_constant);
 
-    /**
-     * Get vertex corresponding with the specified landmark
-     * @param lm
-     * @return
-     */
-    inline landmark_vertex* get_vertex(data::landmark* lm) const {
-        return get_vertex(lm->id_);
-    }
+    //! Get vertex corresponding with the specified landmark
+    landmark_vertex* get_vertex(data::landmark* lm) const;
 
-    /**
-     * Get vertex corresponding with the specified landmark ID
-     * @param id
-     * @return
-     */
-    inline landmark_vertex* get_vertex(const unsigned int id) const {
-        return vtx_container_.at(id);
-    }
+    //! Get vertex corresponding with the specified landmark ID
+    landmark_vertex* get_vertex(const unsigned int id) const;
 
-    /**
-     * Convert landmark to vertex ID
-     * @param lm
-     * @return
-     */
-    inline unsigned int get_vertex_id(data::landmark* lm) const {
-        return get_vertex_id(lm->id_);
-    }
+    //! Convert landmark to vertex ID
+    unsigned int get_vertex_id(data::landmark* lm) const;
 
-    /**
-     * Convert landmark ID to vertex ID
-     * @param id
-     * @return
-     */
-    inline unsigned int get_vertex_id(const unsigned int id) const {
-        return offset_ + id;
-    }
+    //! Convert landmark ID to vertex ID
+    unsigned int get_vertex_id(const unsigned int id) const;
 
-    /**
-     * Convert vertex to landmark ID
-     * @param vtx
-     * @return
-     */
-    inline unsigned int get_id(landmark_vertex* vtx) const {
-        return vtx->id() - offset_;
-    }
+    //! Convert vertex to landmark ID
+    unsigned int get_id(landmark_vertex* vtx) const;
 
-    /**
-     * Convert vertex ID to landmark ID
-     * @param vtx_id
-     * @return
-     */
-    inline unsigned int get_id(const unsigned int vtx_id) const {
-        return vtx_id - offset_;
-    }
+    //! Convert vertex ID to landmark ID
+    unsigned int get_id(const unsigned int vtx_id) const;
 
-    /**
-     * Contains the specified landmark or not
-     */
-    inline bool contain(data::landmark* lm) const {
-        return 0 != vtx_container_.count(lm->id_);
-    }
+    //! Contains the specified landmark or not
+    bool contain(data::landmark* lm) const;
 
-    /**
-     * Get maximum vertex ID
-     * @return
-     */
-    unsigned int get_max_vertex_id() const {
-        return max_vtx_id_;
-    }
+    //! Get maximum vertex ID
+    unsigned int get_max_vertex_id() const;
 
-    typedef std::unordered_map<unsigned int, landmark_vertex*>::iterator iterator;
-    typedef std::unordered_map<unsigned int, landmark_vertex*>::const_iterator const_iterator;
-
-    iterator begin() {
-        return vtx_container_.begin();
-    }
-    const_iterator begin() const {
-        return vtx_container_.begin();
-    }
-    iterator end() {
-        return vtx_container_.end();
-    }
-    const_iterator end() const {
-        return vtx_container_.end();
-    }
+    // iterators to sweep landmark vertices
+    using iterator = std::unordered_map<unsigned int, landmark_vertex*>::iterator;
+    using const_iterator = std::unordered_map<unsigned int, landmark_vertex*>::const_iterator;
+    iterator begin();
+    const_iterator begin() const;
+    iterator end();
+    const_iterator end() const;
 
 private:
     //! vertex ID = offset + landmark ID
@@ -147,6 +72,15 @@ private:
     //! max vertex ID
     unsigned int max_vtx_id_ = 0;
 };
+
+inline landmark_vertex_container::landmark_vertex_container(const unsigned int offset, const unsigned int num_reserve)
+    : offset_(offset) {
+    vtx_container_.reserve(num_reserve);
+}
+
+inline landmark_vertex* landmark_vertex_container::create_vertex(data::landmark* lm, const bool is_constant) {
+    return create_vertex(lm->id_, lm->get_pos_in_world(), is_constant);
+}
 
 inline landmark_vertex* landmark_vertex_container::create_vertex(const unsigned int id, const Vec3_t& pos_w, const bool is_constant) {
     // vertexを作成
@@ -164,6 +98,54 @@ inline landmark_vertex* landmark_vertex_container::create_vertex(const unsigned 
     }
     // 作成したvertexをreturn
     return vtx;
+}
+
+inline landmark_vertex* landmark_vertex_container::get_vertex(data::landmark* lm) const {
+    return get_vertex(lm->id_);
+}
+
+inline landmark_vertex* landmark_vertex_container::get_vertex(const unsigned int id) const {
+    return vtx_container_.at(id);
+}
+
+inline unsigned int landmark_vertex_container::get_vertex_id(data::landmark* lm) const {
+    return get_vertex_id(lm->id_);
+}
+
+inline unsigned int landmark_vertex_container::get_vertex_id(const unsigned int id) const {
+    return offset_ + id;
+}
+
+inline unsigned int landmark_vertex_container::get_id(landmark_vertex* vtx) const {
+    return vtx->id() - offset_;
+}
+
+inline unsigned int landmark_vertex_container::get_id(const unsigned int vtx_id) const {
+    return vtx_id - offset_;
+}
+
+inline bool landmark_vertex_container::contain(data::landmark* lm) const {
+    return 0 != vtx_container_.count(lm->id_);
+}
+
+inline unsigned int landmark_vertex_container::get_max_vertex_id() const {
+    return max_vtx_id_;
+}
+
+inline landmark_vertex_container::iterator landmark_vertex_container::begin() {
+    return vtx_container_.begin();
+}
+
+inline landmark_vertex_container::const_iterator landmark_vertex_container::begin() const {
+    return vtx_container_.begin();
+}
+
+inline landmark_vertex_container::iterator landmark_vertex_container::end() {
+    return vtx_container_.end();
+}
+
+inline landmark_vertex_container::const_iterator landmark_vertex_container::end() const {
+    return vtx_container_.end();
 }
 
 } // namespace g2o
