@@ -4,7 +4,7 @@
 find_package(sioclient REQUIRED)
 
 # Protobuf
-find_package(protobuf REQUIRED)
+find_package(Protobuf REQUIRED)
 if(NOT PROTOBUF_PROTOC_EXECUTABLE)
     message(FATAL_ERROR "Could not find protoc executable (PROTOBUF_PROTOC_EXECUTABLE)")
 endif()
