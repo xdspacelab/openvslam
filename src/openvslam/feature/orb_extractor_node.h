@@ -3,6 +3,7 @@
 
 #include <array>
 #include <list>
+#include <array>
 
 #include <opencv2/core/types.hpp>
 

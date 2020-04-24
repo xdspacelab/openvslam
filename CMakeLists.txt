@@ -38,19 +38,16 @@ endif()
 
 set(USE_SANITIZER OFF CACHE BOOL "Enable Address/Memory sanitizer (set env as ASAN_OPTIONS=detect_leaks=1)")
 if(USE_SANITIZER AND NOT MSVC)
-    add_compile_options(-fno-omit-frame-pointer -fsanitize=address -fsanitize=leak)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address -fsanitize=leak")
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address -fsanitize=leak")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address -fsanitize=leak")
+    add_compile_options(-fno-omit-frame-pointer -fsanitize=address)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
     message(STATUS "Address/Memory sanitizer: ENABLED")
 else()
     message(STATUS "Address/Memory sanitizer: DISABLED")
 endif()
 
 # ----- Set compiler options -----
-
-add_definitions(-DM_PI=3.14159265358979323846)
-add_definitions(-DM_PI_2=1.57079632679489661923)
 
 # Note: add_compile_options() accepts only "simple" generator-expressions :-(
 if(MSVC)
@@ -106,7 +103,7 @@ set(OPENVSLAM_PROJECT_CONFIG ${OPENVSLAM_GENERATED_DIR}/${PROJECT_NAME}Config.cm
 set(OPENVSLAM_TARGETS_EXPORT_NAME ${PROJECT_NAME}Targets)
 set(OPENVSLAM_CONFIG_INSTALL_DIR lib/cmake/${PROJECT_NAME})
 set(OPENVSLAM_NAMESPACE "${PROJECT_NAME}::")
-set(OPENVSLAM_VERSION 0.0.1)
+set(OPENVSLAM_VERSION 1.0.0)
 
 # Create a version config file
 write_basic_package_version_file(${OPENVSLAM_VERSION_CONFIG}

@@ -11,6 +11,12 @@
 #include <Eigen/Geometry>
 #include <opencv2/core/types.hpp>
 
+#ifndef M_PI
+// M_PI is not part of the C++ standard. Rather it is part of the POSIX standard. As such,
+// it is not directly available on Visual C++ (although _USE_MATH_DEFINES does exist).
+#define M_PI 3.14159265358979323846
+#endif
+
 namespace openvslam {
 
 // floating point type
