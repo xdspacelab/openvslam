@@ -27,15 +27,6 @@ public:
 
     //! Camera model
     camera::base* camera_ = nullptr;
-
-    //! ORB feature parameters
-    feature::orb_params orb_params_;
-
-    //! depth threshold
-    double true_depth_thr_ = 40.0;
-
-    //! depthmap factor (pixel_value / depthmap_factor = true_depth)
-    double depthmap_factor_ = 1.0;
 };
 
 } // namespace openvslam

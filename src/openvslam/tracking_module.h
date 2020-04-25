@@ -102,13 +102,19 @@ public:
     void resume();
 
     //-----------------------------------------
-    // variables
+    // configurations
 
-    //! config
-    const std::shared_ptr<config> cfg_;
-
-    //! camera model (equals to cfg_->camera_)
+    //! camera model
     camera::base* camera_;
+
+    //! depth threshold (Ignore depths farther than true_depth_thr_ times the baseline.)
+    double true_depth_thr_ = 40.0;
+
+    //! depthmap factor (pixel_value / depthmap_factor = true_depth)
+    double depthmap_factor_ = 1.0;
+
+    //-----------------------------------------
+    // variables
 
     //! latest tracking state
     tracker_state_t tracking_state_ = tracker_state_t::NotInitialized;

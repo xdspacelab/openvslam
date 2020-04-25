@@ -17,23 +17,78 @@
 
 #include <spdlog/spdlog.h>
 
+namespace {
+using namespace openvslam;
+
+feature::orb_params get_orb_params(const std::shared_ptr<config>& cfg) {
+    spdlog::debug("load ORB parameters");
+    try {
+        return feature::orb_params(cfg->yaml_node_);
+    }
+    catch (const std::exception& e) {
+        spdlog::error("failed in loading ORB parameters: {}", e.what());
+        throw;
+    }
+}
+
+double get_true_depth_thr(const std::shared_ptr<config>& cfg) {
+    spdlog::debug("load depth threshold");
+    double true_depth_thr = 40.0;
+    if (cfg->camera_->setup_type_ == camera::setup_type_t::Stereo || cfg->camera_->setup_type_ == camera::setup_type_t::RGBD) {
+        const auto depth_thr_factor = cfg->yaml_node_["depth_threshold"].as<double>(40.0);
+
+        if (cfg->camera_->model_type_ == camera::model_type_t::Equirectangular) {
+            throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
+        }
+        else {
+            true_depth_thr = cfg->camera_->true_baseline_ * depth_thr_factor;
+        }
+    }
+    return true_depth_thr;
+}
+
+double get_depthmap_factor(const std::shared_ptr<config>& cfg) {
+    spdlog::debug("load depthmap factor");
+    double depthmap_factor = 1.0;
+    if (cfg->camera_->setup_type_ == camera::setup_type_t::RGBD) {
+        depthmap_factor = cfg->yaml_node_["depthmap_factor"].as<double>(depthmap_factor);
+    }
+    return depthmap_factor;
+}
+} // unnamed namespace
+
 namespace openvslam {
 
 tracking_module::tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
                                  data::bow_vocabulary* bow_vocab, data::bow_database* bow_db)
-    : cfg_(cfg), camera_(cfg->camera_), system_(system), map_db_(map_db), bow_vocab_(bow_vocab), bow_db_(bow_db),
+    : camera_(cfg->camera_), true_depth_thr_(get_true_depth_thr(cfg)), depthmap_factor_(get_depthmap_factor(cfg)),
+      system_(system), map_db_(map_db), bow_vocab_(bow_vocab), bow_db_(bow_db),
       initializer_(cfg->camera_->setup_type_, map_db, bow_db, cfg->yaml_node_),
       frame_tracker_(camera_, 10), relocalizer_(bow_db_), pose_optimizer_(),
-      keyfrm_inserter_(cfg_->camera_->setup_type_, cfg_->true_depth_thr_, map_db, bow_db, 0, cfg_->camera_->fps_) {
+      keyfrm_inserter_(cfg->camera_->setup_type_, true_depth_thr_, map_db, bow_db, 0, cfg->camera_->fps_) {
     spdlog::debug("CONSTRUCT: tracking_module");
 
-    extractor_left_ = new feature::orb_extractor(cfg_->orb_params_);
+    if (camera_->setup_type_ == camera::setup_type_t::Stereo || camera_->setup_type_ == camera::setup_type_t::RGBD) {
+        std::cout << "Stereo Configuration:" << std::endl;
+        std::cout << "- true baseline: " << camera_->true_baseline_ << std::endl;
+        std::cout << "- true depth threshold: " << true_depth_thr_ << std::endl;
+        std::cout << "- depth threshold factor: " << true_depth_thr_ / camera_->true_baseline_ << std::endl;
+    }
+    if (camera_->setup_type_ == camera::setup_type_t::RGBD) {
+        std::cout << "Depth Image Configuration:" << std::endl;
+        std::cout << "- depthmap factor: " << depthmap_factor_ << std::endl;
+    }
+
+    feature::orb_params orb_params = get_orb_params(cfg);
+    std::cout << "ORB Configuration:" << std::endl;
+    orb_params.show_parameters();
+    extractor_left_ = new feature::orb_extractor(orb_params);
     if (camera_->setup_type_ == camera::setup_type_t::Monocular) {
-        ini_extractor_left_ = new feature::orb_extractor(cfg_->orb_params_);
+        ini_extractor_left_ = new feature::orb_extractor(orb_params);
         ini_extractor_left_->set_max_num_keypoints(ini_extractor_left_->get_max_num_keypoints() * 2);
     }
     if (camera_->setup_type_ == camera::setup_type_t::Stereo) {
-        extractor_right_ = new feature::orb_extractor(cfg_->orb_params_);
+        extractor_right_ = new feature::orb_extractor(orb_params);
     }
 }
 
@@ -84,10 +139,10 @@ Mat44_t tracking_module::track_monocular_image(const cv::Mat& img, const double 
 
     // create current frame object
     if (tracking_state_ == tracker_state_t::NotInitialized || tracking_state_ == tracker_state_t::Initializing) {
-        curr_frm_ = data::frame(img_gray_, timestamp, ini_extractor_left_, bow_vocab_, camera_, cfg_->true_depth_thr_, mask);
+        curr_frm_ = data::frame(img_gray_, timestamp, ini_extractor_left_, bow_vocab_, camera_, true_depth_thr_, mask);
     }
     else {
-        curr_frm_ = data::frame(img_gray_, timestamp, extractor_left_, bow_vocab_, camera_, cfg_->true_depth_thr_, mask);
+        curr_frm_ = data::frame(img_gray_, timestamp, extractor_left_, bow_vocab_, camera_, true_depth_thr_, mask);
     }
 
     track();
@@ -108,7 +163,7 @@ Mat44_t tracking_module::track_stereo_image(const cv::Mat& left_img_rect, const 
     util::convert_to_grayscale(right_img_gray, camera_->color_order_);
 
     // create current frame object
-    curr_frm_ = data::frame(img_gray_, right_img_gray, timestamp, extractor_left_, extractor_right_, bow_vocab_, camera_, cfg_->true_depth_thr_, mask);
+    curr_frm_ = data::frame(img_gray_, right_img_gray, timestamp, extractor_left_, extractor_right_, bow_vocab_, camera_, true_depth_thr_, mask);
 
     track();
 
@@ -125,10 +180,10 @@ Mat44_t tracking_module::track_RGBD_image(const cv::Mat& img, const cv::Mat& dep
     img_gray_ = img;
     cv::Mat img_depth = depthmap;
     util::convert_to_grayscale(img_gray_, camera_->color_order_);
-    util::convert_to_true_depth(img_depth, cfg_->depthmap_factor_);
+    util::convert_to_true_depth(img_depth, depthmap_factor_);
 
     // create current frame object
-    curr_frm_ = data::frame(img_gray_, img_depth, timestamp, extractor_left_, bow_vocab_, camera_, cfg_->true_depth_thr_, mask);
+    curr_frm_ = data::frame(img_gray_, img_depth, timestamp, extractor_left_, bow_vocab_, camera_, true_depth_thr_, mask);
 
     track();
 
@@ -495,7 +550,7 @@ bool tracking_module::new_keyframe_is_needed() const {
 
     // cannnot insert the new keyframe in a second after relocalization
     const auto num_keyfrms = map_db_->get_num_keyframes();
-    if (cfg_->camera_->fps_ < num_keyfrms && curr_frm_.id_ < last_reloc_frm_id_ + cfg_->camera_->fps_) {
+    if (camera_->fps_ < num_keyfrms && curr_frm_.id_ < last_reloc_frm_id_ + camera_->fps_) {
         return false;
     }
 
