@@ -55,7 +55,7 @@ if(MSVC)
     add_compile_options(/W4 /MT /source-charset:utf-8 /execution-charset:utf-8 /wd4251 /wd4244 /wd4305 /wd4267 /wd4127)
     add_compile_options("$<$<CONFIG:Debug>:/Zo>;$<$<CONFIG:Release>:/O2>")
 else()
-    add_compile_options(-Wall -Wextra -pedantic)
+    add_compile_options(-Wall -Wextra)
     add_compile_options("$<$<CONFIG:Debug>:-Og>;$<$<CONFIG:Release>:-O3;-ffast-math>")
 endif()
 
@@ -71,6 +71,14 @@ endif()
 
 # Threads
 find_package(Threads REQUIRED)
+
+# OpenMP
+find_package(OpenMP REQUIRED)
+if(NOT TARGET OpenMP::OpenMP_CXX)
+    add_library(OpenMP::OpenMP_CXX IMPORTED INTERFACE)
+    set_property(TARGET OpenMP::OpenMP_CXX
+                 PROPERTY INTERFACE_LINK_LIBRARIES ${OpenMP_CXX_FLAGS} Threads::Threads)
+endif()
 
 # Eigen
 find_package(Eigen3 3.3 REQUIRED)

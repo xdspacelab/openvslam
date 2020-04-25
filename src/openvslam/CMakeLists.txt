@@ -60,16 +60,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # ----- Compile configuration -----
 
 # OpenMP
+target_compile_options(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_FLAGS})
 set(USE_OPENMP OFF CACHE BOOL "Use OpenMP")
 if(USE_OPENMP)
-    find_package(OpenMP)
-    if(OpenMP_FOUND)
-        target_compile_options(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_FLAGS})
-        target_compile_definitions(${PROJECT_NAME} PUBLIC ${OpenMP_CXX_FLAGS})
-        message(STATUS "OpenMP: ENABLED (${OpenMP_CXX_FLAGS})")
-    else()
-        message(STATUS "OpenMP: DISABLED")
-    endif()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENMP)
+    message(STATUS "OpenMP: ENABLED")
 else()
     message(STATUS "OpenMP: DISABLED")
 endif()
@@ -126,6 +121,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
                       PUBLIC
                       Threads::Threads
+                      OpenMP::OpenMP_CXX
                       Eigen3::Eigen
                       yaml-cpp
                       opencv_core
