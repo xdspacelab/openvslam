@@ -35,6 +35,7 @@ addons:
       - cmake
       - git
       - suite-sparse
+      - libomp
       - eigen
       - ffmpeg
       - opencv
