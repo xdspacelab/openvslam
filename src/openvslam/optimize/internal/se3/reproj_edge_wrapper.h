@@ -1,12 +1,12 @@
-#ifndef OPENVSLAM_OPTIMIZE_G2O_SE3_POSE_OPT_EDGE_WRAPPER_H
-#define OPENVSLAM_OPTIMIZE_G2O_SE3_POSE_OPT_EDGE_WRAPPER_H
+#ifndef OPENVSLAM_OPTIMIZE_G2O_SE3_REPROJ_EDGE_WRAPPER_H
+#define OPENVSLAM_OPTIMIZE_G2O_SE3_REPROJ_EDGE_WRAPPER_H
 
 #include "openvslam/camera/perspective.h"
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
 #include "openvslam/camera/radial_division.h"
-#include "openvslam/optimize/g2o/se3/perspective_pose_opt_edge.h"
-#include "openvslam/optimize/g2o/se3/equirectangular_pose_opt_edge.h"
+#include "openvslam/optimize/internal/se3/perspective_reproj_edge.h"
+#include "openvslam/optimize/internal/se3/equirectangular_reproj_edge.h"
 
 #include <g2o/core/robust_kernel_impl.h>
 
@@ -17,57 +17,52 @@ class landmark;
 } // namespace data
 
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace se3 {
 
 template<typename T>
-class pose_opt_edge_wrapper {
+class reproj_edge_wrapper {
 public:
-    pose_opt_edge_wrapper() = delete;
+    reproj_edge_wrapper() = delete;
 
-    pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, const Vec3_t& pos_w,
-                          const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
-                          const float inv_sigma_sq, const float sqrt_chi_sq);
+    reproj_edge_wrapper(T* shot, shot_vertex* shot_vtx,
+                        data::landmark* lm, landmark_vertex* lm_vtx,
+                        const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
+                        const float inv_sigma_sq, const float sqrt_chi_sq, const bool use_huber_loss = true);
 
-    virtual ~pose_opt_edge_wrapper() = default;
+    virtual ~reproj_edge_wrapper() = default;
 
-    inline bool is_inlier() const {
-        return edge_->level() == 0;
-    }
+    bool is_inlier() const;
 
-    inline bool is_outlier() const {
-        return edge_->level() != 0;
-    }
+    bool is_outlier() const;
 
-    inline void set_as_inlier() const {
-        edge_->setLevel(0);
-    }
+    void set_as_inlier() const;
 
-    inline void set_as_outlier() const {
-        edge_->setLevel(1);
-    }
+    void set_as_outlier() const;
 
-    inline bool depth_is_positive() const;
+    bool depth_is_positive() const;
 
-    ::g2o::OptimizableGraph::Edge* edge_;
+    g2o::OptimizableGraph::Edge* edge_;
 
     camera::base* camera_;
     T* shot_;
+    data::landmark* lm_;
     const unsigned int idx_;
     const bool is_monocular_;
 };
 
 template<typename T>
-pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, const Vec3_t& pos_w,
-                                                const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
-                                                const float inv_sigma_sq, const float sqrt_chi_sq)
-    : camera_(shot->camera_), shot_(shot), idx_(idx), is_monocular_(obs_x_right < 0) {
+inline reproj_edge_wrapper<T>::reproj_edge_wrapper(T* shot, shot_vertex* shot_vtx,
+                                                   data::landmark* lm, landmark_vertex* lm_vtx,
+                                                   const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
+                                                   const float inv_sigma_sq, const float sqrt_chi_sq, const bool use_huber_loss)
+    : camera_(shot->camera_), shot_(shot), lm_(lm), idx_(idx), is_monocular_(obs_x_right < 0) {
     // 拘束条件を設定
     switch (camera_->model_type_) {
         case camera::model_type_t::Perspective: {
             auto c = static_cast<camera::perspective*>(camera_);
             if (is_monocular_) {
-                auto edge = new mono_perspective_pose_opt_edge();
+                auto edge = new mono_perspective_reproj_edge();
 
                 const Vec2_t obs{obs_x, obs_y};
                 edge->setMeasurement(obs);
@@ -78,14 +73,13 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
                 edge->cx_ = c->cx_;
                 edge->cy_ = c->cy_;
 
-                edge->pos_w_ = pos_w;
-
-                edge->setVertex(0, shot_vtx);
+                edge->setVertex(0, lm_vtx);
+                edge->setVertex(1, shot_vtx);
 
                 edge_ = edge;
             }
             else {
-                auto edge = new stereo_perspective_pose_opt_edge();
+                auto edge = new stereo_perspective_reproj_edge();
 
                 const Vec3_t obs{obs_x, obs_y, obs_x_right};
                 edge->setMeasurement(obs);
@@ -97,9 +91,8 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
                 edge->cy_ = c->cy_;
                 edge->focal_x_baseline_ = camera_->focal_x_baseline_;
 
-                edge->pos_w_ = pos_w;
-
-                edge->setVertex(0, shot_vtx);
+                edge->setVertex(0, lm_vtx);
+                edge->setVertex(1, shot_vtx);
 
                 edge_ = edge;
             }
@@ -108,7 +101,7 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
         case camera::model_type_t::Fisheye: {
             auto c = static_cast<camera::fisheye*>(camera_);
             if (is_monocular_) {
-                auto edge = new mono_perspective_pose_opt_edge();
+                auto edge = new mono_perspective_reproj_edge();
 
                 const Vec2_t obs{obs_x, obs_y};
                 edge->setMeasurement(obs);
@@ -119,14 +112,13 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
                 edge->cx_ = c->cx_;
                 edge->cy_ = c->cy_;
 
-                edge->pos_w_ = pos_w;
-
-                edge->setVertex(0, shot_vtx);
+                edge->setVertex(0, lm_vtx);
+                edge->setVertex(1, shot_vtx);
 
                 edge_ = edge;
             }
             else {
-                auto edge = new stereo_perspective_pose_opt_edge();
+                auto edge = new stereo_perspective_reproj_edge();
 
                 const Vec3_t obs{obs_x, obs_y, obs_x_right};
                 edge->setMeasurement(obs);
@@ -138,9 +130,8 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
                 edge->cy_ = c->cy_;
                 edge->focal_x_baseline_ = camera_->focal_x_baseline_;
 
-                edge->pos_w_ = pos_w;
-
-                edge->setVertex(0, shot_vtx);
+                edge->setVertex(0, lm_vtx);
+                edge->setVertex(1, shot_vtx);
 
                 edge_ = edge;
             }
@@ -151,7 +142,7 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
 
             auto c = static_cast<camera::equirectangular*>(camera_);
 
-            auto edge = new equirectangular_pose_opt_edge();
+            auto edge = new equirectangular_reproj_edge();
 
             const Vec2_t obs{obs_x, obs_y};
             edge->setMeasurement(obs);
@@ -160,9 +151,8 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
             edge->cols_ = c->cols_;
             edge->rows_ = c->rows_;
 
-            edge->pos_w_ = pos_w;
-
-            edge->setVertex(0, shot_vtx);
+            edge->setVertex(0, lm_vtx);
+            edge->setVertex(1, shot_vtx);
 
             edge_ = edge;
 
@@ -171,7 +161,7 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
         case camera::model_type_t::RadialDivision: {
             auto c = static_cast<camera::radial_division*>(camera_);
             if (is_monocular_) {
-                auto edge = new mono_perspective_pose_opt_edge();
+                auto edge = new mono_perspective_reproj_edge();
 
                 const Vec2_t obs{obs_x, obs_y};
                 edge->setMeasurement(obs);
@@ -182,14 +172,13 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
                 edge->cx_ = c->cx_;
                 edge->cy_ = c->cy_;
 
-                edge->pos_w_ = pos_w;
-
-                edge->setVertex(0, shot_vtx);
+                edge->setVertex(0, lm_vtx);
+                edge->setVertex(1, shot_vtx);
 
                 edge_ = edge;
             }
             else {
-                auto edge = new stereo_perspective_pose_opt_edge();
+                auto edge = new stereo_perspective_reproj_edge();
 
                 const Vec3_t obs{obs_x, obs_y, obs_x_right};
                 edge->setMeasurement(obs);
@@ -201,9 +190,8 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
                 edge->cy_ = c->cy_;
                 edge->focal_x_baseline_ = camera_->focal_x_baseline_;
 
-                edge->pos_w_ = pos_w;
-
-                edge->setVertex(0, shot_vtx);
+                edge->setVertex(0, lm_vtx);
+                edge->setVertex(1, shot_vtx);
 
                 edge_ = edge;
             }
@@ -212,28 +200,50 @@ pose_opt_edge_wrapper<T>::pose_opt_edge_wrapper(T* shot, shot_vertex* shot_vtx, 
     }
 
     // loss functionを設定
-    auto huber_kernel = new ::g2o::RobustKernelHuber();
-    huber_kernel->setDelta(sqrt_chi_sq);
-    edge_->setRobustKernel(huber_kernel);
+    if (use_huber_loss) {
+        auto huber_kernel = new g2o::RobustKernelHuber();
+        huber_kernel->setDelta(sqrt_chi_sq);
+        edge_->setRobustKernel(huber_kernel);
+    }
 }
 
 template<typename T>
-bool pose_opt_edge_wrapper<T>::depth_is_positive() const {
+inline bool reproj_edge_wrapper<T>::is_inlier() const {
+    return edge_->level() == 0;
+}
+
+template<typename T>
+inline bool reproj_edge_wrapper<T>::is_outlier() const {
+    return edge_->level() != 0;
+}
+
+template<typename T>
+inline void reproj_edge_wrapper<T>::set_as_inlier() const {
+    edge_->setLevel(0);
+}
+
+template<typename T>
+inline void reproj_edge_wrapper<T>::set_as_outlier() const {
+    edge_->setLevel(1);
+}
+
+template<typename T>
+inline bool reproj_edge_wrapper<T>::depth_is_positive() const {
     switch (camera_->model_type_) {
         case camera::model_type_t::Perspective: {
             if (is_monocular_) {
-                return static_cast<mono_perspective_pose_opt_edge*>(edge_)->mono_perspective_pose_opt_edge::depth_is_positive();
+                return static_cast<mono_perspective_reproj_edge*>(edge_)->mono_perspective_reproj_edge::depth_is_positive();
             }
             else {
-                return static_cast<stereo_perspective_pose_opt_edge*>(edge_)->stereo_perspective_pose_opt_edge::depth_is_positive();
+                return static_cast<stereo_perspective_reproj_edge*>(edge_)->stereo_perspective_reproj_edge::depth_is_positive();
             }
         }
         case camera::model_type_t::Fisheye: {
             if (is_monocular_) {
-                return static_cast<mono_perspective_pose_opt_edge*>(edge_)->mono_perspective_pose_opt_edge::depth_is_positive();
+                return static_cast<mono_perspective_reproj_edge*>(edge_)->mono_perspective_reproj_edge::depth_is_positive();
             }
             else {
-                return static_cast<stereo_perspective_pose_opt_edge*>(edge_)->stereo_perspective_pose_opt_edge::depth_is_positive();
+                return static_cast<stereo_perspective_reproj_edge*>(edge_)->stereo_perspective_reproj_edge::depth_is_positive();
             }
         }
         case camera::model_type_t::Equirectangular: {
@@ -241,10 +251,10 @@ bool pose_opt_edge_wrapper<T>::depth_is_positive() const {
         }
         case camera::model_type_t::RadialDivision: {
             if (is_monocular_) {
-                return static_cast<mono_perspective_pose_opt_edge*>(edge_)->mono_perspective_pose_opt_edge::depth_is_positive();
+                return static_cast<mono_perspective_reproj_edge*>(edge_)->mono_perspective_reproj_edge::depth_is_positive();
             }
             else {
-                return static_cast<stereo_perspective_pose_opt_edge*>(edge_)->stereo_perspective_pose_opt_edge::depth_is_positive();
+                return static_cast<stereo_perspective_reproj_edge*>(edge_)->stereo_perspective_reproj_edge::depth_is_positive();
             }
         }
     }
@@ -253,8 +263,8 @@ bool pose_opt_edge_wrapper<T>::depth_is_positive() const {
 }
 
 } // namespace se3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
 
-#endif // OPENVSLAM_OPTIMIZE_G2O_SE3_POSE_OPT_EDGE_WRAPPER_H
+#endif // OPENVSLAM_OPTIMIZE_G2O_SE3_REPROJ_EDGE_WRAPPER_H

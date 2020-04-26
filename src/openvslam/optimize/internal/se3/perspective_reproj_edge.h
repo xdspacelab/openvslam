@@ -1,14 +1,43 @@
-#include "openvslam/optimize/g2o/se3/perspective_reproj_edge.h"
+#ifndef OPENVSLAM_OPTIMIZER_G2O_SE3_PERSPECTIVE_REPROJ_EDGE_H
+#define OPENVSLAM_OPTIMIZER_G2O_SE3_PERSPECTIVE_REPROJ_EDGE_H
+
+#include "openvslam/type.h"
+#include "openvslam/optimize/internal/landmark_vertex.h"
+#include "openvslam/optimize/internal/se3/shot_vertex.h"
+
+#include <g2o/core/base_binary_edge.h>
+#include <g2o/core/base_unary_edge.h>
 
 namespace openvslam {
 namespace optimize {
-namespace g2o {
+namespace internal {
 namespace se3 {
 
-mono_perspective_reproj_edge::mono_perspective_reproj_edge()
-    : BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex>() {}
+class mono_perspective_reproj_edge final : public g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex> {
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-bool mono_perspective_reproj_edge::read(std::istream& is) {
+    mono_perspective_reproj_edge();
+
+    bool read(std::istream& is) override;
+
+    bool write(std::ostream& os) const override;
+
+    void computeError() override;
+
+    void linearizeOplus() override;
+
+    bool depth_is_positive() const;
+
+    Vec2_t cam_project(const Vec3_t& pos_c) const;
+
+    double fx_, fy_, cx_, cy_;
+};
+
+inline mono_perspective_reproj_edge::mono_perspective_reproj_edge()
+    : g2o::BaseBinaryEdge<2, Vec2_t, landmark_vertex, shot_vertex>() {}
+
+inline bool mono_perspective_reproj_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 2; ++i) {
         is >> _measurement(i);
     }
@@ -23,7 +52,7 @@ bool mono_perspective_reproj_edge::read(std::istream& is) {
     return true;
 }
 
-bool mono_perspective_reproj_edge::write(std::ostream& os) const {
+inline bool mono_perspective_reproj_edge::write(std::ostream& os) const {
     for (unsigned int i = 0; i < 2; ++i) {
         os << measurement()(i) << " ";
     }
@@ -35,9 +64,16 @@ bool mono_perspective_reproj_edge::write(std::ostream& os) const {
     return os.good();
 }
 
-void mono_perspective_reproj_edge::linearizeOplus() {
+inline void mono_perspective_reproj_edge::computeError() {
+    const auto v1 = static_cast<const shot_vertex*>(_vertices.at(1));
+    const auto v2 = static_cast<const landmark_vertex*>(_vertices.at(0));
+    const Vec2_t obs(_measurement);
+    _error = obs - cam_project(v1->estimate().map(v2->estimate()));
+}
+
+inline void mono_perspective_reproj_edge::linearizeOplus() {
     auto vj = static_cast<shot_vertex*>(_vertices.at(1));
-    const ::g2o::SE3Quat& cam_pose_cw = vj->shot_vertex::estimate();
+    const g2o::SE3Quat& cam_pose_cw = vj->shot_vertex::estimate();
 
     auto vi = static_cast<landmark_vertex*>(_vertices.at(0));
     const Vec3_t& pos_w = vi->landmark_vertex::estimate();
@@ -73,10 +109,41 @@ void mono_perspective_reproj_edge::linearizeOplus() {
     _jacobianOplusXj(1, 5) = y / z_sq * fy_;
 }
 
-stereo_perspective_reproj_edge::stereo_perspective_reproj_edge()
-    : BaseBinaryEdge<3, Vec3_t, landmark_vertex, shot_vertex>() {}
+inline bool mono_perspective_reproj_edge::depth_is_positive() const {
+    const auto v1 = static_cast<const shot_vertex*>(_vertices.at(1));
+    const auto v2 = static_cast<const landmark_vertex*>(_vertices.at(0));
+    return 0.0 < (v1->estimate().map(v2->estimate()))(2);
+}
 
-bool stereo_perspective_reproj_edge::read(std::istream& is) {
+inline Vec2_t mono_perspective_reproj_edge::cam_project(const Vec3_t& pos_c) const {
+    return {fx_ * pos_c(0) / pos_c(2) + cx_, fy_ * pos_c(1) / pos_c(2) + cy_};
+}
+
+class stereo_perspective_reproj_edge final : public g2o::BaseBinaryEdge<3, Vec3_t, landmark_vertex, shot_vertex> {
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    stereo_perspective_reproj_edge();
+
+    bool read(std::istream& is) override;
+
+    bool write(std::ostream& os) const override;
+
+    void computeError() override;
+
+    void linearizeOplus() override;
+
+    bool depth_is_positive() const;
+
+    Vec3_t cam_project(const Vec3_t& pos_c) const;
+
+    double fx_, fy_, cx_, cy_, focal_x_baseline_;
+};
+
+inline stereo_perspective_reproj_edge::stereo_perspective_reproj_edge()
+    : g2o::BaseBinaryEdge<3, Vec3_t, landmark_vertex, shot_vertex>() {}
+
+inline bool stereo_perspective_reproj_edge::read(std::istream& is) {
     for (unsigned int i = 0; i < 3; ++i) {
         is >> _measurement(i);
     }
@@ -91,7 +158,7 @@ bool stereo_perspective_reproj_edge::read(std::istream& is) {
     return true;
 }
 
-bool stereo_perspective_reproj_edge::write(std::ostream& os) const {
+inline bool stereo_perspective_reproj_edge::write(std::ostream& os) const {
     for (unsigned int i = 0; i < 3; ++i) {
         os << measurement()(i) << " ";
     }
@@ -103,9 +170,16 @@ bool stereo_perspective_reproj_edge::write(std::ostream& os) const {
     return os.good();
 }
 
-void stereo_perspective_reproj_edge::linearizeOplus() {
+inline void stereo_perspective_reproj_edge::computeError() {
+    const auto v1 = static_cast<const shot_vertex*>(_vertices.at(1));
+    const auto v2 = static_cast<const landmark_vertex*>(_vertices.at(0));
+    const Vec3_t obs(_measurement);
+    _error = obs - cam_project(v1->estimate().map(v2->estimate()));
+}
+
+inline void stereo_perspective_reproj_edge::linearizeOplus() {
     auto vj = static_cast<shot_vertex*>(_vertices.at(1));
-    const ::g2o::SE3Quat& cam_pose_cw = vj->shot_vertex::estimate();
+    const g2o::SE3Quat& cam_pose_cw = vj->shot_vertex::estimate();
 
     auto vi = static_cast<landmark_vertex*>(_vertices.at(0));
     const Vec3_t& pos_w = vi->landmark_vertex::estimate();
@@ -152,7 +226,20 @@ void stereo_perspective_reproj_edge::linearizeOplus() {
     _jacobianOplusXj(2, 5) = _jacobianOplusXj(0, 5) - focal_x_baseline_ / z_sq;
 }
 
+inline bool stereo_perspective_reproj_edge::depth_is_positive() const {
+    const auto v1 = static_cast<const shot_vertex*>(_vertices.at(1));
+    const auto v2 = static_cast<const landmark_vertex*>(_vertices.at(0));
+    return 0 < (v1->estimate().map(v2->estimate()))(2);
+}
+
+inline Vec3_t stereo_perspective_reproj_edge::cam_project(const Vec3_t& pos_c) const {
+    const double reproj_x = fx_ * pos_c(0) / pos_c(2) + cx_;
+    return {reproj_x, fy_ * pos_c(1) / pos_c(2) + cy_, reproj_x - focal_x_baseline_ / pos_c(2)};
+}
+
 } // namespace se3
-} // namespace g2o
+} // namespace internal
 } // namespace optimize
 } // namespace openvslam
+
+#endif // OPENVSLAM_OPTIMIZER_G2O_SE3_PERSPECTIVE_REPROJ_EDGE_H

@@ -35,6 +35,7 @@ addons:
       - cmake
       - git
       - suite-sparse
+      - libomp
       - eigen
       - ffmpeg
       - opencv
@@ -90,7 +91,7 @@ before_install:
         -DG2O_USE_CHOLMOD=OFF \
         -DG2O_USE_CSPARSE=ON \
         -DG2O_USE_OPENGL=OFF \
-        -DG2O_USE_OPENMP=ON \
+        -DG2O_USE_OPENMP=OFF \
         ..
     make -j 3
     make install

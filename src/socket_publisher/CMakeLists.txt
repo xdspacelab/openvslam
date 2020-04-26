@@ -13,23 +13,25 @@ message(STATUS "Found protoc executable: ${PROTOBUF_PROTOC_EXECUTABLE}")
 # ----- Protobuf transpile -----
 
 protobuf_generate_cpp(MAP_PB_SOURCE MAP_PB_HEADER protobuf/map_segment.proto)
-set_source_files_properties(${MAP_PB_HEADER} ${MAP_PB_SOURCE}
-                            COMPILE_FLAGS -Wno-unused-variable)
+if(NOT MSVC)
+    set_source_files_properties(${MAP_PB_HEADER} ${MAP_PB_SOURCE}
+                                COMPILE_FLAGS -Wno-unused-variable)
+endif()
 
 # ----- Configure SocketPublisher library -----
 
 add_library(socket_publisher
-            SHARED
-            data_serializer.h
-            publisher.h
-            socket_client.h
-            data_serializer.cc
-            publisher.cc
-            socket_client.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/data_serializer.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/publisher.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/socket_client.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/data_serializer.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/publisher.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/socket_client.cc
             ${MAP_PB_SOURCE})
 
 set_target_properties(socket_publisher PROPERTIES
                       OUTPUT_NAME socket_publisher
+                      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
                       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 target_include_directories(socket_publisher
@@ -50,16 +52,16 @@ target_link_libraries(socket_publisher
 
 set(INSTALL_SOCKET_PUBLISHER OFF CACHE BOOL "Install SocketPublisher library")
 if(INSTALL_SOCKET_PUBLISHER)
-    set(SOCKER_VIEWER_INCLUDE_INSTALL_DIR ${INCLUDES_DESTINATION}/socket_viewer)
+    set(SOCKER_PUBLISHER_INCLUDE_INSTALL_DIR ${INCLUDES_DESTINATION}/socket_publisher)
 
     install(TARGETS socket_publisher
             EXPORT ${OPENVSLAM_TARGETS_EXPORT_NAME}
             RUNTIME DESTINATION ${RUNTIME_DESTINATION}
             LIBRARY DESTINATION ${LIBRARY_DESTINATION}
             ARCHIVE DESTINATION ${ARCHIVE_DESTINATION}
-            INCLUDES DESTINATION ${SOCKER_VIEWER_INCLUDE_INSTALL_DIR})
+            INCLUDES DESTINATION ${SOCKER_PUBLISHER_INCLUDE_INSTALL_DIR})
 
     file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
     install(FILES ${HEADERS}
-            DESTINATION ${SOCKER_VIEWER_INCLUDE_INSTALL_DIR})
+            DESTINATION ${SOCKER_PUBLISHER_INCLUDE_INSTALL_DIR})
 endif()

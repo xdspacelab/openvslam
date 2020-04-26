@@ -1,7 +1,9 @@
 #ifndef OPENVSLAM_FEATURE_ORB_EXTRACTOR_NODE_H
 #define OPENVSLAM_FEATURE_ORB_EXTRACTOR_NODE_H
 
+#include <array>
 #include <list>
+#include <array>
 
 #include <opencv2/core/types.hpp>
 

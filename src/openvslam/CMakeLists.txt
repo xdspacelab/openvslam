@@ -39,7 +39,6 @@ endif()
 # ----- Create OpenVSLAM library -----
 
 add_library(${PROJECT_NAME}
-            SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/config.h
             ${CMAKE_CURRENT_SOURCE_DIR}/type.h
             ${CMAKE_CURRENT_SOURCE_DIR}/system.h
@@ -55,43 +54,36 @@ add_library(${PROJECT_NAME}
 # Set output directory of the library
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       OUTPUT_NAME openvslam
+                      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
                       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 # ----- Compile configuration -----
 
 # OpenMP
+target_compile_options(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_FLAGS})
 set(USE_OPENMP OFF CACHE BOOL "Use OpenMP")
 if(USE_OPENMP)
-    find_package(OpenMP)
-    if(OpenMP_FOUND)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENMP)
-        message(STATUS "OpenMP: ENABLED")
-    else()
-        message(STATUS "OpenMP: DISABLED")
-    endif()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENMP)
+    message(STATUS "OpenMP: ENABLED")
 else()
     message(STATUS "OpenMP: DISABLED")
 endif()
 
-set(USE_SSE_ORB OFF CACHE BOOL "Enable SSE3 instruction for ORB extraction (-msse3)")
+set(USE_SSE_ORB OFF CACHE BOOL "Enable SSE3 instruction for ORB extraction")
 if(USE_SSE_ORB)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse3")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+    target_compile_options(${PROJECT_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse3>)
     target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SSE_ORB)
-    message(STATUS "SSE3 for ORB extraction (-msse3): ENABLED")
+    message(STATUS "SSE3 for ORB extraction: ENABLED")
 else()
-    message(STATUS "SSE3 for ORB extraction (-msse3): DISABLED")
+    message(STATUS "SSE3 for ORB extraction: DISABLED")
 endif()
 
-set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point operation (-mfpmath=sse)")
+set(USE_SSE_FP_MATH OFF CACHE BOOL "Enable SSE instruction for floating-point operation")
 if(USE_SSE_FP_MATH)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=sse")
-    message(STATUS "SSE for floating-point operation (-mfpmath=sse): ENABLED")
+    target_compile_options(${PROJECT_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-mfpmath=sse>)
+    message(STATUS "SSE for floating-point operation: ENABLED")
 else()
-    message(STATUS "SSE for floating-point operation (-mfpmath=sse): DISABLED")
+    message(STATUS "SSE for floating-point operation: DISABLED")
 endif()
 
 # Check BoW Framework
@@ -129,6 +121,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
                       PUBLIC
                       Threads::Threads
+                      OpenMP::OpenMP_CXX
                       Eigen3::Eigen
                       yaml-cpp
                       opencv_core

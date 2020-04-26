@@ -18,4 +18,4 @@ install(FILES ${HEADERS}
         DESTINATION ${OPENVSLAM_INCLUDE_INSTALL_DIR}/optimize)
 
 # Append subdirectory
-add_subdirectory(g2o)
+add_subdirectory(internal)
