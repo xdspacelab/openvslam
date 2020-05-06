@@ -145,6 +145,7 @@ int main(int argc, char* argv[]) {
     google::InstallFailureSignalHandler();
 #endif
     rclcpp::init(argc, argv);
+    rclcpp::uninstall_signal_handlers();
 
     // create options
     popl::OptionParser op("Allowed options");
