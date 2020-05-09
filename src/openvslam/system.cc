@@ -47,8 +47,8 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     try {
         bow_vocab_->loadFromBinaryFile(vocab_file_path);
     }
-    catch (const std::exception&) {
-        spdlog::critical("wrong path to vocabulary");
+    catch (const std::string& error_message) {
+        spdlog::critical("wrong path to vocabulary ({})", error_message);
         delete bow_vocab_;
         bow_vocab_ = nullptr;
         exit(EXIT_FAILURE);
