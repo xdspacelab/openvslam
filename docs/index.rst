@@ -30,7 +30,7 @@ Contents
     ./simple_tutorial
     ./example
     ./docker
-    ./ros_package
+    ./ros
     ./trouble_shooting
 
 Cite Us

@@ -4,13 +4,6 @@
 ROS Package
 ===========
 
-We provide ROS package examples to help you run OpenVSLAM on ROS framework.
-
-.. NOTE ::
-
-    Please build OpenVSLAM with **OpenCV 3.3.1 or later** if you plan on using ROS package.
-    OpenCV 4.x is not supported yet.
-
 .. _section-installation:
 
 Installation

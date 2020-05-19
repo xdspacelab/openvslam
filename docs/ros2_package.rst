@@ -4,13 +4,6 @@
 ROS2 Package
 ============
 
-We provide ROS2 package examples to help you run OpenVSLAM on ROS2 framework.
-
-.. NOTE ::
-
-    Please build OpenVSLAM with **OpenCV 3.3.1 or later** if you plan on using ROS package.
-    OpenCV 4.x is not supported yet.
-
 .. _section-installation:
 
 Installation
@@ -119,7 +112,7 @@ Republish the ROS topic to ``/camera/image_raw``.
     ros2 run image_transport republish \
         raw in:=/video/image_raw raw out:=/camera/image_raw
 
-Publish Images of a USB Camera
+Publish Images Captured by a USB Camera
 ------------------------------
 
 For using a standard USB camera for visual SLAM or localization.
