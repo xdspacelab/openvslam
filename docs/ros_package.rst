@@ -4,13 +4,6 @@
 ROS Package
 ===========
 
-We provide ROS package examples to help you run OpenVSLAM on ROS framework.
-
-.. NOTE ::
-
-    Please build OpenVSLAM with **OpenCV 3.3.1 or later** if you plan on using ROS package.
-    OpenCV 4.x is not supported yet.
-
 .. _section-installation:
 
 Installation
@@ -55,7 +48,7 @@ Download the source of ``cv_bridge``.
 
 .. code-block:: bash
 
-    cd /path/to/openvslam/ros
+    cd /path/to/openvslam/ros/1
     git clone --branch ${ROS_DISTRO} --depth 1 https://github.com/ros-perception/vision_opencv.git
     cp -r vision_opencv/cv_bridge src/
     rm -rf vision_opencv
@@ -71,7 +64,7 @@ When building with support for PangolinViewer, please specify the following cmak
 
 .. code-block:: bash
 
-    cd /path/to/openvslam/ros
+    cd /path/to/openvslam/ros/1
     catkin_make \
         -DBUILD_WITH_MARCH_NATIVE=ON \
         -DUSE_PANGOLIN_VIEWER=ON \
@@ -83,7 +76,7 @@ Alternatively, when building with support for SocketViewer, please specify the f
 
 .. code-block:: bash
 
-    cd /path/to/openvslam/ros
+    cd /path/to/openvslam/ros/1
     catkin_make \
         -DBUILD_WITH_MARCH_NATIVE=ON \
         -DUSE_PANGOLIN_VIEWER=OFF \
@@ -117,7 +110,7 @@ For using video files (e.g. ``.mp4``) for visual SLAM or localization.
 
 .. code-block:: bash
 
-    source /path/to/openvslam/ros/devel/setup.bash
+    source /path/to/openvslam/ros/1/devel/setup.bash
     rosrun publisher video -m /path/to/video.mp4
 
 Republish the ROS topic to ``/camera/image_raw``.
@@ -135,7 +128,7 @@ For using image sequences for visual SLAM or localization.
 
 .. code-block:: bash
 
-    source /path/to/openvslam/ros/devel/setup.bash
+    source /path/to/openvslam/ros/1/devel/setup.bash
     rosrun publisher image -i /path/to/images/
 
 Republish the ROS topic to ``/camera/image_raw``.
@@ -180,11 +173,11 @@ Tracking and Mapping
 --------------------
 
 We provide an example snippet for visual SLAM.
-The source code is placed at ``./openvslam/ros/src/openvslam/src/run_slam.cc``.
+The source code is placed at ``./openvslam/ros/1/src/openvslam/src/run_slam.cc``.
 
 .. code-block:: bash
 
-    source /path/to/openvslam/ros/devel/setup.bash
+    source /path/to/openvslam/ros/1/devel/setup.bash
     rosrun openvslam run_slam \
         -v /path/to/orb_vocab.dbow2 \
         -c /path/to/config.yaml
@@ -193,11 +186,11 @@ Localization
 ------------
 
 We provide an example snippet for localization based on a prebuilt map.
-The source code is placed at ``./ros/src/openvslam/src/run_localization.cc``.
+The source code is placed at ``./ros/1/src/openvslam/src/run_localization.cc``.
 
 .. code-block:: bash
 
-    source /path/to/openvslam/ros/devel/setup.bash
+    source /path/to/openvslam/ros/1/devel/setup.bash
     rosrun openvslam run_localization \
         -v /path/to/orb_vocab.dbow2 \
         -c /path/to/config.yaml \
