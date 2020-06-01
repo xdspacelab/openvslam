@@ -50,7 +50,7 @@ target_link_libraries(socket_publisher
 
 set(INSTALL_SOCKET_PUBLISHER OFF CACHE BOOL "Install SocketPublisher library")
 if(INSTALL_SOCKET_PUBLISHER)
-    set(SOCKER_VIEWER_INCLUDE_INSTALL_DIR ${INCLUDES_DESTINATION}/socket_viewer)
+    set(SOCKER_VIEWER_INCLUDE_INSTALL_DIR ${INCLUDES_DESTINATION}/socket_publisher)
 
     install(TARGETS socket_publisher
             EXPORT ${OPENVSLAM_TARGETS_EXPORT_NAME}
