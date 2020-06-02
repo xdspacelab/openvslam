@@ -20,12 +20,12 @@ unsigned int area::match_in_consistent_area(data::frame& frm_1, data::frame& frm
         const auto& undist_keypt_1 = frm_1.undist_keypts_.at(idx_1);
         const auto scale_level_1 = undist_keypt_1.octave;
 
-        // 第0スケールの特徴点のみを用いる
+        // Use only keypoints with the 0-th scale
         if (0 < scale_level_1) {
             continue;
         }
 
-        // 一つ前にマッチングした特徴点周辺のcellの特徴点を持ってくる
+        // Get keypoints in the cells neighboring to the previous match
         const auto indices = frm_2.get_keypoints_in_cell(prev_matched_pts.at(idx_1).x, prev_matched_pts.at(idx_1).y,
                                                          margin, scale_level_1, scale_level_1);
         if (indices.empty()) {
@@ -43,7 +43,7 @@ unsigned int area::match_in_consistent_area(data::frame& frm_1, data::frame& frm
 
             const auto hamm_dist = compute_descriptor_distance_32(desc_1, desc_2);
 
-            // すでにマッチした点のほうが近ければスルーする
+            // Ignore if the already-matched point is closer in Hamming space
             if (matched_dists_in_frm_2.at(idx_2) <= hamm_dist) {
                 continue;
             }
@@ -62,23 +62,23 @@ unsigned int area::match_in_consistent_area(data::frame& frm_1, data::frame& frm
             continue;
         }
 
-        // ratio test
+        // Ratio test
         if (second_best_hamm_dist * lowe_ratio_ < static_cast<float>(best_hamm_dist)) {
             continue;
         }
 
-        // idx_1 - best_idx_2 がベストな対応と推定
+        // Assuming that the indices 1 and 2 are the best match
 
-        // best_idx_2に対応する点がすでに存在する場合(=prev_idx_1)は，
-        // 上書きするため対応するmatched_indices_2_in_frm_1.at(prev_idx_1)の対応情報を削除する必要がある
-        // (matched_indices_1_in_frm_2.at(best_idx_2)は上書きするので削除する必要がない)
+        // If a match associated to the best index 2 exists, to overwrite the matching information of the previous index 1 (= prev_idx_1),
+        // 'matched_indices_2_in_frm_1.at(prev_idx_1)' must be deleted to overrwrite the updates
+        // ('matched_indices_1_in_frm_2.at (best_idx_2)' will be overwritten, so there is no need to delete it)
         const auto prev_idx_1 = matched_indices_1_in_frm_2.at(best_idx_2);
         if (0 <= prev_idx_1) {
             matched_indices_2_in_frm_1.at(prev_idx_1) = -1;
             --num_matches;
         }
 
-        // 互いの対応情報を記録する
+        // Record the mutual matching information
         matched_indices_2_in_frm_1.at(idx_1) = best_idx_2;
         matched_indices_1_in_frm_2.at(best_idx_2) = idx_1;
         matched_dists_in_frm_2.at(best_idx_2) = best_hamm_dist;
@@ -101,7 +101,7 @@ unsigned int area::match_in_consistent_area(data::frame& frm_1, data::frame& frm
         }
     }
 
-    // previous matchesを更新する
+    // Update the previous matches
     for (unsigned int idx_1 = 0; idx_1 < matched_indices_2_in_frm_1.size(); ++idx_1) {
         if (0 <= matched_indices_2_in_frm_1.at(idx_1)) {
             prev_matched_pts.at(idx_1) = frm_2.undist_keypts_.at(matched_indices_2_in_frm_1.at(idx_1)).pt;
