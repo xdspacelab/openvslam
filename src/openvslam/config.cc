@@ -75,26 +75,27 @@ config::config(const YAML::Node& yaml_node, const std::string& config_file_path)
     if (camera_->setup_type_ == camera::setup_type_t::Stereo || camera_->setup_type_ == camera::setup_type_t::RGBD) {
         // ベースライン長の一定倍より遠いdepthは無視する
         const auto depth_thr_factor = yaml_node_["depth_threshold"].as<double>(40.0);
-        true_depth_thr_ = yaml_node_["true_depth_threshold"].as<double>(10.0);
 
         switch (camera_->model_type_) {
             case camera::model_type_t::Perspective: {
                 auto camera = static_cast<camera::perspective*>(camera_);
-                if (camera->true_baseline_) {
-                    true_depth_thr_ = camera->true_baseline_ * depth_thr_factor;
-                }
+                true_depth_thr_ = camera->true_baseline_ * depth_thr_factor;
                 break;
             }
             case camera::model_type_t::Fisheye: {
                 auto camera = static_cast<camera::fisheye*>(camera_);
-                if (camera->true_baseline_) {
-                    true_depth_thr_ = camera->true_baseline_ * depth_thr_factor;
-                }
+                true_depth_thr_ = camera->true_baseline_ * depth_thr_factor;
                 break;
             }
             case camera::model_type_t::Equirectangular: {
                 throw std::runtime_error("Not implemented: Stereo or RGBD of equirectangular camera model");
             }
+        }
+
+        // allow user to overwrite with directly specified true depth threshold in [meters]
+        const auto true_depth_thr = yaml_node_["true_depth_threshold"].as<double>(-1.0);
+        if (true_depth_thr > 0) {
+          this->true_depth_thr_ = true_depth_thr;
         }
     }
 
