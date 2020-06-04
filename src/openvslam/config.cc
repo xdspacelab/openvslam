@@ -95,7 +95,7 @@ config::config(const YAML::Node& yaml_node, const std::string& config_file_path)
         // allow user to overwrite with directly specified true depth threshold in [meters]
         const auto true_depth_thr = yaml_node_["true_depth_threshold"].as<double>(-1.0);
         if (true_depth_thr > 0) {
-          this->true_depth_thr_ = true_depth_thr;
+            this->true_depth_thr_ = true_depth_thr;
         }
     }
 
