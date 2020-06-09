@@ -39,7 +39,7 @@ public:
     system(const std::shared_ptr<config>& cfg, const std::string& vocab_file_path);
 
     //! Destructor
-    ~system();
+    virtual ~system();
 
     //-----------------------------------------
     // system startup and shutdown
@@ -143,7 +143,7 @@ public:
     //!! Termination of the system is requested or not
     bool terminate_is_requested() const;
 
-private:
+protected:
     //! Check reset request of the system
     void check_reset_request();
 
