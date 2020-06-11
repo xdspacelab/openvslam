@@ -8,7 +8,6 @@
 #include "openvslam/module/keyframe_inserter.h"
 #include "openvslam/module/frame_tracker.h"
 
-#include <algorithm>
 #include <memory>
 #include <mutex>
 
