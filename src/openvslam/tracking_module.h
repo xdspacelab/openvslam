@@ -8,6 +8,8 @@
 #include "openvslam/module/keyframe_inserter.h"
 #include "openvslam/module/frame_tracker.h"
 
+#include <algorithm>
+#include <memory>
 #include <mutex>
 
 #include <opencv2/core/core.hpp>
@@ -116,7 +118,7 @@ public:
     tracker_state_t last_tracking_state_ = tracker_state_t::NotInitialized;
 
     //! current frame and its image
-    data::frame curr_frm_;
+    std::unique_ptr<data::frame> curr_frm_ = nullptr;
     //! image of the current frame
     cv::Mat img_gray_;
 
@@ -216,7 +218,7 @@ protected:
     unsigned int num_tracked_lms_ = 0;
 
     //! last frame
-    data::frame last_frm_;
+    std::unique_ptr<data::frame> last_frm_ = nullptr;
 
     //! latest frame ID which succeeded in relocalization
     unsigned int last_reloc_frm_id_ = 0;

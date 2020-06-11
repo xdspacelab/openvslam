@@ -22,7 +22,8 @@ initializer::initializer(const camera::setup_type_t setup_type,
       parallax_deg_thr_(yaml_node["Initializer.parallax_deg_threshold"].as<float>(1.0)),
       reproj_err_thr_(yaml_node["Initializer.reprojection_error_threshold"].as<float>(4.0)),
       num_ba_iters_(yaml_node["Initializer.num_ba_iterations"].as<unsigned int>(20)),
-      scaling_factor_(yaml_node["Initializer.scaling_factor"].as<float>(1.0)) {
+      scaling_factor_(yaml_node["Initializer.scaling_factor"].as<float>(1.0)),
+      init_frm_(new data::frame) {
     spdlog::debug("CONSTRUCT: module::initializer");
 }
 
@@ -41,7 +42,7 @@ initializer_state_t initializer::get_state() const {
 }
 
 std::vector<cv::KeyPoint> initializer::get_initial_keypoints() const {
-    return init_frm_.keypts_;
+    return init_frm_->keypts_;
 }
 
 std::vector<int> initializer::get_initial_matches() const {
@@ -102,12 +103,12 @@ bool initializer::initialize(data::frame& curr_frm) {
 
 void initializer::create_initializer(data::frame& curr_frm) {
     // set the initial frame
-    init_frm_ = data::frame(curr_frm);
+    *init_frm_ = data::frame(curr_frm);
 
     // initialize the previously matched coordinates
-    prev_matched_coords_.resize(init_frm_.undist_keypts_.size());
-    for (unsigned int i = 0; i < init_frm_.undist_keypts_.size(); ++i) {
-        prev_matched_coords_.at(i) = init_frm_.undist_keypts_.at(i).pt;
+    prev_matched_coords_.resize(init_frm_->undist_keypts_.size());
+    for (unsigned int i = 0; i < init_frm_->undist_keypts_.size(); ++i) {
+        prev_matched_coords_.at(i) = init_frm_->undist_keypts_.at(i).pt;
     }
 
     // initialize matchings (init_idx -> curr_idx)
@@ -115,16 +116,16 @@ void initializer::create_initializer(data::frame& curr_frm) {
 
     // build a initializer
     initializer_.reset(nullptr);
-    switch (init_frm_.camera_->model_type_) {
+    switch (init_frm_->camera_->model_type_) {
         case camera::model_type_t::Perspective:
         case camera::model_type_t::Fisheye: {
-            initializer_ = std::unique_ptr<initialize::perspective>(new initialize::perspective(init_frm_,
+            initializer_ = std::unique_ptr<initialize::perspective>(new initialize::perspective(*init_frm_,
                                                                                                 num_ransac_iters_, min_num_triangulated_,
                                                                                                 parallax_deg_thr_, reproj_err_thr_));
             break;
         }
         case camera::model_type_t::Equirectangular: {
-            initializer_ = std::unique_ptr<initialize::bearing_vector>(new initialize::bearing_vector(init_frm_,
+            initializer_ = std::unique_ptr<initialize::bearing_vector>(new initialize::bearing_vector(*init_frm_,
                                                                                                       num_ransac_iters_, min_num_triangulated_,
                                                                                                       parallax_deg_thr_, reproj_err_thr_));
             break;
@@ -138,7 +139,7 @@ bool initializer::try_initialize_for_monocular(data::frame& curr_frm) {
     assert(state_ == initializer_state_t::Initializing);
 
     match::area matcher(0.9, true);
-    const auto num_matches = matcher.match_in_consistent_area(init_frm_, curr_frm, prev_matched_coords_, init_matches_, 100);
+    const auto num_matches = matcher.match_in_consistent_area(*init_frm_, curr_frm, prev_matched_coords_, init_matches_, 100);
 
     if (num_matches < min_num_triangulated_) {
         // rebuild the initializer with the next frame
@@ -172,7 +173,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
         }
 
         // set the camera poses
-        init_frm_.set_cam_pose(Mat44_t::Identity());
+        init_frm_->set_cam_pose(Mat44_t::Identity());
         Mat44_t cam_pose_cw = Mat44_t::Identity();
         cam_pose_cw.block<3, 3>(0, 0) = initializer_->get_rotation_ref_to_cur();
         cam_pose_cw.block<3, 1>(0, 3) = initializer_->get_translation_ref_to_cur();
@@ -183,7 +184,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
     }
 
     // create initial keyframes
-    auto init_keyfrm = new data::keyframe(init_frm_, map_db_, bow_db_);
+    auto init_keyfrm = new data::keyframe(*init_frm_, map_db_, bow_db_);
     auto curr_keyfrm = new data::keyframe(curr_frm, map_db_, bow_db_);
 
     // compute BoW representations
@@ -195,9 +196,9 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
     map_db_->add_keyframe(curr_keyfrm);
 
     // update the frame statistics
-    init_frm_.ref_keyfrm_ = init_keyfrm;
+    init_frm_->ref_keyfrm_ = init_keyfrm;
     curr_frm.ref_keyfrm_ = curr_keyfrm;
-    map_db_->update_frame_statistics(init_frm_, false);
+    map_db_->update_frame_statistics(*init_frm_, false);
     map_db_->update_frame_statistics(curr_frm, false);
 
     // assign 2D-3D associations
@@ -249,7 +250,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
     // set the origin keyframe
     map_db_->origin_keyfrm_ = init_keyfrm;
 
-    spdlog::info("new map created with {} points: frame {} - frame {}", map_db_->get_num_landmarks(), init_frm_.id_, curr_frm.id_);
+    spdlog::info("new map created with {} points: frame {} - frame {}", map_db_->get_num_landmarks(), init_frm_->id_, curr_frm.id_);
     state_ = initializer_state_t::Succeeded;
     return true;
 }

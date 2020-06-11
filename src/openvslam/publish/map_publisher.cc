@@ -1,3 +1,4 @@
+#include "openvslam/config.h"
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/keyframe.h"
 #include "openvslam/data/map_database.h"

@@ -185,8 +185,8 @@ void frame_publisher::update(tracking_module* tracker) {
 
     tracker->img_gray_.copyTo(img_);
 
-    const auto num_curr_keypts = tracker->curr_frm_.num_keypts_;
-    curr_keypts_ = tracker->curr_frm_.keypts_;
+    const auto num_curr_keypts = tracker->curr_frm_->num_keypts_;
+    curr_keypts_ = tracker->curr_frm_->keypts_;
     elapsed_ms_ = tracker->elapsed_ms_;
     mapping_is_enabled_ = tracker->get_mapping_module_status();
     tracking_state_ = tracker->last_tracking_state_;
@@ -201,11 +201,11 @@ void frame_publisher::update(tracking_module* tracker) {
         }
         case tracker_state_t::Tracking: {
             for (unsigned int i = 0; i < num_curr_keypts; ++i) {
-                auto lm = tracker->curr_frm_.landmarks_.at(i);
+                auto lm = tracker->curr_frm_->landmarks_.at(i);
                 if (!lm) {
                     continue;
                 }
-                if (tracker->curr_frm_.outlier_flags_.at(i)) {
+                if (tracker->curr_frm_->outlier_flags_.at(i)) {
                     continue;
                 }
 

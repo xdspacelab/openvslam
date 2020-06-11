@@ -103,7 +103,7 @@ private:
     //! initializer for monocular
     std::unique_ptr<initialize::base> initializer_ = nullptr;
     //! initial frame
-    data::frame init_frm_;
+    std::unique_ptr<data::frame> init_frm_ = nullptr;
     //! coordinates of previously matched points to perform area-based matching
     std::vector<cv::Point2f> prev_matched_coords_;
     //! initial matching indices (index: idx of initial frame, value: idx of current frame)
