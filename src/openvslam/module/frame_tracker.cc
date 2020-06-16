@@ -18,18 +18,18 @@ frame_tracker::frame_tracker(camera::base* camera, const unsigned int num_matche
 bool frame_tracker::motion_based_track(data::frame& curr_frm, const data::frame& last_frm, const Mat44_t& velocity) const {
     match::projection projection_matcher(0.9, true);
 
-    // motion modelを使って姿勢の初期値を設定
+    // Set the initial pose by using the motion model
     curr_frm.set_cam_pose(velocity * last_frm.cam_pose_cw_);
 
-    // 2D-3D対応を初期化
+    // Initialize the 2D-3D matches
     std::fill(curr_frm.landmarks_.begin(), curr_frm.landmarks_.end(), nullptr);
 
-    // last frameで見えている3次元点を再投影して2D-3D対応を見つける
+    // Reproject the 3D points observed in the last frame and find 2D-3D matches
     const float margin = (camera_->setup_type_ != camera::setup_type_t::Stereo) ? 20 : 10;
     auto num_matches = projection_matcher.match_current_and_last_frames(curr_frm, last_frm, margin);
 
     if (num_matches < num_matches_thr_) {
-        // marginを広げて再探索
+        // Increment the margin, and search again
         std::fill(curr_frm.landmarks_.begin(), curr_frm.landmarks_.end(), nullptr);
         num_matches = projection_matcher.match_current_and_last_frames(curr_frm, last_frm, 2 * margin);
     }
@@ -39,10 +39,10 @@ bool frame_tracker::motion_based_track(data::frame& curr_frm, const data::frame&
         return false;
     }
 
-    // pose optimization
+    // Pose optimization
     pose_optimizer_.optimize(curr_frm);
 
-    // outlierを除く
+    // Discard the outliers
     const auto num_valid_matches = discard_outliers(curr_frm);
 
     if (num_valid_matches < num_matches_thr_) {
@@ -57,10 +57,11 @@ bool frame_tracker::motion_based_track(data::frame& curr_frm, const data::frame&
 bool frame_tracker::bow_match_based_track(data::frame& curr_frm, const data::frame& last_frm, data::keyframe* ref_keyfrm) const {
     match::bow_tree bow_matcher(0.7, true);
 
-    // BoW matchを行うのでBoWを計算しておく
+    // Compute the BoW representations to perform the BoW match
     curr_frm.compute_bow();
 
-    // keyframeとframeで2D対応を探して，frameの特徴点とkeyframeで観測している3次元点の対応を得る
+    // Search 2D-2D matches between the ref keyframes and the current frame
+    // to acquire 2D-3D matches between the frame keypoints and 3D points observed in the ref keyframe
     std::vector<data::landmark*> matched_lms_in_curr;
     auto num_matches = bow_matcher.match_frame_and_keyframe(ref_keyfrm, curr_frm, matched_lms_in_curr);
 
@@ -69,15 +70,15 @@ bool frame_tracker::bow_match_based_track(data::frame& curr_frm, const data::fra
         return false;
     }
 
-    // 2D-3D対応情報を更新
+    // Update the 2D-3D matches
     curr_frm.landmarks_ = matched_lms_in_curr;
 
-    // pose optimization
-    // 初期値は前のフレームの姿勢
+    // Pose optimization
+    // The initial value is the pose of the previous frame
     curr_frm.set_cam_pose(last_frm.cam_pose_cw_);
     pose_optimizer_.optimize(curr_frm);
 
-    // outlierを除く
+    // Discard the outliers
     const auto num_valid_matches = discard_outliers(curr_frm);
 
     if (num_valid_matches < num_matches_thr_) {
@@ -92,7 +93,8 @@ bool frame_tracker::bow_match_based_track(data::frame& curr_frm, const data::fra
 bool frame_tracker::robust_match_based_track(data::frame& curr_frm, const data::frame& last_frm, data::keyframe* ref_keyfrm) const {
     match::robust robust_matcher(0.8, false);
 
-    // keyframeとframeで2D対応を探して，frameの特徴点とkeyframeで観測している3次元点の対応を得る
+    // Search 2D-2D matches between the ref keyframes and the current frame
+    // to acquire 2D-3D matches between the frame keypoints and 3D points observed in the ref keyframe
     std::vector<data::landmark*> matched_lms_in_curr;
     auto num_matches = robust_matcher.match_frame_and_keyframe(curr_frm, ref_keyfrm, matched_lms_in_curr);
 
@@ -101,15 +103,15 @@ bool frame_tracker::robust_match_based_track(data::frame& curr_frm, const data::
         return false;
     }
 
-    // 2D-3D対応情報を更新
+    // Update the 2D-3D matches
     curr_frm.landmarks_ = matched_lms_in_curr;
 
-    // pose optimization
-    // 初期値は前のフレームの姿勢
+    // Pose optimization
+    // The initial value is the pose of the previous frame
     curr_frm.set_cam_pose(last_frm.cam_pose_cw_);
     pose_optimizer_.optimize(curr_frm);
 
-    // outlierを除く
+    // Discard the outliers
     const auto num_valid_matches = discard_outliers(curr_frm);
 
     if (num_valid_matches < num_matches_thr_) {
