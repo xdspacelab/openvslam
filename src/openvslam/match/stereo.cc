@@ -19,7 +19,7 @@ void stereo::compute(std::vector<float>& stereo_x_right, std::vector<float>& dep
     // Save keypoint indices on the right image in each image row
     const auto indices_right_in_row = get_right_keypoint_indices_in_each_row(2.0);
 
-    // Compute the parallax and depth for each keypoint on the left image in a subpixel precision 
+    // Compute the parallax and depth for each keypoint on the left image in a subpixel precision
     stereo_x_right.resize(num_keypts_, -1.0f);
     depths.resize(num_keypts_, -1.0f);
     std::vector<std::pair<int, int>> correlation_and_idx_left;
