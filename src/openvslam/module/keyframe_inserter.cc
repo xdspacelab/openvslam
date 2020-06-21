@@ -25,50 +25,53 @@ void keyframe_inserter::reset() {
 bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, const unsigned int num_tracked_lms,
                                                const data::keyframe& ref_keyfrm) const {
     assert(mapper_);
-    // mapping moduleが停止しているときはキーフレームが追加できない
+    // Any keyframes are not able to be added when the mapping module stops
     if (mapper_->is_paused() || mapper_->pause_is_requested()) {
         return false;
     }
 
     const auto num_keyfrms = map_db_->get_num_keyframes();
 
-    // reference keyframeで観測している3次元点のうち，3視点以上から観測されている3次元点の数を数える
+    // Count the number of the 3D points that are observed from more than two keyframes
     const unsigned int min_obs_thr = (3 <= num_keyfrms) ? 3 : 2;
     const auto num_reliable_lms = ref_keyfrm.get_num_tracked_landmarks(min_obs_thr);
 
-    // mappingが処理中かどうか
+    // Check if the mapping is in progress or not
     const bool mapper_is_idle = mapper_->get_keyframe_acceptability();
 
-    // 最新のキーフレームで観測している3次元点数に対する，現在のフレームで観測している3次元点数の割合の閾値
+    // Ratio-threshold of "the number of 3D points observed in the current frame" / "that of 3D points observed in the last keyframe"
     constexpr unsigned int num_tracked_lms_thr = 15;
     const float lms_ratio_thr = 0.9;
 
-    // 条件A1: 前回のキーフレーム挿入からmax_num_frames_以上経過していたらキーフレームを追加する
+    // Condition A1: Add a keyframe if the number of frames added after the previous keyframe insertion reaches the threshold
     const bool cond_a1 = frm_id_of_last_keyfrm_ + max_num_frms_ <= curr_frm.id_;
-    // 条件A2: min_num_frames_以上経過していて,mapping moduleが待機状態であればキーフレームを追加する
+    // Condition A2: Add a keyframe if the number of added frames exceeds the minimum,
+    //               and concurrently the mapping module remains standing-by
     const bool cond_a2 = (frm_id_of_last_keyfrm_ + min_num_frms_ <= curr_frm.id_) && mapper_is_idle;
-    // 条件A3: 前回のキーフレームから視点が移動してたらキーフレームを追加する
+    // Condition A3: Add a keyframe if the field-of-view of the current frame is changed a lot
     const bool cond_a3 = num_tracked_lms < num_reliable_lms * 0.25;
 
-    // 条件B: (キーフレーム追加の必要条件)3次元点が閾値以上観測されていて，3次元点との割合が一定割合以下であればキーフレームを追加する
+    // Condition B: (Mandatory for keyframe insertion)
+    //              Add a keyframe if the number of 3D points exceeds the threshold,
+    //              and concurrently the ratio of the reliable 3D points larger than the threshold ratio
     const bool cond_b = (num_tracked_lms_thr <= num_tracked_lms) && (num_tracked_lms < num_reliable_lms * lms_ratio_thr);
 
-    // Bが満たされていなければ追加しない
+    // Do not add any kerframes if the condition B is not satisfied
     if (!cond_b) {
         return false;
     }
 
-    // Aのいずれも満たされていなければ追加しない
+    // Do not add any kerframes if all the conditions A are not satisfied
     if (!cond_a1 && !cond_a2 && !cond_a3) {
         return false;
     }
 
+    // Add the keyframe if the mapping module isn't in the process
     if (mapper_is_idle) {
-        // mapping moduleが処理中でなければ，とりあえずkeyframeを追加しておく
         return true;
     }
 
-    // mapping moduleが処理中だったら，local BAを止めてキーフレームを追加する
+    // Stop the local bundle adjustment if the mapping module is in the process, then add a new keyframe
     if (setup_type_ != camera::setup_type_t::Monocular
         && mapper_->get_num_queued_keyframes() <= 2) {
         mapper_->abort_local_BA();
@@ -79,7 +82,7 @@ bool keyframe_inserter::new_keyframe_is_needed(const data::frame& curr_frm, cons
 }
 
 data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
-    // mapping moduleを(強制的に)動かす
+    // Force the mapping module to run
     if (!mapper_->set_force_to_run(true)) {
         return nullptr;
     }
@@ -89,44 +92,45 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
 
     frm_id_of_last_keyfrm_ = curr_frm.id_;
 
-    // monocularだったらkeyframeをmapping moduleにqueueして終わり
+    // Queue up the keyframe to the mapping module
     if (setup_type_ == camera::setup_type_t::Monocular) {
         queue_keyframe(keyfrm);
         return keyfrm;
     }
 
-    // 有効なdepthとそのindexを格納する
+    // Save the valid depth and index pairs
     std::vector<std::pair<float, unsigned int>> depth_idx_pairs;
     depth_idx_pairs.reserve(curr_frm.num_keypts_);
     for (unsigned int idx = 0; idx < curr_frm.num_keypts_; ++idx) {
         const auto depth = curr_frm.depths_.at(idx);
-        // depthが有効な範囲のものを追加する
+        // Add if the depth is valid
         if (0 < depth) {
             depth_idx_pairs.emplace_back(std::make_pair(depth, idx));
         }
     }
 
-    // 有効なdepthがなかったらqueueして終わり
+    // Queue up the keyframe to the mapping module if any valid depth values don't exist
     if (depth_idx_pairs.empty()) {
         queue_keyframe(keyfrm);
         return keyfrm;
     }
 
-    // カメラに近い順に並べ直す
+    // Sort in order of distance to the camera
     std::sort(depth_idx_pairs.begin(), depth_idx_pairs.end());
 
-    // depthを使って3次元点を最小min_num_to_create点作る
+    // Create 3D points by using a depth parameter
     constexpr unsigned int min_num_to_create = 100;
     for (unsigned int count = 0; count < depth_idx_pairs.size(); ++count) {
         const auto depth = depth_idx_pairs.at(count).first;
         const auto idx = depth_idx_pairs.at(count).second;
 
-        // 最小閾値以上の点が追加されて，かつdepthの範囲が敷居を超えたら追加をやめる
+        // Stop adding a keyframe if the number of 3D points exceeds the minimal threshold,
+        // and concurrently the depth value exceeds the threshold
         if (min_num_to_create < count && true_depth_thr_ < depth) {
             break;
         }
 
-        // idxに対応する3次元点がある場合はstereo triangulationしない
+        // Stereo-triangulation cannot be performed if the 3D point has been already associated to the keypoint index
         {
             auto lm = curr_frm.landmarks_.at(idx);
             if (lm) {
@@ -135,7 +139,7 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
             }
         }
 
-        // idxに対応する3次元がなければstereo triangulationで作る
+        // Stereo-triangulation can be performed if the 3D point is not yet associated to the keypoint index
         const Vec3_t pos_w = curr_frm.triangulate_stereo(idx);
         auto lm = new data::landmark(pos_w, keyfrm, map_db_);
 
@@ -149,7 +153,7 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
         map_db_->add_landmark(lm);
     }
 
-    // keyframeをqueueして終わり
+    // Queue up the keyframe to the mapping module
     queue_keyframe(keyfrm);
     return keyfrm;
 }
