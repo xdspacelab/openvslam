@@ -147,11 +147,11 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
             ++itr_2;
         }
         else if (itr_1->first < itr_2->first) {
-            // Since the node number of the keyframe 1 is smaller, increment the iterator until the node numbers match
+            // Since the node number of keyframe 1 is smaller, increment the iterator until the node numbers match
             itr_1 = keyfrm_1->bow_feat_vec_.lower_bound(itr_2->first);
         }
         else {
-            // Since the node number of the keyframe 2 is smaller, increment the iterator until the node numbers match
+            // Since the node number of keyframe 2 is smaller, increment the iterator until the node numbers match
             itr_2 = keyfrm_2->bow_feat_vec_.lower_bound(itr_1->first);
         }
     }

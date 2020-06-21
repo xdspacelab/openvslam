@@ -452,7 +452,7 @@ unsigned int projection::match_keyframes_mutually(data::keyframe* keyfrm_1, data
     std::vector<int> matched_indices_2_in_keyfrm_1(landmarks_1.size(), -1);
     std::vector<int> matched_indices_1_in_keyfrm_2(landmarks_2.size(), -1);
 
-    // Compute the similarity transformation from the 3D points observed in the keyframe 1 to the keyframe 2 coordinates,
+    // Compute the similarity transformation from the 3D points observed in keyframe 1 to keyframe 2 coordinates,
     // then project the result, and search keypoint matches
     // (world origin -- SE3 -> keyframe 1 -- Sim3 --> keyframe 2)
     // s_rot_21 * (rot_1w * pos_w + trans_1w) + trans_21

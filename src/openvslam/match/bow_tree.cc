@@ -131,7 +131,7 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
 
     matched_lms_in_keyfrm_1 = std::vector<data::landmark*>(keyfrm_1_lms.size(), nullptr);
 
-    // Set 'true' if a keypoint in the keyframe 2 is associated to the keypoint in keyframe 1
+    // Set 'true' if a keypoint in keyframe 2 is associated to the keypoint in keyframe 1
     // NOTE: the size matches the number of the keypoints in keyframe 2
     std::vector<bool> is_already_matched_in_keyfrm_2(keyfrm_2_lms.size(), false);
 
@@ -229,11 +229,11 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
             ++itr_2;
         }
         else if (itr_1->first < itr_2->first) {
-            // Since the node number of the keyframe 1 is smaller, increment the iterator until the node numbers match
+            // Since the node number of keyframe 1 is smaller, increment the iterator until the node numbers match
             itr_1 = keyfrm_1->bow_feat_vec_.lower_bound(itr_2->first);
         }
         else {
-            // Since the node number of the keyframe 2 is smaller, increment the iterator until the node numbers match
+            // Since the node number of keyframe 2 is smaller, increment the iterator until the node numbers match
             itr_2 = keyfrm_2->bow_feat_vec_.lower_bound(itr_1->first);
         }
     }
