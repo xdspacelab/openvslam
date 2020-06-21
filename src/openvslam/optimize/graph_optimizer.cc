@@ -24,7 +24,7 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
                                const module::keyframe_Sim3_pairs_t& non_corrected_Sim3s,
                                const module::keyframe_Sim3_pairs_t& pre_corrected_Sim3s,
                                const std::map<data::keyframe*, std::set<data::keyframe*>>& loop_connections) const {
-    // 1. optimizerを構築
+    // 1. Construct an optimizer
 
     auto linear_solver = g2o::make_unique<g2o::LinearSolverCSparse<g2o::BlockSolver_7_3::PoseMatrixType>>();
     auto block_solver = g2o::make_unique<g2o::BlockSolver_7_3>(std::move(linear_solver));
@@ -33,16 +33,16 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(algorithm);
 
-    // 2. vertexを追加
+    // 2. Add vertices
 
     const auto all_keyfrms = map_db_->get_all_keyframes();
     const auto all_lms = map_db_->get_all_landmarks();
 
     const unsigned int max_keyfrm_id = map_db_->get_max_keyframe_id();
 
-    // 全keyframeの姿勢（修正前)をSim3に変換して保存しておく
+    // Transform the pre-modified poses of all the keyframes to Sim3, and save them
     std::vector<g2o::Sim3, Eigen::aligned_allocator<g2o::Sim3>> Sim3s_cw(max_keyfrm_id + 1);
-    // 追加したvertexを保存しておく
+    // Save the added vertices
     std::vector<internal::sim3::shot_vertex*> vertices(max_keyfrm_id + 1);
 
     constexpr int min_weight = 100;
@@ -55,15 +55,15 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
 
         const auto id = keyfrm->id_;
 
-        // 最適化前に姿勢が修正されているかをチェック
+        // BEFORE optimization, check if the poses have been already modified
         const auto iter = pre_corrected_Sim3s.find(keyfrm);
         if (iter != pre_corrected_Sim3s.end()) {
-            // 最適化前に姿勢を修正済みの場合はその姿勢を取り出してvertexにセットする
+            // BEFORE optimization, set the already-modified poses for verices
             Sim3s_cw.at(id) = iter->second;
             keyfrm_vtx->setEstimate(iter->second);
         }
         else {
-            // 姿勢が修正されていない場合はkeyframeの姿勢をSim3に変換してセットする
+            // Transform an unmodified pose to Sim3, and set it for a vertex
             const Mat33_t rot_cw = keyfrm->get_rotation();
             const Vec3_t trans_cw = keyfrm->get_translation();
             const g2o::Sim3 Sim3_cw(rot_cw, trans_cw, 1.0);
@@ -72,12 +72,12 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
             keyfrm_vtx->setEstimate(Sim3_cw);
         }
 
-        // ループの起点になった点はfixしておく
+        // Fix the loop keyframe
         if (*keyfrm == *loop_keyfrm) {
             keyfrm_vtx->setFixed(true);
         }
 
-        // vertexをoptimizerにセット
+        // Set the vertex to the optimizer
         keyfrm_vtx->setId(id);
         keyfrm_vtx->fix_scale_ = fix_scale_;
 
@@ -85,12 +85,12 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
         vertices.at(id) = keyfrm_vtx;
     }
 
-    // 3. edgeを追加
+    // 3. Add edges
 
-    // どのkeyframe間にedgeが追加されたかを保存しておく
+    // Save keyframe pairs which the edge is inserted between
     std::set<std::pair<unsigned int, unsigned int>> inserted_edge_pairs;
 
-    // constraint edgeを追加する関数
+    // Function to add a constraint edge
     const auto insert_edge =
         [&optimizer, &vertices, &inserted_edge_pairs](unsigned int id1, unsigned int id2, const g2o::Sim3& Sim3_21) {
             auto edge = new internal::sim3::graph_opt_edge();
@@ -104,7 +104,7 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
             inserted_edge_pairs.insert(std::make_pair(std::min(id1, id2), std::max(id1, id2)));
         };
 
-    // threshold weight以上のloop edgeを追加する
+    // Add loop edges only over the weight threshold
     for (const auto& loop_connection : loop_connections) {
         auto keyfrm = loop_connection.first;
         const auto& connected_keyfrms = loop_connection.second;
@@ -116,29 +116,29 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
         for (auto connected_keyfrm : connected_keyfrms) {
             const auto id2 = connected_keyfrm->id_;
 
-            // current vs loop以外のedgeについては，weight thresholdを超えているもののみ
-            // を追加する
-            if ((id1 != curr_keyfrm->id_ || id2 != loop_keyfrm->id_)
+            // Except the current vs loop edges,
+            // Add the loop edges only over the weight threshold
+            if (!(id1 == curr_keyfrm->id_ && id2 == loop_keyfrm->id_)
                 && keyfrm->graph_node_->get_weight(connected_keyfrm) < min_weight) {
                 continue;
             }
 
-            // 相対姿勢を計算
+            // Compute the relative camera pose
             const g2o::Sim3& Sim3_2w = Sim3s_cw.at(id2);
             const g2o::Sim3 Sim3_21 = Sim3_2w * Sim3_w1;
 
-            // constraint edgeを追加
+            // Add a constraint edge
             insert_edge(id1, id2, Sim3_21);
         }
     }
 
-    // loop connection以外のedgeを追加する
+    // Add non-loop-connected edges
     for (auto keyfrm : all_keyfrms) {
-        // 片方のkeyframeの姿勢を取り出す
+        // Select one pose of the keyframe pair
         const auto id1 = keyfrm->id_;
 
-        // covisibilitiesに含まれているかをチェックし，必ず修正前の姿勢を使うようにする
-        // (正しく相対姿勢を計算するには両者が修正前である必要があるため)
+        // Use only non-modified poses in the covisibility information
+        // (Both camera poses should be non-modified in order to compute the relative pose correctly)
         const auto iter1 = non_corrected_Sim3s.find(keyfrm);
         const g2o::Sim3 Sim3_w1 = ((iter1 != non_corrected_Sim3s.end()) ? iter1->second : Sim3s_cw.at(id1)).inverse();
 
@@ -146,58 +146,58 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
         if (parent_node) {
             const auto id2 = parent_node->id_;
 
-            // 重複を防ぐ
+            // Avoid duplication
             if (id1 <= id2) {
                 continue;
             }
 
-            // covisibilitiesに含まれているかをチェックし，必ず修正前の姿勢を使うようにする
-            // (正しく相対姿勢を計算するには両者が修正前である必要があるため)
+            // Use only non-modified poses in the covisibility information
+            // (Both camera poses should be nop-modified in order to compute the relative pose correctly)
             const auto iter2 = non_corrected_Sim3s.find(parent_node);
             const g2o::Sim3& Sim3_2w = (iter2 != non_corrected_Sim3s.end()) ? iter2->second : Sim3s_cw.at(id2);
 
-            // 相対姿勢を計算
+            // Compute the relative camera pose
             const g2o::Sim3 Sim3_21 = Sim3_2w * Sim3_w1;
 
-            // constraint edgeを追加
+            // Add a constraint edge
             insert_edge(id1, id2, Sim3_21);
         }
 
-        // loop edgeはweightにかかわらず追加する
+        // Add all the loop edges with any weight
         const auto loop_edges = keyfrm->graph_node_->get_loop_edges();
         for (auto connected_keyfrm : loop_edges) {
             const auto id2 = connected_keyfrm->id_;
 
-            // 重複を防ぐ
+            // Avoid duplication
             if (id1 <= id2) {
                 continue;
             }
 
-            // covisibilitiesに含まれているかをチェックし，必ず修正前の姿勢を使うようにする
-            // (正しく相対姿勢を計算するには両者が修正前である必要があるため)
+            // Use only non-modified poses in the covisibility information
+            // (Both camera poses should be nop-modified in order to compute the relative pose correctly)
             const auto iter2 = non_corrected_Sim3s.find(connected_keyfrm);
             const g2o::Sim3& Sim3_2w = (iter2 != non_corrected_Sim3s.end()) ? iter2->second : Sim3s_cw.at(id2);
 
-            // 相対姿勢を計算
+            // Compute the relative camera pose
             const g2o::Sim3 Sim3_21 = Sim3_2w * Sim3_w1;
 
-            // constraint edgeを追加
+            // Add a constraint edge
             insert_edge(id1, id2, Sim3_21);
         }
 
-        // threshold weight以上のcovisibilitiesを追加する
+        // Add the covisibility information over the weight threshold
         const auto connected_keyfrms = keyfrm->graph_node_->get_covisibilities_over_weight(min_weight);
         for (auto connected_keyfrm : connected_keyfrms) {
             // null check
             if (!connected_keyfrm || !parent_node) {
                 continue;
             }
-            // parent-childのedgeはすでに追加しているので除外
+            // Exclude parent-child edges because they've been already inserted
             if (*connected_keyfrm == *parent_node
                 || keyfrm->graph_node_->has_spanning_child(connected_keyfrm)) {
                 continue;
             }
-            // loop対応している場合はすでに追加しているので除外
+            // Exclude any edges associated to the loop because they've been already inserted
             if (static_cast<bool>(loop_edges.count(connected_keyfrm))) {
                 continue;
             }
@@ -208,7 +208,7 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
 
             const auto id2 = connected_keyfrm->id_;
 
-            // 重複を防ぐ
+            // Avoid duplication
             if (id1 <= id2) {
                 continue;
             }
@@ -216,30 +216,30 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
                 continue;
             }
 
-            // covisibilitiesに含まれているかをチェックし，必ず修正前の姿勢を使うようにする
-            // (正しく相対姿勢を計算するには両者が修正前である必要があるため)
+            // Use only non-modified poses in the covisibility information
+            // (Both camera poses should be nop-modified in order to compute the relative pose correctly)
             const auto iter2 = non_corrected_Sim3s.find(connected_keyfrm);
             const g2o::Sim3& Sim3_2w = (iter2 != non_corrected_Sim3s.end()) ? iter2->second : Sim3s_cw.at(id2);
 
-            // 相対姿勢を計算
+            // Compute the relative camera pose
             const g2o::Sim3 Sim3_21 = Sim3_2w * Sim3_w1;
 
-            // constraint edgeを追加
+            // Add a constraint edge
             insert_edge(id1, id2, Sim3_21);
         }
     }
 
-    // 4. pose graph optimizationを走らせる
+    // 4. Perform a pose graph optimization
 
     optimizer.initializeOptimization();
     optimizer.optimize(50);
 
-    // 5. 姿勢を更新
+    // 5. Update the camera poses and point-cloud
 
     {
         std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
 
-        // 点群の位置修正のために，全keyframeの姿勢(修正後)を保存しておく
+        // For modification of a point-cloud, save the post-modified poses of all the keyframes
         std::vector<g2o::Sim3, Eigen::aligned_allocator<g2o::Sim3>> corrected_Sim3s_wc(max_keyfrm_id + 1);
 
         for (auto keyfrm : all_keyfrms) {
@@ -258,7 +258,7 @@ void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr
             corrected_Sim3s_wc.at(id) = corrected_Sim3_cw.inverse();
         }
 
-        // 点群の位置を修正
+        // Update the point-cloud
         for (auto lm : all_lms) {
             if (lm->will_be_erased()) {
                 continue;
