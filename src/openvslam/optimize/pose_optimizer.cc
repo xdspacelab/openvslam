@@ -23,7 +23,7 @@ pose_optimizer::pose_optimizer(const unsigned int num_trials, const unsigned int
     : num_trials_(num_trials), num_each_iter_(num_each_iter) {}
 
 unsigned int pose_optimizer::optimize(data::frame& frm) const {
-    // 1. optimizerを構築
+    // 1. Construct an optimizer
 
     auto linear_solver = g2o::make_unique<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>();
     auto block_solver = g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver));
@@ -34,7 +34,7 @@ unsigned int pose_optimizer::optimize(data::frame& frm) const {
 
     unsigned int num_init_obs = 0;
 
-    // 2. frameをg2oのvertexに変換してoptimizerにセットする
+    // 2. Convert the frame to the g2o vertex, then set it to the optimizer
 
     auto frm_vtx = new internal::se3::shot_vertex();
     frm_vtx->setId(frm.id_);
@@ -44,18 +44,18 @@ unsigned int pose_optimizer::optimize(data::frame& frm) const {
 
     const unsigned int num_keypts = frm.num_keypts_;
 
-    // 3. landmarkのvertexをreprojection edgeで接続する
+    // 3. Connect the landmark vertices by using projection edges
 
-    // reprojection edgeのcontainer
+    // Container of the reprojection edges
     using pose_opt_edge_wrapper = internal::se3::pose_opt_edge_wrapper<data::frame>;
     std::vector<pose_opt_edge_wrapper> pose_opt_edge_wraps;
     pose_opt_edge_wraps.reserve(num_keypts);
 
-    // 有意水準5%のカイ2乗値
-    // 自由度n=2
+    // Chi-squared value with significance level of 5%
+    // Two degree-of-freedom (n=2)
     constexpr float chi_sq_2D = 5.99146;
     const float sqrt_chi_sq_2D = std::sqrt(chi_sq_2D);
-    // 自由度n=3
+    // Three degree-of-freedom (n=3)
     constexpr float chi_sq_3D = 7.81473;
     const float sqrt_chi_sq_3D = std::sqrt(chi_sq_3D);
 
@@ -71,7 +71,7 @@ unsigned int pose_optimizer::optimize(data::frame& frm) const {
         ++num_init_obs;
         frm.outlier_flags_.at(idx) = false;
 
-        // frameのvertexをreprojection edgeで接続する
+        // Connect the frame and the landmark vertices using the projection edges
         const auto& undist_keypt = frm.undist_keypts_.at(idx);
         const float x_right = frm.stereo_x_right_.at(idx);
         const float inv_sigma_sq = frm.inv_level_sigma_sq_.at(undist_keypt.octave);
@@ -89,7 +89,7 @@ unsigned int pose_optimizer::optimize(data::frame& frm) const {
         return 0;
     }
 
-    // 4. robust BAを実行する
+    // 4. Perform robust Bundle Adjustment (BA)
 
     unsigned int num_bad_obs = 0;
     for (unsigned int trial = 0; trial < num_trials_; ++trial) {
@@ -138,7 +138,7 @@ unsigned int pose_optimizer::optimize(data::frame& frm) const {
         }
     }
 
-    // 5. 情報を更新
+    // 5. Update the information
 
     frm.set_cam_pose(frm_vtx->estimate());
 

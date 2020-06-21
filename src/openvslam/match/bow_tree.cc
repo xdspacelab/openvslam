@@ -35,16 +35,16 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
 #endif
 
     while (keyfrm_itr != kryfrm_end && frm_itr != frm_end) {
-        // BoW treeのノード番号(first)が一致しているか確認する
+        // Check if the node numbers of BoW tree match
         if (keyfrm_itr->first == frm_itr->first) {
-            // BoW treeのノード番号(first)が一致していれば，
-            // 実際に特徴点index(second)を持ってきて対応しているか確認する
+            // If the node numbers of BoW tree match,
+            // Check in practice if matches exist between the frame and keyframe
             const auto& keyfrm_indices = keyfrm_itr->second;
             const auto& frm_indices = frm_itr->second;
 
             for (const auto keyfrm_idx : keyfrm_indices) {
-                // keyfrm_idxの特徴点と3次元点が対応していない場合はスルーする
-                auto* lm = keyfrm_lms.at(keyfrm_idx);
+                // Ignore if the keypoint of keyframe is not associated any 3D points
+                auto lm = keyfrm_lms.at(keyfrm_idx);
                 if (!lm) {
                     continue;
                 }
@@ -81,7 +81,7 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
                     continue;
                 }
 
-                // ratio test
+                // Ratio test
                 if (lowe_ratio_ * second_best_hamm_dist < static_cast<float>(best_hamm_dist)) {
                     continue;
                 }
@@ -101,11 +101,11 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
             ++frm_itr;
         }
         else if (keyfrm_itr->first < frm_itr->first) {
-            // keyfrm_itrのノード番号のほうが小さいので，ノード番号が合うところまでイテレータkeyfrm_itrをすすめる
+            // Since the node number of the keyframe is smaller, increment the iterator until the node numbers match
             keyfrm_itr = keyfrm->bow_feat_vec_.lower_bound(frm_itr->first);
         }
         else {
-            // frm_itrのノード番号のほうが小さいので，ノード番号が合うところまでイテレータfrm_itrをすすめる
+            // Since the node number of the frame is smaller, increment the iterator until the node numbers match
             frm_itr = frm.bow_feat_vec_.lower_bound(keyfrm_itr->first);
         }
     }
@@ -131,8 +131,8 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
 
     matched_lms_in_keyfrm_1 = std::vector<data::landmark*>(keyfrm_1_lms.size(), nullptr);
 
-    // keyframe2の特徴点のうち，keyfram1の特徴点と対応が取れているものはtrueにする
-    // NOTE: sizeはkeyframe2の特徴点に一致
+    // Set 'true' if a keypoint in keyframe 2 is associated to the keypoint in keyframe 1
+    // NOTE: the size matches the number of the keypoints in keyframe 2
     std::vector<bool> is_already_matched_in_keyfrm_2(keyfrm_2_lms.size(), false);
 
 #ifdef USE_DBOW2
@@ -148,16 +148,17 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
 #endif
 
     while (itr_1 != itr_1_end && itr_2 != itr_2_end) {
-        // BoW treeのノード番号(first)が一致しているか確認する
+        // Check if the node numbers of BoW tree match
         if (itr_1->first == itr_2->first) {
-            // BoW treeのノード番号(first)が一致していれば，
-            // 実際に特徴点index(second)を持ってきて対応しているか確認する
+            // If the node numbers of BoW tree match,
+            // Check in practice if matches exist between keyframes
             const auto& keyfrm_1_indices = itr_1->second;
             const auto& keyfrm_2_indices = itr_2->second;
 
             for (const auto idx_1 : keyfrm_1_indices) {
-                // keyfrm_1の特徴点と3次元点が対応していない場合はスルーする
-                auto* lm_1 = keyfrm_1_lms.at(idx_1);
+                // Ignore if the keypoint is not associated any 3D points
+                // (because this function is used for Sim3 estimation)
+                auto lm_1 = keyfrm_1_lms.at(idx_1);
                 if (!lm_1) {
                     continue;
                 }
@@ -172,8 +173,9 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
                 unsigned int second_best_hamm_dist = MAX_HAMMING_DIST;
 
                 for (const auto idx_2 : keyfrm_2_indices) {
-                    // keyfrm_2の特徴点と3次元点が対応していない場合はスルーする
-                    auto* lm_2 = keyfrm_2_lms.at(idx_2);
+                    // Ignore if the keypoint is not associated any 3D points
+                    // (because this function is used for Sim3 estimation)
+                    auto lm_2 = keyfrm_2_lms.at(idx_2);
                     if (!lm_2) {
                         continue;
                     }
@@ -203,15 +205,15 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
                     continue;
                 }
 
-                // ratio test
+                // Ratio test
                 if (lowe_ratio_ * second_best_hamm_dist < static_cast<float>(best_hamm_dist)) {
                     continue;
                 }
 
-                // 対応情報を記録する
-                // keyframe1のidx_1とkeyframe2のbest_idx_2が対応している
+                // Record the matching information
+                // The index of keyframe 1 matches the best index 2 of keyframe 2
                 matched_lms_in_keyfrm_1.at(idx_1) = keyfrm_2_lms.at(best_idx_2);
-                // keyframe2のbest_idx_2はすでにkeyframe1の特徴点と対応している
+                // The best index of keyframe 2 already matches the keypoint of keyframe 1
                 is_already_matched_in_keyfrm_2.at(best_idx_2) = true;
 
                 num_matches++;
@@ -227,9 +229,11 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
             ++itr_2;
         }
         else if (itr_1->first < itr_2->first) {
+            // Since the node number of keyframe 1 is smaller, increment the iterator until the node numbers match
             itr_1 = keyfrm_1->bow_feat_vec_.lower_bound(itr_2->first);
         }
         else {
+            // Since the node number of keyframe 2 is smaller, increment the iterator until the node numbers match
             itr_2 = keyfrm_2->bow_feat_vec_.lower_bound(itr_1->first);
         }
     }
