@@ -62,6 +62,9 @@ list(APPEND EXECUTABLE_TARGETS run_kitti_slam)
 add_executable(run_tum_rgbd_slam run_tum_rgbd_slam.cc util/tum_rgbd_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_tum_rgbd_slam)
 
+add_executable(run_camera_calibration run_camera_calibration.cc)
+list(APPEND EXECUTABLE_TARGETS run_camera_calibration)
+
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # Set output directory for executables
     set_target_properties(${EXECUTABLE_TARGET} PROPERTIES
