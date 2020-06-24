@@ -137,7 +137,7 @@ Install the dependencies via ``apt``.
     # Protobuf dependencies
     apt install -y autogen autoconf libtool
     # Node.js
-    curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+    curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
     apt install -y nodejs
 
 Download and install Eigen from source.
