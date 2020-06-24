@@ -117,11 +117,11 @@ before_install:
     cd ${DEPS_DIR}
     if [ ! -d socket.io-client-cpp ]; then
         echo "clone socket.io-client-cpp"
-        git clone https://github.com/shinsumicco/socket.io-client-cpp
+        git clone https://github.com/shinsumicco/socket.io-client-cpp.git
     elif [ -z "$(ls socket.io-client-cpp)" ]; then
         echo "reclone socket.io-client-cpp"
         rm -rf socket.io-client-cpp
-        git clone https://github.com/shinsumicco/socket.io-client-cpp
+        git clone https://github.com/shinsumicco/socket.io-client-cpp.git
     fi
     cd socket.io-client-cpp
     git submodule init

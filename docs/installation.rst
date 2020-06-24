@@ -288,7 +288,7 @@ Download, build and install g2o.
 .. code-block:: bash
 
     cd /path/to/working/dir
-    git clone https://github.com/shinsumicco/socket.io-client-cpp
+    git clone https://github.com/shinsumicco/socket.io-client-cpp.git
     cd socket.io-client-cpp
     git submodule init
     git submodule update
