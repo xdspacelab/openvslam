@@ -100,6 +100,12 @@ if(NOT OpenCV_FOUND)
 endif()
 message(STATUS "Use OpenCV ${OpenCV_VERSION}")
 
+# SFML networking
+#find_package(SFML REQUIRED)
+#if(NOT xx_FOUND)
+#        message(FATAL_ERROR "SFML package not found! required for socket connections.")
+#endif()
+
 # ----- Install configuration -----
 
 include(CMakePackageConfigHelpers)

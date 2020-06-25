@@ -153,6 +153,9 @@ void initiate_camera_calibration(const unsigned int cam_num, const float sq_size
         spdlog::critical("cannot open a camera {}", cam_num);
         return;
     }
+    
+    video.set(CAP_PROP_FRAME_WIDTH,640); 
+    video.set(CAP_PROP_FRAME_HEIGHT,480);
 
     namedWindow("Calibration", cv::WINDOW_NORMAL);
     setMouseCallback("Calibration", onMouse);

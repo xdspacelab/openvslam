@@ -1,0 +1,63 @@
+
+#include <iostream>
+#include <popl.hpp>
+#include <spdlog/spdlog.h>
+#include "opencv2/highgui.hpp"
+#include "gps_network.h"
+
+using namespace std;
+
+int main(int argc, char* argv[]) {
+	
+    // create options
+    popl::OptionParser op("Allowed options for calibration with 9x6 checkerboard:");
+    auto help = op.add<popl::Switch>("h", "help", "produce help message");
+    auto ip = op.add<popl::Value<std::string>>("i", "ip", "IP address");
+    auto port = op.add<popl::Value<std::string>>("p", "port", "Port address", "20175");
+    auto freq = op.add<popl::Value<int>>("f", "frequency", "GPS update frequency");
+    auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
+
+    try {
+        op.parse(argc, argv);
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << std::endl;
+        std::cerr << op << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // check validness of options
+    if (help->is_set()) {
+        std::cerr << op << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    if (!ip->is_set() || !freq->is_set()) {
+        std::cerr << "invalid arguments" << std::endl;
+        std::cerr << std::endl;
+        std::cerr << op << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // setup logger
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] %^[%L] %v%$");
+    if (debug_mode->is_set()) {
+        spdlog::set_level(spdlog::level::debug);
+    }
+    else {
+        spdlog::set_level(spdlog::level::info);
+    }
+    gps_network gps;
+
+    gps.init_gps_server(ip->value(), port->value());
+    gps.launch_update_loop(freq->value());
+
+    while (true) {
+        if (cv::waitKey(30) == 27) {
+            gps.close_connection();
+            break;
+        }
+    }
+    return EXIT_SUCCESS;
+}

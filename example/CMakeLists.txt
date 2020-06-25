@@ -21,6 +21,9 @@ else()
     message(STATUS "Google Perftools: DISABLED")
 endif()
 
+# SFML include directory
+set(sfml_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd/SFML/include)
+
 # ----- Show dialog -----
 
 if(USE_PANGOLIN_VIEWER)
@@ -64,6 +67,19 @@ list(APPEND EXECUTABLE_TARGETS run_tum_rgbd_slam)
 
 add_executable(run_camera_calibration run_camera_calibration.cc)
 list(APPEND EXECUTABLE_TARGETS run_camera_calibration)
+
+add_executable(gps_slam_fusion gps_slam_fusion.cc fusion/gps_fusion.cc fusion/gps_network.cc)
+list(APPEND EXECUTABLE_TARGETS gps_slam_fusion)
+
+target_link_libraries(gps_slam_fusion PRIVATE
+                          ${PROJECT_SOURCE_DIR}/3rd/SFML/lib/sfml-network.lib
+	${PROJECT_SOURCE_DIR}/3rd/SFML/lib/sfml-system.lib
+                          )
+
+# include SFML headers for gps input
+target_include_directories(gps_slam_fusion PRIVATE
+                               $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rd/SFML/include>
+                               $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/example/fusion>)
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # Set output directory for executables
