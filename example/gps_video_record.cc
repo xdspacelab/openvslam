@@ -64,8 +64,9 @@ void gps_update_thread() {
         }
         else {
             msg = string(data);
-            //spdlog::info("TCP: " + msg);
+            spdlog::info("TCP: " + msg);
             msg = msg.substr(msg.find_first_of('(') + 1, msg.find_first_of(')') - msg.find_first_of('(') - 1);
+            fout << msg + "\n";
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
         //std::cout << "\nSleep: " << 1.0/update_freq << std::endl;
@@ -76,7 +77,6 @@ void gps_update_thread() {
 void video_update_thread() {
     Mat curr_frame;
     int frame = 0;
-    time_t t1 = time(nullptr);
 
 	while (true) {
         if (terminate_vid_thread || terminate_gps_thread)
@@ -88,10 +88,10 @@ void video_update_thread() {
         //continue;
         frame++;
         vid_writer << curr_frame;
-        fout << msg + "\n";
+//        fout << msg + "\n";
         //imshow("Video", curr_frame);
     }
-    cout << frame << "_" << (time(nullptr) - t1) <<" sec"<<endl;
+    
 }
 
 void start_recording(string ip, int port, int freq, string gps_path, string video_path, int width, int height, int cam_ind) {
@@ -105,23 +105,23 @@ void start_recording(string ip, int port, int freq, string gps_path, string vide
     fout.open(gps_path, fstream::app);
     fout << "# $<time,lat,lon,alt>\n";
 
-    cap = VideoCapture(cam_ind);
-    if (!cap.isOpened()) {
-        spdlog::critical("Failed to start camera index: " + to_string(cam_ind));
-        return;
-    }
-    cap.set(CAP_PROP_FRAME_WIDTH, width);
-    cap.set(CAP_PROP_FRAME_HEIGHT, height);
-    cap.set(CAP_PROP_FPS, freq);
+    //cap = VideoCapture(cam_ind);
+    //if (!cap.isOpened()) {
+    //    spdlog::critical("Failed to start camera index: " + to_string(cam_ind));
+    //    return;
+    //}
+    //cap.set(CAP_PROP_FRAME_WIDTH, width);
+    //cap.set(CAP_PROP_FRAME_HEIGHT, height);
+    //cap.set(CAP_PROP_FPS, freq);
 
-    vid_writer.open(video_path, static_cast<int>(cap.get(CAP_PROP_FOURCC)), freq, Size(width, height), true);
+    //vid_writer.open(video_path, static_cast<int>(cap.get(CAP_PROP_FOURCC)), freq, Size(width, height), true);
 
-    if (!vid_writer.isOpened()) {
-        spdlog::critical("Failed to open video writer. FOURCC- " + to_string(static_cast<int>(cap.get(CAP_PROP_FOURCC))));
-        return;
-    }
+    //if (!vid_writer.isOpened()) {
+    //    spdlog::critical("Failed to open video writer. FOURCC- " + to_string(static_cast<int>(cap.get(CAP_PROP_FOURCC))));
+    //    return;
+    //}
 
-    Mat curr_frame;
+    //Mat curr_frame;
 
     //initialize connection with GPS server
     status = socket.connect(ip, port);
@@ -131,10 +131,11 @@ void start_recording(string ip, int port, int freq, string gps_path, string vide
     }
     //start gps update loop
     gps_th = std::thread(gps_update_thread);
-    vid_th = std::thread(video_update_thread);
+    //vid_th = std::thread(video_update_thread);
     cv::namedWindow("Video", WINDOW_NORMAL);
     std::cout << "\nwait period: " << 1000 / freq << endl;
     //int frame = 0;
+	time_t t1 = time(nullptr);
     while (true) {
         if (waitKey(30) == 27 || terminate_gps_thread)
             break;
@@ -154,11 +155,12 @@ void start_recording(string ip, int port, int freq, string gps_path, string vide
     terminate_vid_thread = true;
     terminate_gps_thread = true;
     gps_th.join();
-    vid_th.join();
+    //vid_th.join();
     //close fstream
     fout.close();
     vid_writer.release();
     cap.release();
+    cout << (time(nullptr) - t1) << " sec" << endl;
 }
 
 int main(int argc, char* argv[]) {

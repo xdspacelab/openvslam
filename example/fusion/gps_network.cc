@@ -54,7 +54,7 @@ void gps_network::update_thread() {
             std::cout << "\nTCP: " << data << std::endl;
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout << "\nSleep: " << 1.0/update_freq << std::endl;
+        //std::cout << "\nSleep: " << 1.0/update_freq << std::endl;
         //std::this_thread::sleep_for(freq);
     }
 }

@@ -2,15 +2,19 @@
 #include <iostream>
 #include <popl.hpp>
 #include <spdlog/spdlog.h>
+
+#include "opencv2/core.hpp"
+#include "opencv2/videoio.hpp"
 #include "opencv2/highgui.hpp"
+
 #include "gps_network.h"
 
 using namespace std;
+using namespace cv;
 
 int main(int argc, char* argv[]) {
-	
     // create options
-    popl::OptionParser op("Allowed options for calibration with 9x6 checkerboard:");
+    popl::OptionParser op("Allowed options for gps client:");
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
     auto ip = op.add<popl::Value<std::string>>("i", "ip", "IP address");
     auto port = op.add<popl::Value<std::string>>("p", "port", "Port address", "20175");

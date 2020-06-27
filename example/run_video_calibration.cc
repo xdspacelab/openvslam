@@ -14,14 +14,14 @@ using namespace std;
 using namespace cv;
 
 //Capture Button
-Rect capture_btn;
-int capture_click = 0;
-Mat capture_btn_img;
-
-//Calibrate Button
-Rect calib_btn;
-int calib_click = 0;
-Mat calib_btn_img;
+//Rect capture_btn;
+//int capture_click = 0;
+//Mat capture_btn_img;
+//
+////Calibrate Button
+//Rect calib_btn;
+//int calib_click = 0;
+//Mat calib_btn_img;
 
 //Camera config params
 cv::Mat intrinsic;  //3x3
@@ -29,28 +29,10 @@ cv::Mat distCoeffs; //5x1; k1, k2, p1, p2, k3 : radial(k) and tangential(p)
 cv::Size frame_sz;
 int cam_fps = 0;
 
-void onMouse(int event, int x, int y, int flags, void* userdata) {
-    switch (event) {
-        case EVENT_LBUTTONDOWN:
-            if (capture_btn.contains(Point(x, y))) {
-                capture_click = !capture_click;
-            }
-            else if (calib_btn.contains(Point(x, y))) {
-                calib_click = !calib_click;
-            }
-            else {
-                cout << Point(x, y) << endl;
-            }
-            break;
-    }
-}
-
 void serialize_calib_params(string config_path) {
-    
-	ofstream fout;
+    ofstream fout;
     fout.open(config_path, ios::out);
     spdlog::info("Seralizing camera params  @ " + config_path);
-
 
     YAML::Emitter y_out;
     y_out << YAML::Comment("#Perspective model\n\n#Camera Model Params");
@@ -88,7 +70,7 @@ void serialize_calib_params(string config_path) {
     y_out << YAML::Key << "Camera.color_order";
     y_out << YAML::Value << "RGB";
 
-   // y_out << YAML::Comment("# ORB Params");
+    // y_out << YAML::Comment("# ORB Params");
 
     y_out << YAML::Key << "Feature.max_num_keypoints";
     y_out << YAML::Value << 2000;
@@ -101,19 +83,19 @@ void serialize_calib_params(string config_path) {
     y_out << YAML::Key << "Feature.min_fast_threshold";
     y_out << YAML::Value << 7;
     double mas[4][4] = {{0.0, 1.0, 0.0, 0.1},
-                       {0.0, 1.0, 0.84, 1.0},
-                       {0.0, 0.2, 0.7, 1.0},
-                       {0.8, 1.0, 0.7, 1.0}};
+                        {0.0, 1.0, 0.84, 1.0},
+                        {0.0, 0.2, 0.7, 1.0},
+                        {0.8, 1.0, 0.7, 1.0}};
     vector<vector<double>> mask = {vector<double>(begin(mas[0]), end(mas[0])),
-                                  vector<double>(begin(mas[1]), end(mas[1])),
-                                  vector<double>(begin(mas[2]), end(mas[2])),
-                                  vector<double>(begin(mas[3]), end(mas[3]))};
+                                   vector<double>(begin(mas[1]), end(mas[1])),
+                                   vector<double>(begin(mas[2]), end(mas[2])),
+                                   vector<double>(begin(mas[3]), end(mas[3]))};
     y_out << YAML::Key << "Feature.mask_rectangles";
     y_out << YAML::BeginSeq;
     y_out << YAML::Flow << mask[0];
     y_out << YAML::Flow << mask[1];
     y_out << YAML::Flow << mask[2];
-    y_out << YAML::Flow << mask[3]; 
+    y_out << YAML::Flow << mask[3];
     y_out << YAML::EndSeq;
     y_out << YAML::EndMap;
 
@@ -129,7 +111,7 @@ void serialize_calib_params(string config_path) {
     return;
 }
 
-void initiate_camera_calibration(const unsigned int cam_num, unsigned int cam_w, unsigned int cam_h, const float sq_size, const string& config_file_path) {
+void initiate_camera_calibration(const string& video_path, const float sq_size, const string& config_file_path, int skip, string& out_vid_path) {
     int numCornersHor = 9;
     int numCornersVer = 6;
     int numSquares = numCornersHor * numCornersVer;
@@ -147,43 +129,28 @@ void initiate_camera_calibration(const unsigned int cam_num, unsigned int cam_w,
     image_points.clear();
     corners.clear();
 
-    auto video = cv::VideoCapture(cam_num);
+    auto video = cv::VideoCapture(video_path);
 
     if (!video.isOpened()) {
-        spdlog::critical("cannot open a camera {}", cam_num);
+        spdlog::critical("cannot open a video", video_path);
         return;
     }
-    
-    video.set(CAP_PROP_FRAME_WIDTH,cam_w); 
-    video.set(CAP_PROP_FRAME_HEIGHT,cam_h);
+
+    //video.set(CAP_PROP_FRAME_WIDTH,640);
+    //video.set(CAP_PROP_FRAME_HEIGHT,480);
 
     namedWindow("Calibration", cv::WINDOW_NORMAL);
-    setMouseCallback("Calibration", onMouse);
+    //setMouseCallback("Calibration", onMouse);
 
     Mat curr_frame;
     Mat disp_frame;
-    //capture UI
-    capture_click = 0;
-    capture_btn = Rect(10, 50, 150, 50);
-    capture_btn_img = Mat(50, 50 + 100, CV_8UC3, Scalar(255, 0, 0));
-    //capture_btn_img(Rect(0, 0, 50, 50)) = Scalar(255, 0, 0);
-    putText(capture_btn_img, "capture", Point(10, 25), FONT_HERSHEY_PLAIN, 2, Scalar(100, 150, 255), 1.5);
 
-    //calib UI
-    calib_click = 0;
-    calib_btn = Rect(10, 120, 150, 50);
-    calib_btn_img = Mat(50, 50 + 100, CV_8UC3, Scalar(255, 0, 0));
-    //calib_btn_img(Rect(0, 0, 50, 50)) = Scalar(255, 0, 0);
-    putText(calib_btn_img, "calibrate", Point(10, 25), FONT_HERSHEY_PLAIN, 2, Scalar(100, 150, 255), 1.5);
-    
-	cout << "3d points:\n";
     vector<Point3f> obj;
     for (int j = 0; j < numCornersVer; j++) {
-        for (int k=0;k<numCornersHor;k++) {
+        for (int k = 0; k < numCornersHor; k++) {
             obj.push_back(Point3f(sq_size * k, sq_size * j, 0.0f));
-            //cout << j << "-" << k << "=" << Point3f(sq_size * k, sq_size * j, 0.0f) << endl;
         }
-	}
+    }
 
     //dry test to capture first frame
     video.read(disp_frame);
@@ -191,27 +158,36 @@ void initiate_camera_calibration(const unsigned int cam_num, unsigned int cam_w,
 
     frame_sz = Size(video.get(CAP_PROP_FRAME_WIDTH), video.get(CAP_PROP_FRAME_HEIGHT));
     cam_fps = video.get(CAP_PROP_FPS);
-    cout << "Btn size: " << capture_btn << endl;
-    cout << "frame size: " << frame_sz << endl;
 
+    cv::VideoWriter writer;
+    bool write_frame = false;
+
+    if (!out_vid_path.empty()) {
+        writer.open(out_vid_path, video.get(CAP_PROP_FOURCC), 30, frame_sz);
+
+        if (!writer.isOpened()) {
+            spdlog::critical("video writer can not open. file @ " + out_vid_path);
+            writer.release();
+        }
+        else {
+            write_frame = true;
+            spdlog::info("writing video @ " + out_vid_path);
+        }
+    }
+
+    //cout << "Btn size: " << capture_btn << endl;
+    std::cout << "frame size: " << frame_sz << endl;
+    int sk = 0;
     while (true) {
-        if (calib_click != 0)
-            break;
-
         video.read(disp_frame);
 
         if (disp_frame.empty())
-            continue;
+            break;
 
         cvtColor(disp_frame, curr_frame, COLOR_BGR2GRAY);
 
-        // disp_frame(capture_btn) = capture_btn_img;
-        // disp_frame(calib_btn) = calib_btn_img;
-        capture_btn_img.copyTo(disp_frame(capture_btn));
-        calib_btn_img.copyTo(disp_frame(calib_btn));
-        
-        if (capture_click != 0) {
-            if (findChessboardCorners(curr_frame, board_sz, corners, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_FILTER_QUADS)) {
+        if (findChessboardCorners(curr_frame, board_sz, corners, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_FILTER_QUADS)) {
+            if (sk % skip == 0) {
                 //sub-pixel accurate location
                 cornerSubPix(curr_frame, corners, Size(11, 11), Size(-1, -1), TermCriteria(TermCriteria::MAX_ITER | TermCriteria::EPS, 30, 0.001));
                 //drawChessboardCorners(image, board_sz, corners, found);
@@ -219,13 +195,14 @@ void initiate_camera_calibration(const unsigned int cam_num, unsigned int cam_w,
                 image_points.push_back(corners);
                 object_points.push_back(obj);
                 cap_frame++;
+                if (write_frame)
+                    writer.write(disp_frame);
                 spdlog::info("captured frame. Total: " + to_string(cap_frame));
             }
-            else {
-                spdlog::info("Invalid frame");
-            }
-
-            capture_click = !capture_click;
+            sk++;
+        }
+        else {
+            spdlog::info("Invalid frame");
         }
 
         imshow("Calibration", disp_frame);
@@ -233,6 +210,12 @@ void initiate_camera_calibration(const unsigned int cam_num, unsigned int cam_w,
         if (waitKey(30) == 27)
             break;
     }
+
+	if (write_frame)
+	{
+        writer.release();
+        spdlog::info("Finished writing video");
+	}
 
     Mat R, T;
     if (cap_frame >= 10)
@@ -243,9 +226,9 @@ void initiate_camera_calibration(const unsigned int cam_num, unsigned int cam_w,
     //spdlog::info("Intrinsics: ",intrinsic);
     //spdlog::info("Distortion coefficents: ",distCoeffs);
 
-    cout << "\nIntrinsic:\n"
+    std::cout << "\nIntrinsic:\n"
          << intrinsic << endl;
-    cout << "\nDist coeff: " << distCoeffs << endl;
+    std::cout << "\nDist coeff: " << distCoeffs << endl;
 
     serialize_calib_params(config_file_path);
 }
@@ -254,11 +237,11 @@ int main(int argc, char* argv[]) {
     // create options
     popl::OptionParser op("Allowed options for calibration with 9x6 checkerboard:");
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
-    auto cam_num = op.add<popl::Value<unsigned int>>("n", "number", "camera number");
-    auto cam_w = op.add<popl::Value<unsigned int>>("x", "width", "camera width",640);
-    auto cam_h = op.add<popl::Value<unsigned int>>("y", "height", "camera height",480);
+    auto video_path = op.add<popl::Value<std::string>>("i", "video", "input video file path");
     auto sq_size = op.add<popl::Value<float>>("s", "size", "square size in cm", 0.026);
+    auto skip = op.add<popl::Value<int>>("k", "skip", "skip k valid frames", 2);
     auto config_file_path = op.add<popl::Value<std::string>>("c", "config", "output camera config file path");
+    auto out_vid_path = op.add<popl::Value<std::string>>("o", "vid", "output video file path","");
     auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
 
     try {
@@ -276,7 +259,7 @@ int main(int argc, char* argv[]) {
         std::cerr << op << std::endl;
         return EXIT_FAILURE;
     }
-    if (!cam_num->is_set() || !config_file_path->is_set()) {
+    if (!video_path->is_set() || !config_file_path->is_set()) {
         std::cerr << "invalid arguments" << std::endl;
         std::cerr << std::endl;
         std::cerr << op << std::endl;
@@ -292,8 +275,7 @@ int main(int argc, char* argv[]) {
         spdlog::set_level(spdlog::level::info);
     }
 
-	//initiate_camera_calibration(cam_num->value(), sq_size->value(), 640,480, config_file_path->value());
-    initiate_camera_calibration(cam_num->value(), cam_w->value(), cam_h->value(), sq_size->value(), config_file_path->value());
+    initiate_camera_calibration(video_path->value(), sq_size->value(), config_file_path->value(), skip->value(), out_vid_path->value());
 
     return EXIT_SUCCESS;
 }
