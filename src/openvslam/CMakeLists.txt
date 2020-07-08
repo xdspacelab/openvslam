@@ -30,7 +30,7 @@ else()
         include_directories(${CXSPARSE_INCLUDE_DIRS})
     endif()
     # SuiteSparse for g2o
-    find_package(SuiteSparse)
+    find_package(SuiteSparse CONFIG REQUIRED)
     if(SUITESPARSE_FOUND)
         include_directories(${SUITESPARSE_INCLUDE_DIRS})
     endif()
@@ -145,8 +145,9 @@ target_link_libraries(${PROJECT_NAME}
                       ${CXSPARSE_LIBRARIES}
                       ${SUITESPARSE_LIBRARIES}
                       ${BoW_LIBRARY}
-                      PRIVATE
-                      ${LAPACK_LIBRARIES})
+                      #PRIVATE
+                      #${LAPACK_LIBRARIES}
+                      )
 
 # ----- Install configuration -----
 
