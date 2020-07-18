@@ -180,6 +180,12 @@ const std::shared_ptr<publish::frame_publisher> system::get_frame_publisher() co
     return frame_publisher_;
 }
 
+tracker_state_t system::get_tracker_state() const {
+    if (tracker_ != nullptr)
+        return tracker_->tracking_state_;
+    return tracker_state_t::NotInitialized;
+}
+
 void system::enable_mapping_module() {
     std::lock_guard<std::mutex> lock(mtx_mapping_);
     if (!system_is_running_) {

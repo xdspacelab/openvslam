@@ -15,6 +15,7 @@ namespace openvslam {
 
 class config;
 class tracking_module;
+enum class tracker_state_t;
 class mapping_module;
 class global_optimization_module;
 
@@ -70,6 +71,9 @@ public:
 
     //! Get the frame publisher
     const std::shared_ptr<publish::frame_publisher> get_frame_publisher() const;
+
+    //! Get the tracker state
+    tracker_state_t get_tracker_state() const;
 
     //-----------------------------------------
     // module management
