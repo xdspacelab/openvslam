@@ -1,6 +1,8 @@
 #ifndef OPENVSLAM_OPTIMIZE_LOCAL_BUNDLE_ADJUSTER_H
 #define OPENVSLAM_OPTIMIZE_LOCAL_BUNDLE_ADJUSTER_H
 
+#include <memory>
+
 namespace openvslam {
 
 namespace data {

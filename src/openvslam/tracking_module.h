@@ -9,6 +9,7 @@
 #include "openvslam/module/frame_tracker.h"
 
 #include <mutex>
+#include <memory>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>

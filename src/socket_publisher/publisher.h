@@ -5,6 +5,7 @@
 #include "socket_publisher/socket_client.h"
 
 #include <mutex>
+#include <memory>
 
 namespace openvslam {
 

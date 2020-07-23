@@ -6,6 +6,7 @@
 #include "openvslam/optimize/transform_optimizer.h"
 
 #include <atomic>
+#include <memory>
 
 namespace openvslam {
 

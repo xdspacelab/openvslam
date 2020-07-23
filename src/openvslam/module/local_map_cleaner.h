@@ -2,6 +2,7 @@
 #define OPENVSLAM_MODULE_LOCAL_MAP_CLEANER_H
 
 #include <list>
+#include <memory>
 
 namespace openvslam {
 

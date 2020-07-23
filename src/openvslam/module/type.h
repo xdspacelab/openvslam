@@ -3,6 +3,8 @@
 
 #include <g2o/types/sim3/types_seven_dof_expmap.h>
 
+#include <memory>
+
 namespace openvslam {
 namespace module {
 

@@ -4,6 +4,7 @@
 #include "openvslam/type.h"
 
 #include <mutex>
+#include <memory>
 
 namespace openvslam {
 

@@ -3,6 +3,8 @@
 
 #include "openvslam/type.h"
 
+#include <memory>
+
 namespace openvslam {
 
 namespace camera {

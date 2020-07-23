@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 namespace openvslam {
 namespace data {

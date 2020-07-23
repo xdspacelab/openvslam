@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <memory>
 
 namespace openvslam {
 namespace data {

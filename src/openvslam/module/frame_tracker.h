@@ -4,6 +4,8 @@
 #include "openvslam/type.h"
 #include "openvslam/optimize/pose_optimizer.h"
 
+#include <memory>
+
 namespace openvslam {
 
 namespace camera {

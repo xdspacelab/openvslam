@@ -6,6 +6,8 @@
 #include "openvslam/optimize/pose_optimizer.h"
 #include "openvslam/solve/pnp_solver.h"
 
+#include <memory>
+
 namespace openvslam {
 
 namespace data {

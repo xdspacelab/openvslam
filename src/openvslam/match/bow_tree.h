@@ -3,6 +3,8 @@
 
 #include "openvslam/match/base.h"
 
+#include <memory>
+
 namespace openvslam {
 
 namespace data {

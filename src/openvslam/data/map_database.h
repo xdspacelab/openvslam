@@ -7,6 +7,7 @@
 #include <mutex>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include <nlohmann/json_fwd.hpp>
 

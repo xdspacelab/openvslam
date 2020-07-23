@@ -6,6 +6,7 @@
 
 #include <mutex>
 #include <vector>
+#include <memory>
 
 #include <opencv2/core/core.hpp>
 

@@ -6,6 +6,7 @@
 #include <map>
 #include <mutex>
 #include <atomic>
+#include <memory>
 
 #include <opencv2/core/core.hpp>
 #include <nlohmann/json_fwd.hpp>

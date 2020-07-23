@@ -4,6 +4,7 @@
 #include "openvslam/data/keyframe.h"
 
 #include <vector>
+#include <memory>
 
 #include <opencv2/core.hpp>
 

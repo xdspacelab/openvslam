@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <atomic>
+#include <memory>
 
 #include <opencv2/core.hpp>
 #include <Eigen/Core>

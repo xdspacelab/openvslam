@@ -4,6 +4,8 @@
 #include "openvslam/type.h"
 #include "openvslam/match/base.h"
 
+#include <memory>
+
 namespace openvslam {
 
 namespace data {

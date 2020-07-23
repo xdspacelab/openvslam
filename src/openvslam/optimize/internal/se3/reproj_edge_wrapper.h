@@ -10,6 +10,8 @@
 
 #include <g2o/core/robust_kernel_impl.h>
 
+#include <memory>
+
 namespace openvslam {
 
 namespace data {

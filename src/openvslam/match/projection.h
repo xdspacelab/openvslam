@@ -5,6 +5,7 @@
 #include "openvslam/match/base.h"
 
 #include <set>
+#include <memory>
 
 namespace openvslam {
 
