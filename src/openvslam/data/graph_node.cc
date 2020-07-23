@@ -222,7 +222,6 @@ unsigned int graph_node::get_weight(const std::shared_ptr<keyframe>& keyfrm) con
 
 void graph_node::set_spanning_parent(const std::shared_ptr<keyframe>& keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_);
-    assert(!spanning_parent_);
     spanning_parent_ = keyfrm;
 }
 
