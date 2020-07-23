@@ -61,8 +61,8 @@ private:
     }
 
     std::string serialize_as_protobuf(const std::vector<std::shared_ptr<openvslam::data::keyframe>>& keyfrms,
-                                      const std::vector<openvslam::std::shared_ptr<data::landmark>>& all_landmarks,
-                                      const std::set<openvslam::std::shared_ptr<data::landmark>>& local_landmarks,
+                                      const std::vector<std::shared_ptr<openvslam::data::landmark>>& all_landmarks,
+                                      const std::set<std::shared_ptr<openvslam::data::landmark>>& local_landmarks,
                                       const openvslam::Mat44_t& current_camera_pose);
 
     std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);

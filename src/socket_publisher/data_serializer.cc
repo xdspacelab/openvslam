@@ -49,8 +49,8 @@ std::string data_serializer::serialize_map_diff() {
     std::vector<std::shared_ptr<openvslam::data::keyframe>> keyframes;
     map_publisher_->get_keyframes(keyframes);
 
-    std::vector<openvslam::std::shared_ptr<data::landmark>> all_landmarks;
-    std::set<openvslam::std::shared_ptr<data::landmark>> local_landmarks;
+    std::vector<std::shared_ptr<openvslam::data::landmark>> all_landmarks;
+    std::set<std::shared_ptr<openvslam::data::landmark>> local_landmarks;
     map_publisher_->get_landmarks(all_landmarks, local_landmarks);
 
     const auto current_camera_pose = map_publisher_->get_current_cam_pose();
@@ -76,15 +76,15 @@ std::string data_serializer::serialize_latest_frame(const unsigned int image_qua
 }
 
 std::string data_serializer::serialize_as_protobuf(const std::vector<std::shared_ptr<openvslam::data::keyframe>>& keyfrms,
-                                                   const std::vector<openvslam::std::shared_ptr<data::landmark>>& all_landmarks,
-                                                   const std::set<openvslam::std::shared_ptr<data::landmark>>& local_landmarks,
+                                                   const std::vector<std::shared_ptr<openvslam::data::landmark>>& all_landmarks,
+                                                   const std::set<std::shared_ptr<openvslam::data::landmark>>& local_landmarks,
                                                    const openvslam::Mat44_t& current_camera_pose) {
     map_segment::map map;
     auto message = map.add_messages();
     message->set_tag("0");
     message->set_txt("only map data");
 
-    std::forward_list<map_segment::map_std::shared_ptr<keyframe> allocated_keyframes;
+    std::forward_list<map_segment::map_keyframe*> allocated_keyframes;
 
     // 1. keyframe registration
 
