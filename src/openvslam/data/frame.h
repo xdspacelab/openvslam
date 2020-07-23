@@ -226,7 +226,7 @@ public:
     Mat44_t cam_pose_cw_;
 
     //! reference keyframe for tracking
-    keyframe* ref_keyfrm_ = nullptr;
+    std::shared_ptr<keyframe> ref_keyfrm_ = nullptr;
 
     // ORB scale pyramid information
     //! number of scale levels

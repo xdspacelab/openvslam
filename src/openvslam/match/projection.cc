@@ -207,7 +207,7 @@ unsigned int projection::match_current_and_last_frames(data::frame& curr_frm, co
     return num_matches;
 }
 
-unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::keyframe* keyfrm, const std::set<std::shared_ptr<data::landmark>>& already_matched_lms,
+unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, const std::shared_ptr<data::keyframe>& keyfrm, const std::set<std::shared_ptr<data::landmark>>& already_matched_lms,
                                                   const float margin, const unsigned int hamm_dist_thr) const {
     unsigned int num_matches = 0;
 
@@ -314,7 +314,7 @@ unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::k
     return num_matches;
 }
 
-unsigned int projection::match_by_Sim3_transform(data::keyframe* keyfrm, const Mat44_t& Sim3_cw, const std::vector<std::shared_ptr<data::landmark>>& landmarks,
+unsigned int projection::match_by_Sim3_transform(const std::shared_ptr<data::keyframe>& keyfrm, const Mat44_t& Sim3_cw, const std::vector<std::shared_ptr<data::landmark>>& landmarks,
                                                  std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm, const float margin) const {
     unsigned int num_matches = 0;
 
@@ -414,7 +414,7 @@ unsigned int projection::match_by_Sim3_transform(data::keyframe* keyfrm, const M
     return num_matches;
 }
 
-unsigned int projection::match_keyframes_mutually(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_1,
+unsigned int projection::match_keyframes_mutually(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2, std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_1,
                                                   const float& s_12, const Mat33_t& rot_12, const Vec3_t& trans_12, const float margin) const {
     // The pose of keyframe 1
     const Mat33_t rot_1w = keyfrm_1->get_rotation();

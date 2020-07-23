@@ -9,7 +9,7 @@
 namespace openvslam {
 namespace match {
 
-unsigned int fuse::detect_duplication(data::keyframe* keyfrm, const Mat44_t& Sim3_cw, const std::vector<std::shared_ptr<data::landmark>>& landmarks_to_check,
+unsigned int fuse::detect_duplication(const std::shared_ptr<data::keyframe>& keyfrm, const Mat44_t& Sim3_cw, const std::vector<std::shared_ptr<data::landmark>>& landmarks_to_check,
                                       const float margin, std::vector<std::shared_ptr<data::landmark>>& duplicated_lms_in_keyfrm) {
     unsigned int num_fused = 0;
 
@@ -123,7 +123,7 @@ unsigned int fuse::detect_duplication(data::keyframe* keyfrm, const Mat44_t& Sim
 }
 
 template<typename T>
-unsigned int fuse::replace_duplication(data::keyframe* keyfrm, const T& landmarks_to_check, const float margin) {
+unsigned int fuse::replace_duplication(const std::shared_ptr<data::keyframe>& keyfrm, const T& landmarks_to_check, const float margin) {
     unsigned int num_fused = 0;
 
     const Mat33_t rot_cw = keyfrm->get_rotation();
@@ -265,8 +265,8 @@ unsigned int fuse::replace_duplication(data::keyframe* keyfrm, const T& landmark
     return num_fused;
 }
 
-template unsigned int fuse::replace_duplication(data::keyframe*, const std::vector<std::shared_ptr<data::landmark>>&, const float);
-template unsigned int fuse::replace_duplication(data::keyframe*, const std::unordered_set<std::shared_ptr<data::landmark>>&, const float);
+template unsigned int fuse::replace_duplication(const std::shared_ptr<data::keyframe>&, const std::vector<std::shared_ptr<data::landmark>>&, const float);
+template unsigned int fuse::replace_duplication(const std::shared_ptr<data::keyframe>&, const std::unordered_set<std::shared_ptr<data::landmark>>&, const float);
 
 } // namespace match
 } // namespace openvslam

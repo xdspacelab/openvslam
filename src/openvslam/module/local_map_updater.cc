@@ -10,7 +10,7 @@ local_map_updater::local_map_updater(const data::frame& curr_frm, const unsigned
     : frm_id_(curr_frm.id_), frm_lms_(curr_frm.landmarks_), num_keypts_(curr_frm.num_keypts_),
       max_num_local_keyfrms_(max_num_local_keyfrms) {}
 
-std::vector<data::keyframe*> local_map_updater::get_local_keyframes() const {
+std::vector<std::shared_ptr<data::keyframe>> local_map_updater::get_local_keyframes() const {
     return local_keyfrms_;
 }
 
@@ -18,7 +18,7 @@ std::vector<std::shared_ptr<data::landmark>> local_map_updater::get_local_landma
     return local_lms_;
 }
 
-data::keyframe* local_map_updater::get_nearest_covisibility() const {
+std::shared_ptr<data::keyframe> local_map_updater::get_nearest_covisibility() const {
     return nearest_covisibility_;
 }
 
@@ -58,13 +58,13 @@ local_map_updater::keyframe_weights_t local_map_updater::count_keyframe_weights(
 }
 
 auto local_map_updater::find_first_local_keyframes(const keyframe_weights_t& keyfrm_weights)
-    -> std::vector<data::keyframe*> {
-    std::vector<data::keyframe*> first_local_keyfrms;
+    -> std::vector<std::shared_ptr<data::keyframe>> {
+    std::vector<std::shared_ptr<data::keyframe>> first_local_keyfrms;
     first_local_keyfrms.reserve(2 * keyfrm_weights.size());
 
     unsigned int max_weight = 0;
     for (auto& keyfrm_weight : keyfrm_weights) {
-        auto keyfrm = keyfrm_weight.first;
+        const auto& keyfrm = keyfrm_weight.first;
         const auto weight = keyfrm_weight.second;
 
         if (keyfrm->will_be_erased()) {
@@ -86,13 +86,13 @@ auto local_map_updater::find_first_local_keyframes(const keyframe_weights_t& key
     return first_local_keyfrms;
 }
 
-auto local_map_updater::find_second_local_keyframes(const std::vector<data::keyframe*>& first_local_keyframes) const
-    -> std::vector<data::keyframe*> {
-    std::vector<data::keyframe*> second_local_keyfrms;
+auto local_map_updater::find_second_local_keyframes(const std::vector<std::shared_ptr<data::keyframe>>& first_local_keyframes) const
+    -> std::vector<std::shared_ptr<data::keyframe>> {
+    std::vector<std::shared_ptr<data::keyframe>> second_local_keyfrms;
     second_local_keyfrms.reserve(4 * first_local_keyframes.size());
 
     // add the second-order keyframes to the local landmarks
-    auto add_second_local_keyframe = [this, &second_local_keyfrms](data::keyframe* keyfrm) {
+    auto add_second_local_keyframe = [this, &second_local_keyfrms](const std::shared_ptr<data::keyframe>& keyfrm) {
         if (!keyfrm) {
             return false;
         }
@@ -112,11 +112,11 @@ auto local_map_updater::find_second_local_keyframes(const std::vector<data::keyf
             break;
         }
 
-        auto keyfrm = *iter;
+        const auto& keyfrm = *iter;
 
         // covisibilities of the neighbor keyframe
         const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
-        for (auto neighbor : neighbors) {
+        for (const auto& neighbor : neighbors) {
             if (add_second_local_keyframe(neighbor)) {
                 break;
             }
@@ -124,14 +124,14 @@ auto local_map_updater::find_second_local_keyframes(const std::vector<data::keyf
 
         // children of the spanning tree
         const auto spanning_children = keyfrm->graph_node_->get_spanning_children();
-        for (auto child : spanning_children) {
+        for (const auto& child : spanning_children) {
             if (add_second_local_keyframe(child)) {
                 break;
             }
         }
 
         // parent of the spanning tree
-        auto parent = keyfrm->graph_node_->get_spanning_parent();
+        const auto& parent = keyfrm->graph_node_->get_spanning_parent();
         add_second_local_keyframe(parent);
     }
 
@@ -142,8 +142,8 @@ bool local_map_updater::find_local_landmarks() {
     local_lms_.clear();
     local_lms_.reserve(50 * local_keyfrms_.size());
 
-    for (auto keyfrm : local_keyfrms_) {
-        const auto lms = keyfrm->get_landmarks();
+    for (const auto& keyfrm : local_keyfrms_) {
+        const auto& lms = keyfrm->get_landmarks();
 
         for (const auto& lm : lms) {
             if (!lm) {

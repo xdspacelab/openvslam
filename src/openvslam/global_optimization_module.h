@@ -57,7 +57,7 @@ public:
     void run();
 
     //! Queue a keyframe to the BoW database
-    void queue_keyframe(data::keyframe* keyfrm);
+    void queue_keyframe(const std::shared_ptr<data::keyframe>& keyfrm);
 
     //-----------------------------------------
     // management for reset process
@@ -110,11 +110,11 @@ private:
     void correct_loop();
 
     //! Compute Sim3s (world to covisibility) which are prior to loop correction
-    module::keyframe_Sim3_pairs_t get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const;
+    module::keyframe_Sim3_pairs_t get_Sim3s_before_loop_correction(const std::vector<std::shared_ptr<data::keyframe>>& neighbors) const;
 
     //! Compute Sim3s (world to covisibility) which are corrected using the estimated Sim3 of the current keyframe
     module::keyframe_Sim3_pairs_t get_Sim3s_after_loop_correction(const Mat44_t& cam_pose_wc_before_correction, const g2o::Sim3& g2o_Sim3_cw_after_correction,
-                                                                  const std::vector<data::keyframe*>& neighbors) const;
+                                                                  const std::vector<std::shared_ptr<data::keyframe>>& neighbors) const;
 
     //! Correct the positions of the landmarks which are seen in covisibilities
     void correct_covisibility_landmarks(const module::keyframe_Sim3_pairs_t& Sim3s_nw_before_correction,
@@ -128,7 +128,7 @@ private:
                                       const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     //! Extract the new connections which will be created AFTER loop correction
-    std::map<data::keyframe*, std::set<data::keyframe*>> extract_new_connections(const std::vector<data::keyframe*>& covisibilities) const;
+    std::map<std::shared_ptr<data::keyframe>, std::set<std::shared_ptr<data::keyframe>>> extract_new_connections(const std::vector<std::shared_ptr<data::keyframe>>& covisibilities) const;
 
     //-----------------------------------------
     // management for reset process
@@ -199,9 +199,9 @@ private:
     bool keyframe_is_queued() const;
 
     //! queue for keyframes
-    std::list<data::keyframe*> keyfrms_queue_;
+    std::list<std::shared_ptr<data::keyframe>> keyfrms_queue_;
 
-    data::keyframe* cur_keyfrm_ = nullptr;
+    std::shared_ptr<data::keyframe> cur_keyfrm_ = nullptr;
 
     //-----------------------------------------
     // optimizer

@@ -5,7 +5,7 @@
 namespace openvslam {
 namespace module {
 
-two_view_triangulator::two_view_triangulator(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
+two_view_triangulator::two_view_triangulator(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2,
                                              const float rays_parallax_deg_thr)
     : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
       rot_1w_(keyfrm_1->get_rotation()), rot_w1_(rot_1w_.transpose()), trans_1w_(keyfrm_1->get_translation()),

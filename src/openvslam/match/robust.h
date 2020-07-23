@@ -21,13 +21,13 @@ public:
 
     ~robust() final = default;
 
-    unsigned int match_for_triangulation(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, const Mat33_t& E_12,
+    unsigned int match_for_triangulation(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2, const Mat33_t& E_12,
                                          std::vector<std::pair<unsigned int, unsigned int>>& matched_idx_pairs);
 
-    unsigned int match_frame_and_keyframe(data::frame& frm, data::keyframe* keyfrm,
+    unsigned int match_frame_and_keyframe(data::frame& frm, const std::shared_ptr<data::keyframe>& keyfrm,
                                           std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_frm);
 
-    unsigned int brute_force_match(data::frame& frm, data::keyframe* keyfrm, std::vector<std::pair<int, int>>& matches);
+    unsigned int brute_force_match(data::frame& frm, const std::shared_ptr<data::keyframe>& keyfrm, std::vector<std::pair<int, int>>& matches);
 
 private:
     bool check_epipolar_constraint(const Vec3_t& bearing_1, const Vec3_t& bearing_2,

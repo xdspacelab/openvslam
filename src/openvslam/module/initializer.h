@@ -98,7 +98,7 @@ private:
     bool create_map_for_monocular(data::frame& curr_frm);
 
     //! Scaling up or down a initial map
-    void scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_keyfrm, const double scale);
+    void scale_map(const std::shared_ptr<data::keyframe>& init_keyfrm, const std::shared_ptr<data::keyframe>& curr_keyfrm, const double scale);
 
     //! initializer for monocular
     std::unique_ptr<initialize::base> initializer_ = nullptr;

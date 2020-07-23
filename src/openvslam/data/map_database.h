@@ -40,13 +40,13 @@ public:
      * Add keyframe to the database
      * @param keyfrm
      */
-    void add_keyframe(keyframe* keyfrm);
+    void add_keyframe(const std::shared_ptr<keyframe>& keyfrm);
 
     /**
      * Erase keyframe from the database
      * @param keyfrm
      */
-    void erase_keyframe(keyframe* keyfrm);
+    void erase_keyframe(const std::shared_ptr<keyframe>& keyfrm);
 
     /**
      * Add landmark to the database
@@ -76,7 +76,7 @@ public:
      * Get all of the keyframes in the database
      * @return
      */
-    std::vector<keyframe*> get_all_keyframes() const;
+    std::vector<std::shared_ptr<keyframe>> get_all_keyframes() const;
 
     /**
      * Get the number of keyframes
@@ -117,7 +117,7 @@ public:
      * @param old_keyfrm
      * @param new_keyfrm
      */
-    void replace_reference_keyframe(data::keyframe* old_keyfrm, data::keyframe* new_keyfrm) {
+    void replace_reference_keyframe(const std::shared_ptr<data::keyframe>& old_keyfrm, const std::shared_ptr<data::keyframe>& new_keyfrm) {
         std::lock_guard<std::mutex> lock(mtx_map_access_);
         frm_stats_.replace_reference_keyframe(old_keyfrm, new_keyfrm);
     }
@@ -155,7 +155,7 @@ public:
     void to_json(nlohmann::json& json_keyfrms, nlohmann::json& json_landmarks);
 
     //! origin keyframe
-    keyframe* origin_keyfrm_ = nullptr;
+    std::shared_ptr<keyframe> origin_keyfrm_ = nullptr;
 
     //! mutex for locking ALL access to the database
     //! (NOTE: cannot used in map_database class)
@@ -205,7 +205,7 @@ private:
     // keyframe and landmark database
 
     //! IDs and keyframes
-    std::unordered_map<unsigned int, keyframe*> keyframes_;
+    std::unordered_map<unsigned int, std::shared_ptr<keyframe>> keyframes_;
     //! IDs and landmarks
     std::unordered_map<unsigned int, std::shared_ptr<landmark>> landmarks_;
 

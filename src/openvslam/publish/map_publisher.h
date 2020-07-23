@@ -52,7 +52,7 @@ public:
      * @param all_keyfrms
      * @return number of keyframes in map
      */
-    unsigned int get_keyframes(std::vector<data::keyframe*>& all_keyfrms);
+    unsigned int get_keyframes(std::vector<std::shared_ptr<data::keyframe>>& all_keyfrms);
 
     /**
      * Get all landmarks and local landmarks

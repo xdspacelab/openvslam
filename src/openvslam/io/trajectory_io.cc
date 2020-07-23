@@ -114,7 +114,7 @@ void trajectory_io::save_keyframe_trajectory(const std::string& path, const std:
 
     assert(map_db_);
     auto keyfrms = map_db_->get_all_keyframes();
-    std::sort(keyfrms.begin(), keyfrms.end(), [&](data::keyframe* keyfrm_1, data::keyframe* keyfrm_2) {
+    std::sort(keyfrms.begin(), keyfrms.end(), [&](const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2) {
         return *keyfrm_1 < *keyfrm_2;
     });
 

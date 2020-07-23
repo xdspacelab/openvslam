@@ -22,7 +22,7 @@ public:
     /**
      * Constructor
      */
-    explicit two_view_triangulator(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
+    explicit two_view_triangulator(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2,
                                    const float rays_parallax_deg_thr = 1.0);
 
     /**
@@ -54,9 +54,9 @@ private:
     bool check_scale_factors(const Vec3_t& pos_w, const float scale_factor_1, const float scale_factor_2) const;
 
     //! pointer to keyframe 1
-    data::keyframe* const keyfrm_1_;
+    std::shared_ptr<data::keyframe> const keyfrm_1_;
     //! pointer to keyframe 2
-    data::keyframe* const keyfrm_2_;
+    std::shared_ptr<data::keyframe> const keyfrm_2_;
 
     // camera poses of keyframe 1
     const Mat33_t rot_1w_;

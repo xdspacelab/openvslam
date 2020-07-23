@@ -69,7 +69,7 @@ unsigned int local_map_cleaner::remove_redundant_landmarks(const unsigned int cu
     return num_removed;
 }
 
-unsigned int local_map_cleaner::remove_redundant_keyframes(data::keyframe* cur_keyfrm) const {
+unsigned int local_map_cleaner::remove_redundant_keyframes(const std::shared_ptr<data::keyframe>& cur_keyfrm) const {
     // window size not to remove
     constexpr unsigned int window_size_not_to_remove = 2;
     // if the redundancy ratio of observations is larger than this threshold,
@@ -106,7 +106,7 @@ unsigned int local_map_cleaner::remove_redundant_keyframes(data::keyframe* cur_k
     return num_removed;
 }
 
-void local_map_cleaner::count_redundant_observations(data::keyframe* keyfrm, unsigned int& num_valid_obs, unsigned int& num_redundant_obs) const {
+void local_map_cleaner::count_redundant_observations(const std::shared_ptr<data::keyframe>& keyfrm, unsigned int& num_valid_obs, unsigned int& num_redundant_obs) const {
     // if the number of keyframes that observes the landmark with more reliable scale than the specified keyframe does,
     // it is considered as redundant
     constexpr unsigned int num_better_obs_thr = 3;

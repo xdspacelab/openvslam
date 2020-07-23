@@ -201,7 +201,7 @@ void viewer::draw_keyframes() {
     // frustum size of keyframes
     const float w = keyfrm_size_ * *menu_frm_size_;
 
-    std::vector<openvslam::data::keyframe*> keyfrms;
+    std::vector<std::shared_ptr<openvslam::data::keyframe>> keyfrms;
     map_publisher_->get_keyframes(keyfrms);
 
     if (*menu_show_keyfrms_) {

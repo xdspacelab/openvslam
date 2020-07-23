@@ -15,7 +15,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     //! Constructor
-    sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
+    sim3_solver(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2,
                 const std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_2,
                 const bool fix_scale = true, const unsigned int min_num_inliers = 20);
 
@@ -61,16 +61,16 @@ protected:
     //! reproject points in camera (local) coordinates to the other image (as undistorted keypoints)
     void reproject_to_other_image(const std::vector<Vec3_t, Eigen::aligned_allocator<Vec3_t>>& lm_coords_in_cam_1,
                                   std::vector<Vec2_t, Eigen::aligned_allocator<Vec2_t>>& reprojected_in_cam_2,
-                                  const Mat33_t& rot_21, const Vec3_t& trans_21, const float scale_21, data::keyframe* keyfrm);
+                                  const Mat33_t& rot_21, const Vec3_t& trans_21, const float scale_21, const std::shared_ptr<data::keyframe>& keyfrm);
 
     //! reproject points in camera (local) coordinates to the same image (as undistorted keypoints)
     void reproject_to_same_image(const std::vector<Vec3_t, Eigen::aligned_allocator<Vec3_t>>& lm_coords_in_cam,
-                                 std::vector<Vec2_t, Eigen::aligned_allocator<Vec2_t>>& reprojected, data::keyframe* keyfrm);
+                                 std::vector<Vec2_t, Eigen::aligned_allocator<Vec2_t>>& reprojected, const std::shared_ptr<data::keyframe>& keyfrm);
 
 protected:
     //! キーフレーム
-    data::keyframe* keyfrm_1_;
-    data::keyframe* keyfrm_2_;
+    std::shared_ptr<data::keyframe> keyfrm_1_;
+    std::shared_ptr<data::keyframe> keyfrm_2_;
 
     //! true: Sim3を求める, false: SE3を求める
     bool fix_scale_;

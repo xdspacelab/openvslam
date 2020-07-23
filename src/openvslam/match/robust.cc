@@ -15,7 +15,7 @@
 namespace openvslam {
 namespace match {
 
-unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, const Mat33_t& E_12,
+unsigned int robust::match_for_triangulation(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2, const Mat33_t& E_12,
                                              std::vector<std::pair<unsigned int, unsigned int>>& matched_idx_pairs) {
     unsigned int num_matches = 0;
 
@@ -176,7 +176,7 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
     return num_matches;
 }
 
-unsigned int robust::match_frame_and_keyframe(data::frame& frm, data::keyframe* keyfrm,
+unsigned int robust::match_frame_and_keyframe(data::frame& frm, const std::shared_ptr<data::keyframe>& keyfrm,
                                               std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_frm) {
     // Initialization
     const auto num_frm_keypts = frm.num_keypts_;
@@ -211,7 +211,7 @@ unsigned int robust::match_frame_and_keyframe(data::frame& frm, data::keyframe* 
     return num_inlier_matches;
 }
 
-unsigned int robust::brute_force_match(data::frame& frm, data::keyframe* keyfrm, std::vector<std::pair<int, int>>& matches) {
+unsigned int robust::brute_force_match(data::frame& frm, const std::shared_ptr<data::keyframe>& keyfrm, std::vector<std::pair<int, int>>& matches) {
     unsigned int num_matches = 0;
 
     angle_checker<int> angle_checker;

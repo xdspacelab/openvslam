@@ -33,17 +33,10 @@ class landmark;
 class map_database;
 class bow_database;
 
-class keyframe {
+class keyframe : public std::enable_shared_from_this<keyframe> {
+private:
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    // operator overrides
-    bool operator==(const keyframe& keyfrm) const { return id_ == keyfrm.id_; }
-    bool operator!=(const keyframe& keyfrm) const { return !(*this == keyfrm); }
-    bool operator<(const keyframe& keyfrm) const { return id_ < keyfrm.id_; }
-    bool operator<=(const keyframe& keyfrm) const { return id_ <= keyfrm.id_; }
-    bool operator>(const keyframe& keyfrm) const { return id_ > keyfrm.id_; }
-    bool operator>=(const keyframe& keyfrm) const { return id_ >= keyfrm.id_; }
 
     /**
      * Constructor for building from a frame
@@ -61,6 +54,26 @@ public:
              const std::vector<float>& stereo_x_right, const std::vector<float>& depths, const cv::Mat& descriptors,
              const unsigned int num_scale_levels, const float scale_factor,
              bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db);
+    virtual ~keyframe();
+
+    // Factory method for create keyframe
+    static std::shared_ptr<keyframe> make_keyframe(const frame& frm, map_database* map_db, bow_database* bow_db);
+    static std::shared_ptr<keyframe> make_keyframe(
+        const unsigned int id, const unsigned int src_frm_id, const double timestamp,
+        const Mat44_t& cam_pose_cw, camera::base* camera, const float depth_thr,
+        const unsigned int num_keypts, const std::vector<cv::KeyPoint>& keypts,
+        const std::vector<cv::KeyPoint>& undist_keypts, const eigen_alloc_vector<Vec3_t>& bearings,
+        const std::vector<float>& stereo_x_right, const std::vector<float>& depths, const cv::Mat& descriptors,
+        const unsigned int num_scale_levels, const float scale_factor,
+        bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db);
+
+    // operator overrides
+    bool operator==(const keyframe& keyfrm) const { return id_ == keyfrm.id_; }
+    bool operator!=(const keyframe& keyfrm) const { return !(*this == keyfrm); }
+    bool operator<(const keyframe& keyfrm) const { return id_ < keyfrm.id_; }
+    bool operator<=(const keyframe& keyfrm) const { return id_ <= keyfrm.id_; }
+    bool operator>(const keyframe& keyfrm) const { return id_ > keyfrm.id_; }
+    bool operator>=(const keyframe& keyfrm) const { return id_ >= keyfrm.id_; }
 
     /**
      * Encode this keyframe information as JSON
@@ -267,7 +280,7 @@ public:
     // covisibility graph
 
     //! graph node
-    const std::unique_ptr<graph_node> graph_node_ = nullptr;
+    std::unique_ptr<graph_node> graph_node_ = nullptr;
 
     //-----------------------------------------
     // ORB scale pyramid information

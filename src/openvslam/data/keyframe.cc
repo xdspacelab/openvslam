@@ -29,8 +29,6 @@ keyframe::keyframe(const frame& frm, map_database* map_db, bow_database* bow_db)
       stereo_x_right_(frm.stereo_x_right_), depths_(frm.depths_), descriptors_(frm.descriptors_.clone()),
       // BoW
       bow_vec_(frm.bow_vec_), bow_feat_vec_(frm.bow_feat_vec_),
-      // covisibility graph node (connections is not assigned yet)
-      graph_node_(std::unique_ptr<graph_node>(new graph_node(this, true))),
       // ORB scale pyramid
       num_scale_levels_(frm.num_scale_levels_), scale_factor_(frm.scale_factor_),
       log_scale_factor_(frm.log_scale_factor_), scale_factors_(frm.scale_factors_),
@@ -58,8 +56,6 @@ keyframe::keyframe(const unsigned int id, const unsigned int src_frm_id, const d
       num_keypts_(num_keypts), keypts_(keypts), undist_keypts_(undist_keypts), bearings_(bearings),
       keypt_indices_in_cells_(assign_keypoints_to_grid(camera, undist_keypts)),
       stereo_x_right_(stereo_x_right), depths_(depths), descriptors_(descriptors.clone()),
-      // graph node (connections is not assigned yet)
-      graph_node_(std::unique_ptr<graph_node>(new graph_node(this, false))),
       // ORB scale pyramid
       num_scale_levels_(num_scale_levels), scale_factor_(scale_factor), log_scale_factor_(std::log(scale_factor)),
       scale_factors_(feature::orb_params::calc_scale_factors(num_scale_levels, scale_factor)),
@@ -85,6 +81,36 @@ keyframe::keyframe(const unsigned int id, const unsigned int src_frm_id, const d
     // TODO: should set loop_edges_ using add_loop_edge()
 }
 
+keyframe::~keyframe() {}
+
+std::shared_ptr<keyframe> keyframe::make_keyframe(const frame& frm, map_database* map_db, bow_database* bow_db) {
+    auto ptr = std::make_shared<keyframe>(frm, map_db, bow_db);
+    // covisibility graph node (connections is not assigned yet)
+    ptr->graph_node_ = std::make_unique<graph_node>(ptr, true);
+    return ptr;
+}
+
+std::shared_ptr<keyframe> keyframe::make_keyframe(
+    const unsigned int id, const unsigned int src_frm_id, const double timestamp,
+    const Mat44_t& cam_pose_cw, camera::base* camera, const float depth_thr,
+    const unsigned int num_keypts, const std::vector<cv::KeyPoint>& keypts,
+    const std::vector<cv::KeyPoint>& undist_keypts, const eigen_alloc_vector<Vec3_t>& bearings,
+    const std::vector<float>& stereo_x_right, const std::vector<float>& depths, const cv::Mat& descriptors,
+    const unsigned int num_scale_levels, const float scale_factor,
+    bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db) {
+    auto ptr = std::make_shared<keyframe>(
+        id, src_frm_id, timestamp,
+        cam_pose_cw, camera, depth_thr,
+        num_keypts, keypts,
+        undist_keypts, bearings,
+        stereo_x_right, depths, descriptors,
+        num_scale_levels, scale_factor,
+        bow_vocab, bow_db, map_db);
+    // covisibility graph node (connections is not assigned yet)
+    ptr->graph_node_ = std::make_unique<graph_node>(ptr, false);
+    return ptr;
+}
+
 nlohmann::json keyframe::to_json() const {
     // extract landmark IDs
     std::vector<int> landmark_ids(landmarks_.size(), -1);
@@ -95,13 +121,13 @@ nlohmann::json keyframe::to_json() const {
     }
 
     // extract spanning tree parent
-    auto spanning_parent = graph_node_->get_spanning_parent();
+    const auto& spanning_parent = graph_node_->get_spanning_parent();
 
     // extract spanning tree children
     const auto spanning_children = graph_node_->get_spanning_children();
     std::vector<int> spanning_child_ids;
     spanning_child_ids.reserve(spanning_children.size());
-    for (const auto spanning_child : spanning_children) {
+    for (const auto& spanning_child : spanning_children) {
         spanning_child_ids.push_back(spanning_child->id_);
     }
 
@@ -201,7 +227,7 @@ void keyframe::erase_landmark_with_index(const unsigned int idx) {
 
 void keyframe::erase_landmark(const std::shared_ptr<landmark>& lm) {
     std::lock_guard<std::mutex> lock(mtx_observations_);
-    int idx = lm->get_index_in_keyframe(this);
+    int idx = lm->get_index_in_keyframe(shared_from_this());
     if (0 <= idx) {
         landmarks_.at(static_cast<unsigned int>(idx)) = nullptr;
     }
@@ -407,7 +433,7 @@ void keyframe::prepare_for_erasing() {
             if (!lm) {
                 continue;
             }
-            lm->erase_observation(this);
+            lm->erase_observation(shared_from_this());
         }
     }
 
@@ -420,12 +446,12 @@ void keyframe::prepare_for_erasing() {
 
     // 3. update frame statistics
 
-    map_db_->replace_reference_keyframe(this, graph_node_->get_spanning_parent());
+    map_db_->replace_reference_keyframe(shared_from_this(), graph_node_->get_spanning_parent());
 
     // 4. remove myself from the databased
 
-    map_db_->erase_keyframe(this);
-    bow_db_->erase_keyframe(this);
+    map_db_->erase_keyframe(shared_from_this());
+    bow_db_->erase_keyframe(shared_from_this());
 }
 
 bool keyframe::will_be_erased() {

@@ -44,7 +44,7 @@ public:
     void run();
 
     //! Queue a keyframe to process the mapping
-    void queue_keyframe(data::keyframe* keyfrm);
+    void queue_keyframe(const std::shared_ptr<data::keyframe>& keyfrm);
 
     //! Get the number of queued keyframes
     unsigned int get_num_queued_keyframes() const;
@@ -112,18 +112,18 @@ private:
     void create_new_landmarks();
 
     //! Triangulate landmarks between the keyframes 1 and 2
-    void triangulate_with_two_keyframes(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
+    void triangulate_with_two_keyframes(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2,
                                         const std::vector<std::pair<unsigned int, unsigned int>>& matches);
 
     //! Update the new keyframe
     void update_new_keyframe();
 
     //! Get the first and second order covisibilities of current keyframe
-    std::unordered_set<data::keyframe*> get_second_order_covisibilities(const unsigned int first_order_thr,
-                                                                        const unsigned int second_order_thr);
+    std::unordered_set<std::shared_ptr<data::keyframe>> get_second_order_covisibilities(const unsigned int first_order_thr,
+                                                                                        const unsigned int second_order_thr);
 
     //! Fuse duplicated landmarks between current keyframe and covisibility keyframes
-    void fuse_landmark_duplication(const std::unordered_set<data::keyframe*>& fuse_tgt_keyfrms);
+    void fuse_landmark_duplication(const std::unordered_set<std::shared_ptr<data::keyframe>>& fuse_tgt_keyfrms);
 
     //-----------------------------------------
     // management for reset process
@@ -200,7 +200,7 @@ private:
     bool keyframe_is_queued() const;
 
     //! queue for keyframes
-    std::list<data::keyframe*> keyfrms_queue_;
+    std::list<std::shared_ptr<data::keyframe>> keyfrms_queue_;
 
     //-----------------------------------------
     // optimizer
@@ -221,7 +221,7 @@ private:
     std::atomic<bool> keyfrm_acceptability_{true};
 
     //! current keyframe which is used in the current mapping
-    data::keyframe* cur_keyfrm_ = nullptr;
+    std::shared_ptr<data::keyframe> cur_keyfrm_ = nullptr;
 };
 
 } // namespace openvslam

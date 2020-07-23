@@ -72,7 +72,7 @@ void loop_bundle_adjuster::optimize(const unsigned int identifier) {
         std::lock_guard<std::mutex> lock2(data::map_database::mtx_database_);
 
         // update the camera pose along the spanning tree from the origin
-        std::list<data::keyframe*> keyfrms_to_check;
+        std::list<std::shared_ptr<data::keyframe>> keyfrms_to_check;
         keyfrms_to_check.push_back(map_db_->origin_keyfrm_);
         while (!keyfrms_to_check.empty()) {
             auto parent = keyfrms_to_check.front();

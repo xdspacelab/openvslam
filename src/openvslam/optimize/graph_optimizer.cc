@@ -20,10 +20,10 @@ namespace optimize {
 graph_optimizer::graph_optimizer(data::map_database* map_db, const bool fix_scale)
     : map_db_(map_db), fix_scale_(fix_scale) {}
 
-void graph_optimizer::optimize(data::keyframe* loop_keyfrm, data::keyframe* curr_keyfrm,
+void graph_optimizer::optimize(const std::shared_ptr<data::keyframe>& loop_keyfrm, const std::shared_ptr<data::keyframe>& curr_keyfrm,
                                const module::keyframe_Sim3_pairs_t& non_corrected_Sim3s,
                                const module::keyframe_Sim3_pairs_t& pre_corrected_Sim3s,
-                               const std::map<data::keyframe*, std::set<data::keyframe*>>& loop_connections) const {
+                               const std::map<std::shared_ptr<data::keyframe>, std::set<std::shared_ptr<data::keyframe>>>& loop_connections) const {
     // 1. Construct an optimizer
 
     auto linear_solver = g2o::make_unique<g2o::LinearSolverCSparse<g2o::BlockSolver_7_3::PoseMatrixType>>();

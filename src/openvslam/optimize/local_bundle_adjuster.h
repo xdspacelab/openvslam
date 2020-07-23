@@ -31,7 +31,7 @@ public:
      * @param curr_keyfrm
      * @param force_stop_flag
      */
-    void optimize(data::keyframe* curr_keyfrm, bool* const force_stop_flag) const;
+    void optimize(const std::shared_ptr<data::keyframe>& curr_keyfrm, bool* const force_stop_flag) const;
 
 private:
     //! number of iterations of first optimization

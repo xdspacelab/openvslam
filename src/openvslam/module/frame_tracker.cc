@@ -54,7 +54,7 @@ bool frame_tracker::motion_based_track(data::frame& curr_frm, const data::frame&
     }
 }
 
-bool frame_tracker::bow_match_based_track(data::frame& curr_frm, const data::frame& last_frm, data::keyframe* ref_keyfrm) const {
+bool frame_tracker::bow_match_based_track(data::frame& curr_frm, const data::frame& last_frm, const std::shared_ptr<data::keyframe>& ref_keyfrm) const {
     match::bow_tree bow_matcher(0.7, true);
 
     // Compute the BoW representations to perform the BoW match
@@ -90,7 +90,7 @@ bool frame_tracker::bow_match_based_track(data::frame& curr_frm, const data::fra
     }
 }
 
-bool frame_tracker::robust_match_based_track(data::frame& curr_frm, const data::frame& last_frm, data::keyframe* ref_keyfrm) const {
+bool frame_tracker::robust_match_based_track(data::frame& curr_frm, const data::frame& last_frm, const std::shared_ptr<data::keyframe>& ref_keyfrm) const {
     match::robust robust_matcher(0.8, false);
 
     // Search 2D-2D matches between the ref keyframes and the current frame

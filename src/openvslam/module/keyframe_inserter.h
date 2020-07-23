@@ -38,13 +38,13 @@ public:
     /**
      * Insert the new keyframe derived from the current frame
      */
-    data::keyframe* insert_new_keyframe(data::frame& curr_frm);
+    std::shared_ptr<data::keyframe> insert_new_keyframe(data::frame& curr_frm);
 
 private:
     /**
      * Queue the new keyframe to the mapping module
      */
-    void queue_keyframe(data::keyframe* keyfrm);
+    void queue_keyframe(const std::shared_ptr<data::keyframe>& keyfrm);
 
     //! setup type of the tracking camera
     const camera::setup_type_t setup_type_;

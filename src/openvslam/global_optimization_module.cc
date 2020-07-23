@@ -121,7 +121,7 @@ void global_optimization_module::run() {
     spdlog::info("terminate global optimization module");
 }
 
-void global_optimization_module::queue_keyframe(data::keyframe* keyfrm) {
+void global_optimization_module::queue_keyframe(const std::shared_ptr<data::keyframe>& keyfrm) {
     std::lock_guard<std::mutex> lock(mtx_keyfrm_queue_);
     if (keyfrm->id_ != 0) {
         keyfrms_queue_.push_back(keyfrm);
@@ -163,7 +163,7 @@ void global_optimization_module::correct_loop() {
     //    finally, landmarks observed in them are also moved to the correct position using the camera poses before and after camera pose correction
 
     // acquire the covisibilities of the current keyframe
-    std::vector<data::keyframe*> curr_neighbors = cur_keyfrm_->graph_node_->get_covisibilities();
+    std::vector<std::shared_ptr<data::keyframe>> curr_neighbors = cur_keyfrm_->graph_node_->get_covisibilities();
     curr_neighbors.push_back(cur_keyfrm_);
 
     // Sim3 camera poses BEFORE loop correction
@@ -226,7 +226,7 @@ void global_optimization_module::correct_loop() {
     loop_detector_->set_loop_correct_keyframe_id(cur_keyfrm_->id_);
 }
 
-module::keyframe_Sim3_pairs_t global_optimization_module::get_Sim3s_before_loop_correction(const std::vector<data::keyframe*>& neighbors) const {
+module::keyframe_Sim3_pairs_t global_optimization_module::get_Sim3s_before_loop_correction(const std::vector<std::shared_ptr<data::keyframe>>& neighbors) const {
     module::keyframe_Sim3_pairs_t Sim3s_nw_before_loop_correction;
 
     for (const auto neighbor : neighbors) {
@@ -244,7 +244,7 @@ module::keyframe_Sim3_pairs_t global_optimization_module::get_Sim3s_before_loop_
 
 module::keyframe_Sim3_pairs_t global_optimization_module::get_Sim3s_after_loop_correction(const Mat44_t& cam_pose_wc_before_correction,
                                                                                           const g2o::Sim3& g2o_Sim3_cw_after_correction,
-                                                                                          const std::vector<data::keyframe*>& neighbors) const {
+                                                                                          const std::vector<std::shared_ptr<data::keyframe>>& neighbors) const {
     module::keyframe_Sim3_pairs_t Sim3s_nw_after_loop_correction;
 
     for (auto neighbor : neighbors) {
@@ -367,9 +367,9 @@ void global_optimization_module::replace_duplicated_landmarks(const std::vector<
     }
 }
 
-auto global_optimization_module::extract_new_connections(const std::vector<data::keyframe*>& covisibilities) const
-    -> std::map<data::keyframe*, std::set<data::keyframe*>> {
-    std::map<data::keyframe*, std::set<data::keyframe*>> new_connections;
+auto global_optimization_module::extract_new_connections(const std::vector<std::shared_ptr<data::keyframe>>& covisibilities) const
+    -> std::map<std::shared_ptr<data::keyframe>, std::set<std::shared_ptr<data::keyframe>>> {
+    std::map<std::shared_ptr<data::keyframe>, std::set<std::shared_ptr<data::keyframe>>> new_connections;
 
     for (auto covisibility : covisibilities) {
         // acquire neighbors BEFORE loop fusion (because update_connections() is not called yet)

@@ -31,7 +31,7 @@ public:
     shot_vertex* create_vertex(data::frame* frm, const bool is_constant);
 
     //! Create and return the g2o vertex created from the specified keyframe
-    shot_vertex* create_vertex(data::keyframe* keyfrm, const bool is_constant);
+    shot_vertex* create_vertex(const std::shared_ptr<data::keyframe>& keyfrm, const bool is_constant);
 
     //! Create and return the g2o vertex created from shot ID and camera pose
     shot_vertex* create_vertex(const unsigned int id, const Mat44_t& cam_pose_cw, const bool is_constant);
@@ -40,7 +40,7 @@ public:
     shot_vertex* get_vertex(data::frame* frm) const;
 
     //! Get vertex corresponding with the specified keyframe
-    shot_vertex* get_vertex(data::keyframe* keyfrm) const;
+    shot_vertex* get_vertex(const std::shared_ptr<data::keyframe>& keyfrm) const;
 
     //! Get vertex corresponding with the specified shot (frame/keyframe) ID
     shot_vertex* get_vertex(const unsigned int id) const;
@@ -49,7 +49,7 @@ public:
     unsigned int get_vertex_id(data::frame* frm) const;
 
     //! Convert keyframe ID to vertex ID
-    unsigned int get_vertex_id(data::keyframe* keyfrm) const;
+    unsigned int get_vertex_id(const std::shared_ptr<data::keyframe>& keyfrm) const;
 
     //! Convert shot (frame/keyframe) ID to vertex ID
     unsigned int get_vertex_id(unsigned int id) const;
@@ -64,7 +64,7 @@ public:
     unsigned int get_max_vertex_id() const;
 
     //! Contains the specified keyframe or not
-    bool contain(data::keyframe* keyfrm) const;
+    bool contain(const std::shared_ptr<data::keyframe>& keyfrm) const;
 
     // iterators to sweep shot vertices
     using iterator = std::unordered_map<unsigned int, shot_vertex*>::iterator;
@@ -94,7 +94,7 @@ inline shot_vertex* shot_vertex_container::create_vertex(data::frame* frm, const
     return create_vertex(frm->id_, frm->cam_pose_cw_, is_constant);
 }
 
-inline shot_vertex* shot_vertex_container::create_vertex(data::keyframe* keyfrm, const bool is_constant) {
+inline shot_vertex* shot_vertex_container::create_vertex(const std::shared_ptr<data::keyframe>& keyfrm, const bool is_constant) {
     return create_vertex(keyfrm->id_, keyfrm->get_cam_pose(), is_constant);
 }
 
@@ -119,7 +119,7 @@ inline shot_vertex* shot_vertex_container::get_vertex(data::frame* frm) const {
     return get_vertex(frm->id_);
 }
 
-inline shot_vertex* shot_vertex_container::get_vertex(data::keyframe* keyfrm) const {
+inline shot_vertex* shot_vertex_container::get_vertex(const std::shared_ptr<data::keyframe>& keyfrm) const {
     return get_vertex(keyfrm->id_);
 }
 
@@ -131,7 +131,7 @@ inline unsigned int shot_vertex_container::get_vertex_id(data::frame* frm) const
     return get_vertex_id(frm->id_);
 }
 
-inline unsigned int shot_vertex_container::get_vertex_id(data::keyframe* keyfrm) const {
+inline unsigned int shot_vertex_container::get_vertex_id(const std::shared_ptr<data::keyframe>& keyfrm) const {
     return get_vertex_id(keyfrm->id_);
 }
 
@@ -151,7 +151,7 @@ inline unsigned int shot_vertex_container::get_max_vertex_id() const {
     return max_vtx_id_;
 }
 
-inline bool shot_vertex_container::contain(data::keyframe* keyfrm) const {
+inline bool shot_vertex_container::contain(const std::shared_ptr<data::keyframe>& keyfrm) const {
     return 0 != vtx_container_.count(keyfrm->id_);
 }
 

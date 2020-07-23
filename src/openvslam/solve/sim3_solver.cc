@@ -12,7 +12,7 @@
 namespace openvslam {
 namespace solve {
 
-sim3_solver::sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
+sim3_solver::sim3_solver(const std::shared_ptr<data::keyframe>& keyfrm_1, const std::shared_ptr<data::keyframe>& keyfrm_2,
                          const std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_2,
                          const bool fix_scale, const unsigned int min_num_inliers)
     : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
@@ -281,7 +281,7 @@ unsigned int sim3_solver::count_inliers(const Mat33_t& rot_12, const Vec3_t& tra
 
 void sim3_solver::reproject_to_other_image(const std::vector<Vec3_t, Eigen::aligned_allocator<Vec3_t>>& lm_coords_in_cam_1,
                                            std::vector<Vec2_t, Eigen::aligned_allocator<Vec2_t>>& reprojected_in_cam_2,
-                                           const Mat33_t& rot_21, const Vec3_t& trans_21, const float scale_21, data::keyframe* keyfrm) {
+                                           const Mat33_t& rot_21, const Vec3_t& trans_21, const float scale_21, const std::shared_ptr<data::keyframe>& keyfrm) {
     reprojected_in_cam_2.clear();
     reprojected_in_cam_2.reserve(lm_coords_in_cam_1.size());
 
@@ -295,7 +295,7 @@ void sim3_solver::reproject_to_other_image(const std::vector<Vec3_t, Eigen::alig
 }
 
 void sim3_solver::reproject_to_same_image(const std::vector<Vec3_t, Eigen::aligned_allocator<Vec3_t>>& lm_coords_in_cam,
-                                          std::vector<Vec2_t, Eigen::aligned_allocator<Vec2_t>>& reprojected, data::keyframe* keyfrm) {
+                                          std::vector<Vec2_t, Eigen::aligned_allocator<Vec2_t>>& reprojected, const std::shared_ptr<data::keyframe>& keyfrm) {
     reprojected.clear();
     reprojected.reserve(lm_coords_in_cam.size());
 

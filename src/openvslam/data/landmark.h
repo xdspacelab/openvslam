@@ -24,11 +24,11 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     //! constructor
-    landmark(const Vec3_t& pos_w, keyframe* ref_keyfrm, map_database* map_db);
+    landmark(const Vec3_t& pos_w, const std::shared_ptr<keyframe>& ref_keyfrm, map_database* map_db);
 
     //! constructor for map loading with computing parameters which can be recomputed
     landmark(const unsigned int id, const unsigned int first_keyfrm_id,
-             const Vec3_t& pos_w, keyframe* ref_keyfrm,
+             const Vec3_t& pos_w, const std::shared_ptr<keyframe>& ref_keyfrm,
              const unsigned int num_visible, const unsigned int num_found,
              map_database* map_db);
 
@@ -40,24 +40,24 @@ public:
     //! get mean normalized vector of keyframe->lm vectors, for keyframes such that observe the 3D point.
     Vec3_t get_obs_mean_normal() const;
     //! get reference keyframe, a keyframe at the creation of a given 3D point
-    keyframe* get_ref_keyframe() const;
+    std::shared_ptr<keyframe> get_ref_keyframe() const;
 
     //! add observation
-    void add_observation(keyframe* keyfrm, unsigned int idx);
+    void add_observation(const std::shared_ptr<keyframe>& keyfrm, unsigned int idx);
     //! erase observation
-    void erase_observation(keyframe* keyfrm);
+    void erase_observation(const std::shared_ptr<keyframe>& keyfrm);
 
     //! get observations (keyframe and keypoint idx)
-    std::map<keyframe*, unsigned int> get_observations() const;
+    std::map<std::shared_ptr<keyframe>, unsigned int> get_observations() const;
     //! get number of observations
     unsigned int num_observations() const;
     //! whether this landmark is observed from more than zero keyframes
     bool has_observation() const;
 
     //! get index of associated keypoint in the specified keyframe
-    int get_index_in_keyframe(keyframe* keyfrm) const;
+    int get_index_in_keyframe(const std::shared_ptr<keyframe>& keyfrm) const;
     //! whether this landmark is observed in the specified keyframe
-    bool is_observed_in_keyframe(keyframe* keyfrm) const;
+    bool is_observed_in_keyframe(const std::shared_ptr<keyframe>& keyfrm) const;
 
     //! check the distance between landmark and camera is in ORB scale variance
     inline bool is_inside_in_orb_scale(const float cam_to_lm_dist) const {
@@ -83,7 +83,7 @@ public:
     //! predict scale level assuming this landmark is observed in the specified frame
     unsigned int predict_scale_level(const float cam_to_lm_dist, const frame* frm) const;
     //! predict scale level assuming this landmark is observed in the specified keyframe
-    unsigned int predict_scale_level(const float cam_to_lm_dist, const keyframe* keyfrm) const;
+    unsigned int predict_scale_level(const float cam_to_lm_dist, const std::shared_ptr<keyframe>& keyfrm) const;
 
     //! erase this landmark from database
     void prepare_for_erasing();
@@ -127,7 +127,7 @@ private:
     Vec3_t pos_w_;
 
     //! observations (keyframe and keypoint index)
-    std::map<keyframe*, unsigned int> observations_;
+    std::map<std::shared_ptr<keyframe>, unsigned int> observations_;
 
     //! Normalized average vector (unit vector) of keyframe->lm, for keyframes such that observe the 3D point.
     Vec3_t mean_normal_ = Vec3_t::Zero();
@@ -136,7 +136,7 @@ private:
     cv::Mat descriptor_;
 
     //! reference keyframe
-    keyframe* ref_keyfrm_;
+    std::shared_ptr<keyframe> ref_keyfrm_;
 
     // track counter
     unsigned int num_observable_ = 1;

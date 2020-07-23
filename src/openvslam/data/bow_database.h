@@ -33,13 +33,13 @@ public:
      * Add a keyframe to the database
      * @param keyfrm
      */
-    void add_keyframe(keyframe* keyfrm);
+    void add_keyframe(const std::shared_ptr<keyframe>& keyfrm);
 
     /**
      * Erase the keyframe from the database
      * @param keyfrm
      */
-    void erase_keyframe(keyframe* keyfrm);
+    void erase_keyframe(const std::shared_ptr<keyframe>& keyfrm);
 
     /**
      * Clear the database
@@ -52,14 +52,14 @@ public:
      * @param min_score
      * @return
      */
-    std::vector<keyframe*> acquire_loop_candidates(keyframe* qry_keyfrm, const float min_score);
+    std::vector<std::shared_ptr<keyframe>> acquire_loop_candidates(const std::shared_ptr<keyframe>& qry_keyfrm, const float min_score);
 
     /**
      * Acquire relocalization candidates
      * @param qry_frm
      * @return
      */
-    std::vector<keyframe*> acquire_relocalization_candidates(frame* qry_frm);
+    std::vector<std::shared_ptr<keyframe>> acquire_relocalization_candidates(frame* qry_frm);
 
 protected:
     /**
@@ -75,7 +75,7 @@ protected:
      * @return whether candidates are found or not
      */
     template<typename T>
-    bool set_candidates_sharing_words(const T* const qry_shot, const std::set<keyframe*>& keyfrms_to_reject = {});
+    bool set_candidates_sharing_words(const T qry_shot, const std::set<std::shared_ptr<keyframe>>& keyfrms_to_reject = {});
 
     /**
      * Compute scores (scores_) between the query and the each of keyframes contained in the database
@@ -85,7 +85,7 @@ protected:
      * @return whether candidates are found or not
      */
     template<typename T>
-    bool compute_scores(const T* const qry_shot, const unsigned int min_num_common_words_thr);
+    bool compute_scores(const T qry_shot, const unsigned int min_num_common_words_thr);
 
     /**
      * Align scores and keyframes only which have greater scores than the minimum one
@@ -109,7 +109,7 @@ protected:
     //! mutex to access BoW database
     mutable std::mutex mtx_;
     //! BoW database
-    std::unordered_map<unsigned int, std::list<keyframe*>> keyfrms_in_node_;
+    std::unordered_map<unsigned int, std::list<std::shared_ptr<keyframe>>> keyfrms_in_node_;
 
     //-----------------------------------------
     // BoW vocabulary
@@ -124,23 +124,23 @@ protected:
     mutable std::mutex tmp_mtx_;
 
     //! initial candidates for loop or relocalization
-    std::unordered_set<keyframe*> init_candidates_;
+    std::unordered_set<std::shared_ptr<keyframe>> init_candidates_;
 
     // key: queryとwordを共有しているキーフレーム, value: 共有word数
     //! number of shared words between the query and the each of keyframes contained in the database
-    std::unordered_map<keyframe*, unsigned int> num_common_words_;
+    std::unordered_map<std::shared_ptr<keyframe>, unsigned int> num_common_words_;
 
     // key: queryとwordを共有しているキーフレーム, value: スコア
     //! similarity scores between the query and the each of keyframes contained in the database
-    std::unordered_map<keyframe*, float> scores_;
+    std::unordered_map<std::shared_ptr<keyframe>, float> scores_;
 
     // min_score以上のものを保存しておくvector (スコア, キーフレーム)
     //! pairs of score and keyframe which has the larger score than the minimum one
-    std::vector<std::pair<float, keyframe*>> score_keyfrm_pairs_;
+    std::vector<std::pair<float, std::shared_ptr<keyframe>>> score_keyfrm_pairs_;
 
     // min_score以上のものを保存しておくvector (スコア, キーフレーム)
     //! pairs of total score and keyframe which has the larger score than the minimum one
-    std::vector<std::pair<float, keyframe*>> total_score_keyfrm_pairs_;
+    std::vector<std::pair<float, std::shared_ptr<keyframe>>> total_score_keyfrm_pairs_;
 };
 
 } // namespace data

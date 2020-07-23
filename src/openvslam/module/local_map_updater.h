@@ -15,7 +15,7 @@ namespace module {
 
 class local_map_updater {
 public:
-    using keyframe_weights_t = std::unordered_map<data::keyframe*, unsigned int>;
+    using keyframe_weights_t = std::unordered_map<std::shared_ptr<data::keyframe>, unsigned int>;
 
     //! Constructor
     explicit local_map_updater(const data::frame& curr_frm, const unsigned int max_num_local_keyfrms);
@@ -24,13 +24,13 @@ public:
     ~local_map_updater() = default;
 
     //! Get the local keyframes
-    std::vector<data::keyframe*> get_local_keyframes() const;
+    std::vector<std::shared_ptr<data::keyframe>> get_local_keyframes() const;
 
     //! Get the local landmarks
     std::vector<std::shared_ptr<data::landmark>> get_local_landmarks() const;
 
     //! Get the nearest covisibility
-    data::keyframe* get_nearest_covisibility() const;
+    std::shared_ptr<data::keyframe> get_nearest_covisibility() const;
 
     //! Acquire the new local map
     bool acquire_local_map();
@@ -44,11 +44,11 @@ private:
 
     //! Find the first-order local keyframes
     auto find_first_local_keyframes(const keyframe_weights_t& keyfrm_weights)
-        -> std::vector<data::keyframe*>;
+        -> std::vector<std::shared_ptr<data::keyframe>>;
 
     //! Find the second-order local keyframes
-    auto find_second_local_keyframes(const std::vector<data::keyframe*>& first_local_keyframes) const
-        -> std::vector<data::keyframe*>;
+    auto find_second_local_keyframes(const std::vector<std::shared_ptr<data::keyframe>>& first_local_keyframes) const
+        -> std::vector<std::shared_ptr<data::keyframe>>;
 
     //! Find the local landmarks
     bool find_local_landmarks();
@@ -63,11 +63,11 @@ private:
     const unsigned int max_num_local_keyfrms_;
 
     // found local keyframes
-    std::vector<data::keyframe*> local_keyfrms_;
+    std::vector<std::shared_ptr<data::keyframe>> local_keyfrms_;
     // found local landmarks
     std::vector<std::shared_ptr<data::landmark>> local_lms_;
     // the nearst keyframe in covisibility graph, which will be found in find_first_local_keyframes()
-    data::keyframe* nearest_covisibility_;
+    std::shared_ptr<data::keyframe> nearest_covisibility_;
 };
 
 } // namespace module

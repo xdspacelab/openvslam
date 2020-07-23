@@ -51,12 +51,12 @@ public:
     /**
      * Remove redundant keyframes
      */
-    unsigned int remove_redundant_keyframes(data::keyframe* cur_keyfrm) const;
+    unsigned int remove_redundant_keyframes(const std::shared_ptr<data::keyframe>& cur_keyfrm) const;
 
     /**
      * Count the valid and the redundant observations in the specified keyframe
      */
-    void count_redundant_observations(data::keyframe* keyfrm, unsigned int& num_valid_obs, unsigned int& num_redundant_obs) const;
+    void count_redundant_observations(const std::shared_ptr<data::keyframe>& keyfrm, unsigned int& num_valid_obs, unsigned int& num_redundant_obs) const;
 
 private:
     //! origin keyframe ID

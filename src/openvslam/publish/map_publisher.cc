@@ -27,7 +27,7 @@ Mat44_t map_publisher::get_current_cam_pose() {
     return cam_pose_cw_;
 }
 
-unsigned int map_publisher::get_keyframes(std::vector<data::keyframe*>& all_keyfrms) {
+unsigned int map_publisher::get_keyframes(std::vector<std::shared_ptr<data::keyframe>>& all_keyfrms) {
     all_keyfrms = map_db_->get_all_keyframes();
     return map_db_->get_num_keyframes();
 }
