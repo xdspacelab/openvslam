@@ -13,7 +13,7 @@ namespace openvslam {
 namespace solve {
 
 sim3_solver::sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
-                         const std::vector<data::landmark*>& matched_lms_in_keyfrm_2,
+                         const std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_2,
                          const bool fix_scale, const unsigned int min_num_inliers)
     : keyfrm_1_(keyfrm_1), keyfrm_2_(keyfrm_2),
       fix_scale_(fix_scale), min_num_inliers_(min_num_inliers) {
@@ -46,8 +46,8 @@ sim3_solver::sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
             continue;
         }
 
-        auto lm_1 = keyfrm_1_lms.at(idx1);
-        auto lm_2 = matched_lms_in_keyfrm_2.at(idx1);
+        auto& lm_1 = keyfrm_1_lms.at(idx1);
+        auto& lm_2 = matched_lms_in_keyfrm_2.at(idx1);
 
         if (!lm_1 || !lm_2) {
             continue;

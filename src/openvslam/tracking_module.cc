@@ -320,7 +320,7 @@ void tracking_module::update_motion_model() {
 
 void tracking_module::apply_landmark_replace() {
     for (unsigned int idx = 0; idx < last_frm_.num_keypts_; ++idx) {
-        auto lm = last_frm_.landmarks_.at(idx);
+        auto& lm = last_frm_.landmarks_.at(idx);
         if (!lm) {
             continue;
         }
@@ -350,7 +350,7 @@ bool tracking_module::optimize_current_frame_with_local_map() {
     // count up the number of tracked landmarks
     num_tracked_lms_ = 0;
     for (unsigned int idx = 0; idx < curr_frm_.num_keypts_; ++idx) {
-        auto lm = curr_frm_.landmarks_.at(idx);
+        const auto& lm = curr_frm_.landmarks_.at(idx);
         if (!lm) {
             continue;
         }
@@ -390,7 +390,7 @@ bool tracking_module::optimize_current_frame_with_local_map() {
 void tracking_module::update_local_map() {
     // clean landmark associations
     for (unsigned int idx = 0; idx < curr_frm_.num_keypts_; ++idx) {
-        auto lm = curr_frm_.landmarks_.at(idx);
+        const auto& lm = curr_frm_.landmarks_.at(idx);
         if (!lm) {
             continue;
         }
@@ -422,7 +422,7 @@ void tracking_module::update_local_map() {
 
 void tracking_module::search_local_landmarks() {
     // select the landmarks which can be reprojected from the ones observed in the current frame
-    for (auto lm : curr_frm_.landmarks_) {
+    for (const auto& lm : curr_frm_.landmarks_) {
         if (!lm) {
             continue;
         }
@@ -444,7 +444,7 @@ void tracking_module::search_local_landmarks() {
     Vec2_t reproj;
     float x_right;
     unsigned int pred_scale_level;
-    for (auto lm : local_landmarks_) {
+    for (const auto& lm : local_landmarks_) {
         // avoid the landmarks which cannot be reprojected (== observed in the current frame)
         if (lm->identifier_in_local_lm_search_ == curr_frm_.id_) {
             continue;

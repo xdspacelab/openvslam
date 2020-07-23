@@ -1,6 +1,8 @@
 #ifndef OPENVSLAM_MODULE_LOCAL_MAP_UPDATER_H
 #define OPENVSLAM_MODULE_LOCAL_MAP_UPDATER_H
 
+#include <memory>
+
 namespace openvslam {
 
 namespace data {
@@ -25,7 +27,7 @@ public:
     std::vector<data::keyframe*> get_local_keyframes() const;
 
     //! Get the local landmarks
-    std::vector<data::landmark*> get_local_landmarks() const;
+    std::vector<std::shared_ptr<data::landmark>> get_local_landmarks() const;
 
     //! Get the nearest covisibility
     data::keyframe* get_nearest_covisibility() const;
@@ -54,7 +56,7 @@ private:
     // frame ID
     const unsigned int frm_id_;
     // landmark associations
-    const std::vector<data::landmark*> frm_lms_;
+    const std::vector<std::shared_ptr<data::landmark>> frm_lms_;
     // the number of keypoints
     const unsigned int num_keypts_;
     // maximum number of the local keyframes
@@ -63,7 +65,7 @@ private:
     // found local keyframes
     std::vector<data::keyframe*> local_keyfrms_;
     // found local landmarks
-    std::vector<data::landmark*> local_lms_;
+    std::vector<std::shared_ptr<data::landmark>> local_lms_;
     // the nearst keyframe in covisibility graph, which will be found in find_first_local_keyframes()
     data::keyframe* nearest_covisibility_;
 };

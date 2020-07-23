@@ -60,7 +60,7 @@ unsigned int pose_optimizer::optimize(data::frame& frm) const {
     const float sqrt_chi_sq_3D = std::sqrt(chi_sq_3D);
 
     for (unsigned int idx = 0; idx < num_keypts; ++idx) {
-        auto lm = frm.landmarks_.at(idx);
+        const auto& lm = frm.landmarks_.at(idx);
         if (!lm) {
             continue;
         }

@@ -278,7 +278,7 @@ void mapping_module::triangulate_with_two_keyframes(data::keyframe* keyfrm_1, da
         // succeeded
 
         // create a landmark object
-        auto lm = new data::landmark(pos_w, keyfrm_1, map_db_);
+        auto lm = std::make_shared<data::landmark>(pos_w, keyfrm_1, map_db_);
 
         lm->add_observation(keyfrm_1, idx_1);
         lm->add_observation(keyfrm_2, idx_2);
@@ -309,7 +309,7 @@ void mapping_module::update_new_keyframe() {
 
     // update the geometries
     const auto cur_landmarks = cur_keyfrm_->get_landmarks();
-    for (const auto lm : cur_landmarks) {
+    for (const auto& lm : cur_landmarks) {
         if (!lm) {
             continue;
         }
@@ -380,13 +380,13 @@ void mapping_module::fuse_landmark_duplication(const std::unordered_set<data::ke
         // - additional matches
         // - duplication of matches
         // then, add matches and solve duplication
-        std::unordered_set<data::landmark*> candidate_landmarks_to_fuse;
+        std::unordered_set<std::shared_ptr<data::landmark>> candidate_landmarks_to_fuse;
         candidate_landmarks_to_fuse.reserve(fuse_tgt_keyfrms.size() * cur_keyfrm_->num_keypts_);
 
         for (const auto fuse_tgt_keyfrm : fuse_tgt_keyfrms) {
             const auto fuse_tgt_landmarks = fuse_tgt_keyfrm->get_landmarks();
 
-            for (const auto lm : fuse_tgt_landmarks) {
+            for (const auto& lm : fuse_tgt_landmarks) {
                 if (!lm) {
                     continue;
                 }

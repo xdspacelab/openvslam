@@ -13,12 +13,12 @@
 namespace openvslam {
 namespace match {
 
-unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::frame& frm, std::vector<data::landmark*>& matched_lms_in_frm) const {
+unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::frame& frm, std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_frm) const {
     unsigned int num_matches = 0;
 
     angle_checker<int> angle_checker;
 
-    matched_lms_in_frm = std::vector<data::landmark*>(frm.num_keypts_, nullptr);
+    matched_lms_in_frm = std::vector<std::shared_ptr<data::landmark>>(frm.num_keypts_, nullptr);
 
     const auto keyfrm_lms = keyfrm->get_landmarks();
 
@@ -44,7 +44,7 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
 
             for (const auto keyfrm_idx : keyfrm_indices) {
                 // Ignore if the keypoint of keyframe is not associated any 3D points
-                auto lm = keyfrm_lms.at(keyfrm_idx);
+                auto& lm = keyfrm_lms.at(keyfrm_idx);
                 if (!lm) {
                     continue;
                 }
@@ -121,7 +121,7 @@ unsigned int bow_tree::match_frame_and_keyframe(data::keyframe* keyfrm, data::fr
     return num_matches;
 }
 
-unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, std::vector<data::landmark*>& matched_lms_in_keyfrm_1) const {
+unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_1) const {
     unsigned int num_matches = 0;
 
     angle_checker<int> angle_checker;
@@ -129,7 +129,7 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
     const auto keyfrm_1_lms = keyfrm_1->get_landmarks();
     const auto keyfrm_2_lms = keyfrm_2->get_landmarks();
 
-    matched_lms_in_keyfrm_1 = std::vector<data::landmark*>(keyfrm_1_lms.size(), nullptr);
+    matched_lms_in_keyfrm_1 = std::vector<std::shared_ptr<data::landmark>>(keyfrm_1_lms.size(), nullptr);
 
     // Set 'true' if a keypoint in keyframe 2 is associated to the keypoint in keyframe 1
     // NOTE: the size matches the number of the keypoints in keyframe 2
@@ -158,7 +158,7 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
             for (const auto idx_1 : keyfrm_1_indices) {
                 // Ignore if the keypoint is not associated any 3D points
                 // (because this function is used for Sim3 estimation)
-                auto lm_1 = keyfrm_1_lms.at(idx_1);
+                auto& lm_1 = keyfrm_1_lms.at(idx_1);
                 if (!lm_1) {
                     continue;
                 }
@@ -175,7 +175,7 @@ unsigned int bow_tree::match_keyframes(data::keyframe* keyfrm_1, data::keyframe*
                 for (const auto idx_2 : keyfrm_2_indices) {
                     // Ignore if the keypoint is not associated any 3D points
                     // (because this function is used for Sim3 estimation)
-                    auto lm_2 = keyfrm_2_lms.at(idx_2);
+                    auto& lm_2 = keyfrm_2_lms.at(idx_2);
                     if (!lm_2) {
                         continue;
                     }

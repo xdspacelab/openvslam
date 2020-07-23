@@ -39,24 +39,24 @@ void map_database::erase_keyframe(keyframe* keyfrm) {
     // TODO: delete object
 }
 
-void map_database::add_landmark(landmark* lm) {
+void map_database::add_landmark(std::shared_ptr<landmark>& lm) {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
     landmarks_[lm->id_] = lm;
 }
 
-void map_database::erase_landmark(landmark* lm) {
+void map_database::erase_landmark(unsigned int id) {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
-    landmarks_.erase(lm->id_);
+    landmarks_.erase(id);
 
     // TODO: delete object
 }
 
-void map_database::set_local_landmarks(const std::vector<landmark*>& local_lms) {
+void map_database::set_local_landmarks(const std::vector<std::shared_ptr<landmark>>& local_lms) {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
     local_landmarks_ = local_lms;
 }
 
-std::vector<landmark*> map_database::get_local_landmarks() const {
+std::vector<std::shared_ptr<landmark>> map_database::get_local_landmarks() const {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
     return local_landmarks_;
 }
@@ -76,9 +76,9 @@ unsigned int map_database::get_num_keyframes() const {
     return keyframes_.size();
 }
 
-std::vector<landmark*> map_database::get_all_landmarks() const {
+std::vector<std::shared_ptr<landmark>> map_database::get_all_landmarks() const {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
-    std::vector<landmark*> landmarks;
+    std::vector<std::shared_ptr<landmark>> landmarks;
     landmarks.reserve(landmarks_.size());
     for (const auto id_landmark : landmarks_) {
         landmarks.push_back(id_landmark.second);
@@ -100,7 +100,6 @@ void map_database::clear() {
     std::lock_guard<std::mutex> lock(mtx_map_access_);
 
     for (auto& lm : landmarks_) {
-        delete lm.second;
         lm.second = nullptr;
     }
 
@@ -126,7 +125,6 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
 
     // Step 1. delete all the data in map database
     for (auto& lm : landmarks_) {
-        delete lm.second;
         lm.second = nullptr;
     }
 
@@ -203,7 +201,7 @@ void map_database::from_json(camera_database* cam_db, bow_vocabulary* bow_vocab,
         assert(0 <= id);
 
         assert(landmarks_.count(id));
-        auto lm = landmarks_.at(id);
+        const auto& lm = landmarks_.at(id);
 
         lm->update_normal_and_depth();
         lm->compute_descriptor();
@@ -277,8 +275,9 @@ void map_database::register_landmark(const unsigned int id, const nlohmann::json
     const auto num_visible = json_landmark.at("n_vis").get<unsigned int>();
     const auto num_found = json_landmark.at("n_fnd").get<unsigned int>();
 
-    auto lm = new data::landmark(id, first_keyfrm_id, pos_w, ref_keyfrm,
-                                 num_visible, num_found, this);
+    auto lm = std::make_shared<data::landmark>(
+        id, first_keyfrm_id, pos_w, ref_keyfrm,
+        num_visible, num_found, this);
     assert(!landmarks_.count(id));
     landmarks_[lm->id_] = lm;
 }
@@ -320,7 +319,7 @@ void map_database::register_association(const unsigned int keyfrm_id, const nloh
             continue;
         }
 
-        auto lm = landmarks_.at(lm_id);
+        const auto& lm = landmarks_.at(lm_id);
         keyfrm->add_landmark(lm, idx);
         lm->add_observation(keyfrm, idx);
     }
@@ -349,7 +348,7 @@ void map_database::to_json(nlohmann::json& json_keyfrms, nlohmann::json& json_la
     std::map<std::string, nlohmann::json> landmarks;
     for (const auto id_lm : landmarks_) {
         const auto id = id_lm.first;
-        const auto lm = id_lm.second;
+        const auto& lm = id_lm.second;
         assert(lm);
         assert(id == lm->id_);
         assert(!lm->will_be_erased());

@@ -288,7 +288,7 @@ void landmark::prepare_for_erasing() {
         keyfrm_and_idx.first->erase_landmark_with_index(keyfrm_and_idx.second);
     }
 
-    map_db_->erase_landmark(this);
+    map_db_->erase_landmark(this->id_);
 }
 
 bool landmark::will_be_erased() {
@@ -297,7 +297,7 @@ bool landmark::will_be_erased() {
     return will_be_erased_;
 }
 
-void landmark::replace(landmark* lm) {
+void landmark::replace(std::shared_ptr<landmark> lm) {
     if (lm->id_ == this->id_) {
         return;
     }
@@ -331,10 +331,10 @@ void landmark::replace(landmark* lm) {
     lm->increase_num_observable(num_observable);
     lm->compute_descriptor();
 
-    map_db_->erase_landmark(this);
+    map_db_->erase_landmark(this->id_);
 }
 
-landmark* landmark::get_replaced() const {
+std::shared_ptr<landmark> landmark::get_replaced() const {
     std::lock_guard<std::mutex> lock1(mtx_observations_);
     std::lock_guard<std::mutex> lock2(mtx_position_);
     return replaced_;

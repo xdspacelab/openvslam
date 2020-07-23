@@ -124,7 +124,7 @@ private:
     void correct_covisibility_keyframes(const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     //! Detect and replace duplicated landmarks
-    void replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_match_lms_observed_in_cand,
+    void replace_duplicated_landmarks(const std::vector<std::shared_ptr<data::landmark>>& curr_match_lms_observed_in_cand,
                                       const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const;
 
     //! Extract the new connections which will be created AFTER loop correction

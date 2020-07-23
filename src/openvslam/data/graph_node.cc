@@ -59,7 +59,7 @@ void graph_node::update_connections() {
     const auto landmarks = owner_keyfrm_->get_landmarks();
 
     std::map<keyframe*, unsigned int> keyfrm_weights;
-    for (const auto lm : landmarks) {
+    for (const auto& lm : landmarks) {
         if (!lm) {
             continue;
         }

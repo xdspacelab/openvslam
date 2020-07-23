@@ -273,7 +273,7 @@ void global_optimization_module::correct_covisibility_landmarks(const module::ke
         const auto& Sim3_nw_before_correction = Sim3s_nw_before_correction.at(neighbor);
 
         const auto ngh_landmarks = neighbor->get_landmarks();
-        for (auto lm : ngh_landmarks) {
+        for (const auto& lm : ngh_landmarks) {
             if (!lm) {
                 continue;
             }
@@ -316,7 +316,7 @@ void global_optimization_module::correct_covisibility_keyframes(const module::ke
     }
 }
 
-void global_optimization_module::replace_duplicated_landmarks(const std::vector<data::landmark*>& curr_match_lms_observed_in_cand,
+void global_optimization_module::replace_duplicated_landmarks(const std::vector<std::shared_ptr<data::landmark>>& curr_match_lms_observed_in_cand,
                                                               const module::keyframe_Sim3_pairs_t& Sim3s_nw_after_correction) const {
     // resolve duplications of landmarks between the current keyframe and the loop candidate
     {
@@ -328,7 +328,7 @@ void global_optimization_module::replace_duplicated_landmarks(const std::vector<
                 continue;
             }
 
-            auto lm_in_curr = cur_keyfrm_->get_landmark(idx);
+            const auto& lm_in_curr = cur_keyfrm_->get_landmark(idx);
             if (lm_in_curr) {
                 // if the landmark corresponding `idx` exists,
                 // replace it with `curr_match_lm_in_cand` (observed in the candidate)
@@ -345,7 +345,7 @@ void global_optimization_module::replace_duplicated_landmarks(const std::vector<
     }
 
     // resolve duplications of landmarks between the current keyframe and the candidates of the loop candidate
-    const auto curr_match_lms_observed_in_cand_covis = loop_detector_->current_matched_landmarks_observed_in_candidate_covisibilities();
+    auto curr_match_lms_observed_in_cand_covis = loop_detector_->current_matched_landmarks_observed_in_candidate_covisibilities();
     match::fuse fuser(0.8);
     for (const auto& t : Sim3s_nw_after_correction) {
         auto neighbor = t.first;
@@ -353,13 +353,13 @@ void global_optimization_module::replace_duplicated_landmarks(const std::vector<
 
         // reproject the landmarks observed in the current keyframe to the neighbor,
         // then search duplication of the landmarks
-        std::vector<data::landmark*> lms_to_replace(curr_match_lms_observed_in_cand_covis.size(), nullptr);
+        std::vector<std::shared_ptr<data::landmark>> lms_to_replace(curr_match_lms_observed_in_cand_covis.size(), nullptr);
         fuser.detect_duplication(neighbor, Sim3_nw_after_correction, curr_match_lms_observed_in_cand_covis, 4, lms_to_replace);
 
         std::lock_guard<std::mutex> lock(data::map_database::mtx_database_);
         // if any landmark duplication is found, replace it
         for (unsigned int i = 0; i < curr_match_lms_observed_in_cand_covis.size(); ++i) {
-            auto lm_to_replace = lms_to_replace.at(i);
+            const auto& lm_to_replace = lms_to_replace.at(i);
             if (lm_to_replace) {
                 lm_to_replace->replace(curr_match_lms_observed_in_cand_covis.at(i));
             }

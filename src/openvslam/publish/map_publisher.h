@@ -60,8 +60,8 @@ public:
      * @param local_landmarks
      * @return number of landmarks in map
      */
-    unsigned int get_landmarks(std::vector<data::landmark*>& all_landmarks,
-                               std::set<data::landmark*>& local_landmarks);
+    unsigned int get_landmarks(std::vector<std::shared_ptr<data::landmark>>& all_landmarks,
+                               std::set<std::shared_ptr<data::landmark>>& local_landmarks);
 
 private:
     //! config

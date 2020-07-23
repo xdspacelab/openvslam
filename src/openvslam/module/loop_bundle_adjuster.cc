@@ -106,7 +106,7 @@ void loop_bundle_adjuster::optimize(const unsigned int identifier) {
 
         // update the positions of the landmarks
         const auto landmarks = map_db_->get_all_landmarks();
-        for (auto lm : landmarks) {
+        for (const auto& lm : landmarks) {
             if (lm->will_be_erased()) {
                 continue;
             }

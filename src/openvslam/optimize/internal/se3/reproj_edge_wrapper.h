@@ -26,7 +26,7 @@ public:
     reproj_edge_wrapper() = delete;
 
     reproj_edge_wrapper(T* shot, shot_vertex* shot_vtx,
-                        data::landmark* lm, landmark_vertex* lm_vtx,
+                        const std::shared_ptr<data::landmark>& lm, landmark_vertex* lm_vtx,
                         const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
                         const float inv_sigma_sq, const float sqrt_chi_sq, const bool use_huber_loss = true);
 
@@ -46,14 +46,14 @@ public:
 
     camera::base* camera_;
     T* shot_;
-    data::landmark* lm_;
+    std::shared_ptr<data::landmark> lm_;
     const unsigned int idx_;
     const bool is_monocular_;
 };
 
 template<typename T>
 inline reproj_edge_wrapper<T>::reproj_edge_wrapper(T* shot, shot_vertex* shot_vtx,
-                                                   data::landmark* lm, landmark_vertex* lm_vtx,
+                                                   const std::shared_ptr<data::landmark>& lm, landmark_vertex* lm_vtx,
                                                    const unsigned int idx, const float obs_x, const float obs_y, const float obs_x_right,
                                                    const float inv_sigma_sq, const float sqrt_chi_sq, const bool use_huber_loss)
     : camera_(shot->camera_), shot_(shot), lm_(lm), idx_(idx), is_monocular_(obs_x_right < 0) {

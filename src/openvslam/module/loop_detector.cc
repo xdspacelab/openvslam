@@ -126,10 +126,10 @@ bool loop_detector::validate_candidates() {
 
     // acquire all of the landmarks observed in the covisibilities of the candidate
     // check the already inserted landmarks
-    std::unordered_set<data::landmark*> already_inserted;
+    std::unordered_set<std::shared_ptr<data::landmark>> already_inserted;
     for (const auto covisibility : cand_covisibilities) {
         const auto lms_in_covisibility = covisibility->get_landmarks();
-        for (const auto lm : lms_in_covisibility) {
+        for (const auto& lm : lms_in_covisibility) {
             if (!lm) {
                 continue;
             }
@@ -272,7 +272,7 @@ keyframe_sets loop_detector::find_continuously_detected_keyframe_sets(const keyf
 bool loop_detector::select_loop_candidate_via_Sim3(const std::vector<data::keyframe*>& loop_candidates,
                                                    data::keyframe*& selected_candidate,
                                                    g2o::Sim3& g2o_Sim3_world_to_curr,
-                                                   std::vector<data::landmark*>& curr_match_lms_observed_in_cand) const {
+                                                   std::vector<std::shared_ptr<data::landmark>>& curr_match_lms_observed_in_cand) const {
     // estimate and the Sim3 between the current keyframe and each of the candidates using the observed landmarks
     // the Sim3 is estimated both in linear and non-linear ways
     // if the inlier after the estimation is lower than the threshold, discard tha candidate
@@ -348,11 +348,11 @@ g2o::Sim3 loop_detector::get_Sim3_world_to_current() const {
     return g2o_Sim3_world_to_curr_;
 }
 
-std::vector<data::landmark*> loop_detector::current_matched_landmarks_observed_in_candidate() const {
+std::vector<std::shared_ptr<data::landmark>> loop_detector::current_matched_landmarks_observed_in_candidate() const {
     return curr_match_lms_observed_in_cand_;
 }
 
-std::vector<data::landmark*> loop_detector::current_matched_landmarks_observed_in_candidate_covisibilities() const {
+std::vector<std::shared_ptr<data::landmark>> loop_detector::current_matched_landmarks_observed_in_candidate_covisibilities() const {
     return curr_match_lms_observed_in_cand_covis_;
 }
 

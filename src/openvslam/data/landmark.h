@@ -91,9 +91,9 @@ public:
     bool will_be_erased();
 
     //! replace this with specified landmark
-    void replace(landmark* lm);
+    void replace(std::shared_ptr<landmark> lm);
     //! get replace landmark
-    landmark* get_replaced() const;
+    std::shared_ptr<landmark> get_replaced() const;
 
     void increase_num_observable(unsigned int num_observable = 1);
     void increase_num_observed(unsigned int num_observed = 1);
@@ -146,7 +146,7 @@ private:
     bool will_be_erased_ = false;
 
     //! replace this landmark with below
-    landmark* replaced_ = nullptr;
+    std::shared_ptr<landmark> replaced_ = nullptr;
 
     // ORB scale variances
     //! max valid distance between landmark and camera

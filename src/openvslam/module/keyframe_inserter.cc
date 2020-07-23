@@ -132,7 +132,7 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
 
         // Stereo-triangulation cannot be performed if the 3D point has been already associated to the keypoint index
         {
-            auto lm = curr_frm.landmarks_.at(idx);
+            const auto& lm = curr_frm.landmarks_.at(idx);
             if (lm) {
                 assert(lm->has_observation());
                 continue;
@@ -141,7 +141,7 @@ data::keyframe* keyframe_inserter::insert_new_keyframe(data::frame& curr_frm) {
 
         // Stereo-triangulation can be performed if the 3D point is not yet associated to the keypoint index
         const Vec3_t pos_w = curr_frm.triangulate_stereo(idx);
-        auto lm = new data::landmark(pos_w, keyfrm, map_db_);
+        auto lm = std::make_shared<data::landmark>(pos_w, keyfrm, map_db_);
 
         lm->add_observation(keyfrm, idx);
         keyfrm->add_landmark(lm, idx);

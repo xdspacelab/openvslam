@@ -16,7 +16,7 @@ public:
 
     //! Constructor
     sim3_solver(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2,
-                const std::vector<data::landmark*>& matched_lms_in_keyfrm_2,
+                const std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_2,
                 const bool fix_scale = true, const unsigned int min_num_inliers = 20);
 
     //! Destructor

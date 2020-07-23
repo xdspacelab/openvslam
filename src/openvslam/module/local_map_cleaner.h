@@ -34,7 +34,7 @@ public:
     /**
      * Add fresh landmark to check their redundancy
      */
-    void add_fresh_landmark(data::landmark* lm) {
+    void add_fresh_landmark(std::shared_ptr<data::landmark>& lm) {
         fresh_landmarks_.push_back(lm);
     }
 
@@ -66,7 +66,7 @@ private:
     const bool is_monocular_;
 
     //! fresh landmarks to check their redundancy
-    std::list<data::landmark*> fresh_landmarks_;
+    std::list<std::shared_ptr<data::landmark>> fresh_landmarks_;
 };
 
 } // namespace module

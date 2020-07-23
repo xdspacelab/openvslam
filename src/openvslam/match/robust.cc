@@ -61,9 +61,8 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
             const auto& keyfrm_2_indices = itr_2->second;
 
             for (const auto idx_1 : keyfrm_1_indices) {
-                // Ignore if the keypoint is associated any 3D points
-                // (because this function is used for triangulation)
-                auto lm_1 = assoc_lms_in_keyfrm_1.at(idx_1);
+                const auto& lm_1 = assoc_lms_in_keyfrm_1.at(idx_1);
+                // 3次元点が存在"する"場合はスルー(triangulation前のmatchingであるため)
                 if (lm_1) {
                     continue;
                 }
@@ -83,7 +82,7 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
                 for (const auto idx_2 : keyfrm_2_indices) {
                     // Ignore if the keypoint is associated any 3D points
                     // (because this function is used for triangulation)
-                    auto lm_2 = assoc_lms_in_keyfrm_2.at(idx_2);
+                    const auto& lm_2 = assoc_lms_in_keyfrm_2.at(idx_2);
                     if (lm_2) {
                         continue;
                     }
@@ -178,12 +177,12 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
 }
 
 unsigned int robust::match_frame_and_keyframe(data::frame& frm, data::keyframe* keyfrm,
-                                              std::vector<data::landmark*>& matched_lms_in_frm) {
+                                              std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_frm) {
     // Initialization
     const auto num_frm_keypts = frm.num_keypts_;
     const auto keyfrm_lms = keyfrm->get_landmarks();
     unsigned int num_inlier_matches = 0;
-    matched_lms_in_frm = std::vector<data::landmark*>(num_frm_keypts, nullptr);
+    matched_lms_in_frm = std::vector<std::shared_ptr<data::landmark>>(num_frm_keypts, nullptr);
 
     // Compute brute-force match
     std::vector<std::pair<int, int>> matches;
@@ -236,8 +235,8 @@ unsigned int robust::brute_force_match(data::frame& frm, data::keyframe* keyfrm,
     std::unordered_set<int> already_matched_indices_1;
 
     for (unsigned int idx_2 = 0; idx_2 < num_keypts_2; ++idx_2) {
-        // Select only the 3D points which observed in the keyframe
-        auto lm_2 = lms_2.at(idx_2);
+        // 3次元点が有効なもののみ対象にする
+        const auto& lm_2 = lms_2.at(idx_2);
         if (!lm_2) {
             continue;
         }

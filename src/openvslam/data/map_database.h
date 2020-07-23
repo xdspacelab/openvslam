@@ -52,25 +52,25 @@ public:
      * Add landmark to the database
      * @param lm
      */
-    void add_landmark(landmark* lm);
+    void add_landmark(std::shared_ptr<landmark>& lm);
 
     /**
      * Erase landmark from the database
      * @param lm
      */
-    void erase_landmark(landmark* lm);
+    void erase_landmark(unsigned int id);
 
     /**
      * Set local landmarks
      * @param local_lms
      */
-    void set_local_landmarks(const std::vector<landmark*>& local_lms);
+    void set_local_landmarks(const std::vector<std::shared_ptr<landmark>>& local_lms);
 
     /**
      * Get local landmarks
      * @return
      */
-    std::vector<landmark*> get_local_landmarks() const;
+    std::vector<std::shared_ptr<landmark>> get_local_landmarks() const;
 
     /**
      * Get all of the keyframes in the database
@@ -88,7 +88,7 @@ public:
      * Get all of the landmarks in the database
      * @return
      */
-    std::vector<landmark*> get_all_landmarks() const;
+    std::vector<std::shared_ptr<landmark>> get_all_landmarks() const;
 
     /**
      * Get the number of landmarks
@@ -207,10 +207,10 @@ private:
     //! IDs and keyframes
     std::unordered_map<unsigned int, keyframe*> keyframes_;
     //! IDs and landmarks
-    std::unordered_map<unsigned int, landmark*> landmarks_;
+    std::unordered_map<unsigned int, std::shared_ptr<landmark>> landmarks_;
 
     //! local landmarks
-    std::vector<landmark*> local_landmarks_;
+    std::vector<std::shared_ptr<landmark>> local_landmarks_;
 
     //! max keyframe ID
     unsigned int max_keyfrm_id_ = 0;

@@ -201,7 +201,7 @@ void frame_publisher::update(tracking_module* tracker) {
         }
         case tracker_state_t::Tracking: {
             for (unsigned int i = 0; i < num_curr_keypts; ++i) {
-                auto lm = tracker->curr_frm_.landmarks_.at(i);
+                const auto& lm = tracker->curr_frm_.landmarks_.at(i);
                 if (!lm) {
                     continue;
                 }

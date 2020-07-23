@@ -32,11 +32,11 @@ unsigned int map_publisher::get_keyframes(std::vector<data::keyframe*>& all_keyf
     return map_db_->get_num_keyframes();
 }
 
-unsigned int map_publisher::get_landmarks(std::vector<data::landmark*>& all_landmarks,
-                                          std::set<data::landmark*>& local_landmarks) {
+unsigned int map_publisher::get_landmarks(std::vector<std::shared_ptr<data::landmark>>& all_landmarks,
+                                          std::set<std::shared_ptr<data::landmark>>& local_landmarks) {
     all_landmarks = map_db_->get_all_landmarks();
     const auto _local_landmarks = map_db_->get_local_landmarks();
-    local_landmarks = std::set<data::landmark*>(_local_landmarks.begin(), _local_landmarks.end());
+    local_landmarks = std::set<std::shared_ptr<data::landmark>>(_local_landmarks.begin(), _local_landmarks.end());
     return map_db_->get_num_landmarks();
 }
 

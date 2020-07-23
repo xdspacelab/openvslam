@@ -116,7 +116,7 @@ public:
     /**
      * Add a landmark observed by myself at keypoint idx
      */
-    void add_landmark(landmark* lm, const unsigned int idx);
+    void add_landmark(std::shared_ptr<landmark> lm, const unsigned int idx);
 
     /**
      * Erase a landmark observed by myself at keypoint idx
@@ -126,23 +126,23 @@ public:
     /**
      * Erase a landmark
      */
-    void erase_landmark(landmark* lm);
+    void erase_landmark(const std::shared_ptr<landmark>& lm);
 
     /**
      * Replace the landmark
      */
-    void replace_landmark(landmark* lm, const unsigned int idx);
+    void replace_landmark(std::shared_ptr<landmark>& lm, const unsigned int idx);
 
     /**
      * Get all of the landmarks
      * (NOTE: including nullptr)
      */
-    std::vector<landmark*> get_landmarks() const;
+    std::vector<std::shared_ptr<landmark>> get_landmarks() const;
 
     /**
      * Get the valid landmarks
      */
-    std::set<landmark*> get_valid_landmarks() const;
+    std::set<std::shared_ptr<landmark>> get_valid_landmarks() const;
 
     /**
      * Get the number of tracked landmarks which have observers equal to or greater than the threshold
@@ -152,7 +152,7 @@ public:
     /**
      * Get the landmark associated keypoint idx
      */
-    landmark* get_landmark(const unsigned int idx) const;
+    std::shared_ptr<landmark>& get_landmark(const unsigned int idx);
 
     /**
      * Get the keypoint indices in the cell which reference point is located
@@ -304,7 +304,7 @@ private:
     //! need mutex for access to observations
     mutable std::mutex mtx_observations_;
     //! observed landmarks
-    std::vector<landmark*> landmarks_;
+    std::vector<std::shared_ptr<landmark>> landmarks_;
 
     //-----------------------------------------
     // databases

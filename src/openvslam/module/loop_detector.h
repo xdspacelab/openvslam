@@ -68,12 +68,12 @@ public:
     /**
      * Get the matches between the keypoint indices of the current keyframe and the landmarks observed in the candidate
      */
-    std::vector<data::landmark*> current_matched_landmarks_observed_in_candidate() const;
+    std::vector<std::shared_ptr<data::landmark>> current_matched_landmarks_observed_in_candidate() const;
 
     /**
      * Get the matches between the keypoint indices of the current keyframe and the landmarks observed in covisibilities of the candidate
      */
-    std::vector<data::landmark*> current_matched_landmarks_observed_in_candidate_covisibilities() const;
+    std::vector<std::shared_ptr<data::landmark>> current_matched_landmarks_observed_in_candidate_covisibilities() const;
 
     /**
      * Set the keyframe ID when loop correction is performed
@@ -98,7 +98,7 @@ private:
     bool select_loop_candidate_via_Sim3(const std::vector<data::keyframe*>& loop_candidates,
                                         data::keyframe*& selected_candidate,
                                         g2o::Sim3& g2o_Sim3_world_to_curr,
-                                        std::vector<data::landmark*>& curr_match_lms_observed_in_cand) const;
+                                        std::vector<std::shared_ptr<data::landmark>>& curr_match_lms_observed_in_cand) const;
 
     //! BoW database
     data::bow_database* bow_db_;
@@ -128,9 +128,9 @@ private:
     std::vector<data::keyframe*> loop_candidates_to_validate_;
 
     //! matches between the keypoint indices of the current keyframe and the landmarks observed in the candidate
-    std::vector<data::landmark*> curr_match_lms_observed_in_cand_;
+    std::vector<std::shared_ptr<data::landmark>> curr_match_lms_observed_in_cand_;
     //! matches between the keypoint indices of the current keyframe and the landmarks observed in covisibilities of the candidate
-    std::vector<data::landmark*> curr_match_lms_observed_in_cand_covis_;
+    std::vector<std::shared_ptr<data::landmark>> curr_match_lms_observed_in_cand_covis_;
 
     //! the Sim3 camera pose of the current keyframe AFTER loop correction (in Mat44_t format)
     Mat44_t Sim3_world_to_curr_;

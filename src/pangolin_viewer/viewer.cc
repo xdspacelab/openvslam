@@ -278,8 +278,8 @@ void viewer::draw_landmarks() {
         return;
     }
 
-    std::vector<openvslam::data::landmark*> landmarks;
-    std::set<openvslam::data::landmark*> local_landmarks;
+    std::vector<std::shared_ptr<openvslam::data::landmark>> landmarks;
+    std::set<std::shared_ptr<openvslam::data::landmark>> local_landmarks;
 
     map_publisher_->get_landmarks(landmarks, local_landmarks);
 
@@ -292,7 +292,7 @@ void viewer::draw_landmarks() {
 
     glBegin(GL_POINTS);
 
-    for (const auto lm : landmarks) {
+    for (const auto& lm : landmarks) {
         if (!lm || lm->will_be_erased()) {
             continue;
         }
@@ -314,7 +314,7 @@ void viewer::draw_landmarks() {
 
     glBegin(GL_POINTS);
 
-    for (const auto local_lm : local_landmarks) {
+    for (const auto& local_lm : local_landmarks) {
         if (local_lm->will_be_erased()) {
             continue;
         }

@@ -14,7 +14,7 @@ std::vector<data::keyframe*> local_map_updater::get_local_keyframes() const {
     return local_keyfrms_;
 }
 
-std::vector<data::landmark*> local_map_updater::get_local_landmarks() const {
+std::vector<std::shared_ptr<data::landmark>> local_map_updater::get_local_landmarks() const {
     return local_lms_;
 }
 
@@ -45,7 +45,7 @@ local_map_updater::keyframe_weights_t local_map_updater::count_keyframe_weights(
     // key: keyframe, value: number of sharing landmarks
     keyframe_weights_t keyfrm_weights;
     for (unsigned int idx = 0; idx < num_keypts_; ++idx) {
-        auto lm = frm_lms_.at(idx);
+        auto& lm = frm_lms_.at(idx);
         if (!lm) {
             continue;
         }
@@ -145,7 +145,7 @@ bool local_map_updater::find_local_landmarks() {
     for (auto keyfrm : local_keyfrms_) {
         const auto lms = keyfrm->get_landmarks();
 
-        for (auto lm : lms) {
+        for (const auto& lm : lms) {
             if (!lm) {
                 continue;
             }

@@ -209,7 +209,7 @@ bool initializer::create_map_for_monocular(data::frame& curr_frm) {
         }
 
         // construct a landmark
-        auto lm = new data::landmark(init_triangulated_pts.at(init_idx), curr_keyfrm, map_db_);
+        auto lm = std::make_shared<data::landmark>(init_triangulated_pts.at(init_idx), curr_keyfrm, map_db_);
 
         // set the assocications to the new keyframes
         init_keyfrm->add_landmark(lm, init_idx);
@@ -263,7 +263,7 @@ void initializer::scale_map(data::keyframe* init_keyfrm, data::keyframe* curr_ke
 
     // scaling landmarks
     const auto landmarks = init_keyfrm->get_landmarks();
-    for (auto lm : landmarks) {
+    for (const auto& lm : landmarks) {
         if (!lm) {
             continue;
         }
@@ -307,7 +307,7 @@ bool initializer::create_map_for_stereo(data::frame& curr_frm) {
 
         // build a landmark
         const Vec3_t pos_w = curr_frm.triangulate_stereo(idx);
-        auto lm = new data::landmark(pos_w, curr_keyfrm, map_db_);
+        auto lm = std::make_shared<data::landmark>(pos_w, curr_keyfrm, map_db_);
 
         // set the associations to the new keyframe
         lm->add_observation(curr_keyfrm, idx);

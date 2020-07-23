@@ -45,7 +45,7 @@ frame::frame(const cv::Mat& img_gray, const double timestamp,
     camera->convert_keypoints_to_bearings(undist_keypts_, bearings_);
 
     // Initialize association with 3D points
-    landmarks_ = std::vector<landmark*>(num_keypts_, nullptr);
+    landmarks_ = std::vector<std::shared_ptr<landmark>>(num_keypts_, nullptr);
     outlier_flags_ = std::vector<bool>(num_keypts_, false);
 
     // Assign all the keypoints into grid
@@ -85,7 +85,7 @@ frame::frame(const cv::Mat& left_img_gray, const cv::Mat& right_img_gray, const 
     camera->convert_keypoints_to_bearings(undist_keypts_, bearings_);
 
     // Initialize association with 3D points
-    landmarks_ = std::vector<landmark*>(num_keypts_, nullptr);
+    landmarks_ = std::vector<std::shared_ptr<landmark>>(num_keypts_, nullptr);
     outlier_flags_ = std::vector<bool>(num_keypts_, false);
 
     // Assign all the keypoints into grid
@@ -118,7 +118,7 @@ frame::frame(const cv::Mat& img_gray, const cv::Mat& img_depth, const double tim
     camera->convert_keypoints_to_bearings(undist_keypts_, bearings_);
 
     // Initialize association with 3D points
-    landmarks_ = std::vector<landmark*>(num_keypts_, nullptr);
+    landmarks_ = std::vector<std::shared_ptr<landmark>>(num_keypts_, nullptr);
     outlier_flags_ = std::vector<bool>(num_keypts_, false);
 
     // Assign all the keypoints into grid
@@ -170,7 +170,7 @@ void frame::compute_bow() {
     }
 }
 
-bool frame::can_observe(landmark* lm, const float ray_cos_thr,
+bool frame::can_observe(const std::shared_ptr<landmark>& lm, const float ray_cos_thr,
                         Vec2_t& reproj, float& x_right, unsigned int& pred_scale_level) const {
     const Vec3_t pos_w = lm->get_pos_in_world();
 

@@ -8,7 +8,7 @@
 namespace openvslam {
 namespace match {
 
-unsigned int projection::match_frame_and_landmarks(data::frame& frm, const std::vector<data::landmark*>& local_landmarks, const float margin) const {
+unsigned int projection::match_frame_and_landmarks(data::frame& frm, const std::vector<std::shared_ptr<data::landmark>>& local_landmarks, const float margin) const {
     unsigned int num_matches = 0;
 
     // Reproject the 3D points to the frame, then acquire the 2D-3D matches
@@ -110,7 +110,7 @@ unsigned int projection::match_current_and_last_frames(data::frame& curr_frm, co
     // Reproject the 3D points associated to the keypoints of the last frame,
     // then acquire the 2D-3D matches
     for (unsigned int idx_last = 0; idx_last < last_frm.num_keypts_; ++idx_last) {
-        auto lm = last_frm.landmarks_.at(idx_last);
+        auto& lm = last_frm.landmarks_.at(idx_last);
         if (!lm) {
             continue;
         }
@@ -207,7 +207,7 @@ unsigned int projection::match_current_and_last_frames(data::frame& curr_frm, co
     return num_matches;
 }
 
-unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::keyframe* keyfrm, const std::set<data::landmark*>& already_matched_lms,
+unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::keyframe* keyfrm, const std::set<std::shared_ptr<data::landmark>>& already_matched_lms,
                                                   const float margin, const unsigned int hamm_dist_thr) const {
     unsigned int num_matches = 0;
 
@@ -222,7 +222,7 @@ unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::k
     // Reproject the 3D points associated to the keypoints of the keyframe,
     // then acquire the 2D-3D matches
     for (unsigned int idx = 0; idx < landmarks.size(); idx++) {
-        auto lm = landmarks.at(idx);
+        auto& lm = landmarks.at(idx);
         if (!lm) {
             continue;
         }
@@ -314,8 +314,8 @@ unsigned int projection::match_frame_and_keyframe(data::frame& curr_frm, data::k
     return num_matches;
 }
 
-unsigned int projection::match_by_Sim3_transform(data::keyframe* keyfrm, const Mat44_t& Sim3_cw, const std::vector<data::landmark*>& landmarks,
-                                                 std::vector<data::landmark*>& matched_lms_in_keyfrm, const float margin) const {
+unsigned int projection::match_by_Sim3_transform(data::keyframe* keyfrm, const Mat44_t& Sim3_cw, const std::vector<std::shared_ptr<data::landmark>>& landmarks,
+                                                 std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm, const float margin) const {
     unsigned int num_matches = 0;
 
     // Convert Sim3 into SE3
@@ -325,11 +325,10 @@ unsigned int projection::match_by_Sim3_transform(data::keyframe* keyfrm, const M
     const Vec3_t trans_cw = Sim3_cw.block<3, 1>(0, 3) / s_cw;
     const Vec3_t cam_center = -rot_cw.transpose() * trans_cw;
 
-    std::set<data::landmark*> already_matched(matched_lms_in_keyfrm.begin(), matched_lms_in_keyfrm.end());
-    already_matched.erase(static_cast<data::landmark*>(nullptr));
+    std::set<std::shared_ptr<data::landmark>> already_matched(matched_lms_in_keyfrm.begin(), matched_lms_in_keyfrm.end());
+    already_matched.erase(nullptr);
 
-    // Reproject the 3D points to the keyframe, then acquire the 2D-3D matches
-    for (auto lm : landmarks) {
+    for (const auto& lm : landmarks) {
         if (lm->will_be_erased()) {
             continue;
         }
@@ -415,7 +414,7 @@ unsigned int projection::match_by_Sim3_transform(data::keyframe* keyfrm, const M
     return num_matches;
 }
 
-unsigned int projection::match_keyframes_mutually(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, std::vector<data::landmark*>& matched_lms_in_keyfrm_1,
+unsigned int projection::match_keyframes_mutually(data::keyframe* keyfrm_1, data::keyframe* keyfrm_2, std::vector<std::shared_ptr<data::landmark>>& matched_lms_in_keyfrm_1,
                                                   const float& s_12, const Mat33_t& rot_12, const Vec3_t& trans_12, const float margin) const {
     // The pose of keyframe 1
     const Mat33_t rot_1w = keyfrm_1->get_rotation();
@@ -438,7 +437,7 @@ unsigned int projection::match_keyframes_mutually(data::keyframe* keyfrm_1, data
     std::vector<bool> is_already_matched_in_keyfrm_2(landmarks_2.size(), false);
 
     for (unsigned int idx_1 = 0; idx_1 < landmarks_1.size(); ++idx_1) {
-        auto lm = matched_lms_in_keyfrm_1.at(idx_1);
+        auto& lm = matched_lms_in_keyfrm_1.at(idx_1);
         if (!lm) {
             continue;
         }
@@ -461,7 +460,7 @@ unsigned int projection::match_keyframes_mutually(data::keyframe* keyfrm_1, data
         const Mat33_t s_rot_21w = s_rot_21 * rot_1w;
         const Vec3_t trans_21w = s_rot_21 * trans_1w + trans_21;
         for (unsigned int idx_1 = 0; idx_1 < landmarks_1.size(); ++idx_1) {
-            auto lm = landmarks_1.at(idx_1);
+            auto& lm = landmarks_1.at(idx_1);
             if (!lm) {
                 continue;
             }
@@ -543,7 +542,7 @@ unsigned int projection::match_keyframes_mutually(data::keyframe* keyfrm_1, data
         const Mat33_t s_rot_12w = s_rot_12 * rot_2w;
         const Vec3_t trans_12w = s_rot_12 * trans_2w + trans_12;
         for (unsigned int idx_2 = 0; idx_2 < landmarks_2.size(); ++idx_2) {
-            auto lm = landmarks_2.at(idx_2);
+            auto& lm = landmarks_2.at(idx_2);
             if (!lm) {
                 continue;
             }

@@ -25,7 +25,7 @@ unsigned int local_map_cleaner::remove_redundant_landmarks(const unsigned int cu
     unsigned int num_removed = 0;
     auto iter = fresh_landmarks_.begin();
     while (iter != fresh_landmarks_.end()) {
-        auto lm = *iter;
+        const auto& lm = *iter;
 
         // decide the state of lms the buffer
         auto lm_state = lm_state_t::NotClear;
@@ -116,7 +116,7 @@ void local_map_cleaner::count_redundant_observations(data::keyframe* keyfrm, uns
 
     const auto landmarks = keyfrm->get_landmarks();
     for (unsigned int idx = 0; idx < landmarks.size(); ++idx) {
-        auto lm = landmarks.at(idx);
+        const auto& lm = landmarks.at(idx);
         if (!lm) {
             continue;
         }
