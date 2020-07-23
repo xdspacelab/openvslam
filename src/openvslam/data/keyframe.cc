@@ -86,7 +86,7 @@ keyframe::~keyframe() {}
 std::shared_ptr<keyframe> keyframe::make_keyframe(const frame& frm, map_database* map_db, bow_database* bow_db) {
     auto ptr = std::allocate_shared<keyframe>(Eigen::aligned_allocator<keyframe>(), frm, map_db, bow_db);
     // covisibility graph node (connections is not assigned yet)
-    ptr->graph_node_ = std::make_unique<graph_node>(ptr, true);
+    ptr->graph_node_ = openvslam::make_unique<graph_node>(ptr, true);
     return ptr;
 }
 
@@ -108,7 +108,7 @@ std::shared_ptr<keyframe> keyframe::make_keyframe(
         num_scale_levels, scale_factor,
         bow_vocab, bow_db, map_db);
     // covisibility graph node (connections is not assigned yet)
-    ptr->graph_node_ = std::make_unique<graph_node>(ptr, false);
+    ptr->graph_node_ = openvslam::make_unique<graph_node>(ptr, false);
     return ptr;
 }
 
