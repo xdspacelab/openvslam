@@ -24,6 +24,8 @@ class landmark {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    using observations_t = std::map<std::weak_ptr<keyframe>, unsigned int, std::owner_less<std::weak_ptr<keyframe>>>;
+
     //! constructor
     landmark(const Vec3_t& pos_w, const std::shared_ptr<keyframe>& ref_keyfrm, map_database* map_db);
 
@@ -49,7 +51,7 @@ public:
     void erase_observation(const std::shared_ptr<keyframe>& keyfrm);
 
     //! get observations (keyframe and keypoint idx)
-    std::map<std::shared_ptr<keyframe>, unsigned int> get_observations() const;
+    observations_t get_observations() const;
     //! get number of observations
     unsigned int num_observations() const;
     //! whether this landmark is observed from more than zero keyframes
@@ -128,7 +130,7 @@ private:
     Vec3_t pos_w_;
 
     //! observations (keyframe and keypoint index)
-    std::map<std::shared_ptr<keyframe>, unsigned int> observations_;
+    observations_t observations_;
 
     //! Normalized average vector (unit vector) of keyframe->lm, for keyframes such that observe the 3D point.
     Vec3_t mean_normal_ = Vec3_t::Zero();

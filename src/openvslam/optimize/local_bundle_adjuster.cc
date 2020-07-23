@@ -74,7 +74,7 @@ void local_bundle_adjuster::optimize(const std::shared_ptr<openvslam::data::keyf
     for (const auto& local_lm : local_lms) {
         const auto observations = local_lm.second->get_observations();
         for (const auto& obs : observations) {
-            const auto& fixed_keyfrm = obs.first;
+            const auto fixed_keyfrm = obs.first.lock();
             if (!fixed_keyfrm) {
                 continue;
             }
@@ -161,7 +161,7 @@ void local_bundle_adjuster::optimize(const std::shared_ptr<openvslam::data::keyf
 
         const auto observations = local_lm->get_observations();
         for (const auto& obs : observations) {
-            const auto& keyfrm = obs.first;
+            const auto keyfrm = obs.first.lock();
             auto idx = obs.second;
             if (!keyfrm) {
                 continue;

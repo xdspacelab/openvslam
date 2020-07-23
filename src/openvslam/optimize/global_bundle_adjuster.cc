@@ -93,7 +93,7 @@ void global_bundle_adjuster::optimize(const unsigned int lead_keyfrm_id_in_globa
         unsigned int num_edges = 0;
         const auto observations = lm->get_observations();
         for (const auto& obs : observations) {
-            auto keyfrm = obs.first;
+            auto keyfrm = obs.first.lock();
             auto idx = obs.second;
             if (!keyfrm) {
                 continue;

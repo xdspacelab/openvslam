@@ -72,7 +72,7 @@ void graph_node::update_connections() {
         for (const auto& obs : observations) {
             auto keyfrm = obs.first;
 
-            if (*keyfrm == *owner_keyfrm_.lock()) {
+            if (*keyfrm.lock() == *owner_keyfrm_.lock()) {
                 continue;
             }
             // count up weight of `keyfrm`

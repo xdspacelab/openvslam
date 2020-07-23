@@ -148,7 +148,7 @@ void local_map_cleaner::count_redundant_observations(const std::shared_ptr<data:
         unsigned int num_better_obs = 0;
 
         for (const auto obs : observations) {
-            const auto ngh_keyfrm = obs.first;
+            const auto ngh_keyfrm = obs.first.lock();
             if (*ngh_keyfrm == *keyfrm) {
                 continue;
             }
