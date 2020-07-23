@@ -98,7 +98,8 @@ std::shared_ptr<keyframe> keyframe::make_keyframe(
     const std::vector<float>& stereo_x_right, const std::vector<float>& depths, const cv::Mat& descriptors,
     const unsigned int num_scale_levels, const float scale_factor,
     bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db) {
-    auto ptr = std::allocate_shared<keyframe>(Eigen::aligned_allocator<keyframe>(),
+    auto ptr = std::allocate_shared<keyframe>(
+        Eigen::aligned_allocator<keyframe>(),
         id, src_frm_id, timestamp,
         cam_pose_cw, camera, depth_thr,
         num_keypts, keypts,
