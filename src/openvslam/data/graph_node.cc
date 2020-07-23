@@ -47,7 +47,7 @@ void graph_node::erase_connection(const std::shared_ptr<keyframe>& keyfrm) {
 void graph_node::erase_all_connections() {
     // remote myself from the connected keyframes
     for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
-        keyfrm_and_weight.first->graph_node_->erase_connection(owner_keyfrm_.lock());
+        keyfrm_and_weight.first.lock()->graph_node_->erase_connection(owner_keyfrm_.lock());
     }
     // remove the buffers
     connected_keyfrms_and_weights_.clear();
@@ -58,7 +58,7 @@ void graph_node::erase_all_connections() {
 void graph_node::update_connections() {
     const auto landmarks = owner_keyfrm_.lock()->get_landmarks();
 
-    std::map<std::shared_ptr<keyframe>, unsigned int> keyfrm_weights;
+    std::map<std::weak_ptr<keyframe>, unsigned int, std::owner_less<std::weak_ptr<keyframe>>> keyfrm_weights;
     for (const auto& lm : landmarks) {
         if (!lm) {
             continue;
@@ -91,7 +91,7 @@ void graph_node::update_connections() {
     std::vector<std::pair<unsigned int, std::shared_ptr<keyframe>>> weight_covisibility_pairs;
     weight_covisibility_pairs.reserve(keyfrm_weights.size());
     for (const auto& keyfrm_weight : keyfrm_weights) {
-        auto keyfrm = keyfrm_weight.first;
+        auto keyfrm = keyfrm_weight.first.lock();
         const auto weight = keyfrm_weight.second;
 
         if (max_weight <= weight) {
@@ -130,13 +130,13 @@ void graph_node::update_connections() {
     {
         std::lock_guard<std::mutex> lock(mtx_);
 
-        connected_keyfrms_and_weights_ = keyfrm_weights;
+        connected_keyfrms_and_weights_ = std::map<std::weak_ptr<keyframe>, unsigned int, std::owner_less<std::weak_ptr<keyframe>>>(keyfrm_weights.begin(), keyfrm_weights.end());
         ordered_covisibilities_ = ordered_covisibilities;
         ordered_weights_ = ordered_weights;
 
         if (spanning_parent_is_not_set_ && owner_keyfrm_.lock()->id_ != 0) {
             // set the parent of spanning tree
-            assert(*nearest_covisibility == *ordered_covisibilities.front());
+            assert(*nearest_covisibility == *ordered_covisibilities.front().lock());
             spanning_parent_ = nearest_covisibility;
             nearest_covisibility->graph_node_->add_spanning_child(owner_keyfrm_.lock());
             spanning_parent_is_not_set_ = false;
@@ -151,7 +151,7 @@ void graph_node::update_covisibility_orders() {
     weight_keyfrm_pairs.reserve(connected_keyfrms_and_weights_.size());
 
     for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
-        weight_keyfrm_pairs.emplace_back(std::make_pair(keyfrm_and_weight.second, keyfrm_and_weight.first));
+        weight_keyfrm_pairs.emplace_back(std::make_pair(keyfrm_and_weight.second, keyfrm_and_weight.first.lock()));
     }
 
     // sort with weights
@@ -172,7 +172,7 @@ std::set<std::shared_ptr<keyframe>> graph_node::get_connected_keyframes() const 
     std::set<std::shared_ptr<keyframe>> keyfrms;
 
     for (const auto& keyfrm_and_weight : connected_keyfrms_and_weights_) {
-        keyfrms.insert(keyfrm_and_weight.first);
+        keyfrms.insert(keyfrm_and_weight.first.lock());
     }
 
     return keyfrms;
@@ -180,13 +180,13 @@ std::set<std::shared_ptr<keyframe>> graph_node::get_connected_keyframes() const 
 
 std::vector<std::shared_ptr<keyframe>> graph_node::get_covisibilities() const {
     std::lock_guard<std::mutex> lock(mtx_);
-    return ordered_covisibilities_;
+    return std::vector<std::shared_ptr<keyframe>>(ordered_covisibilities_.begin(), ordered_covisibilities_.end());
 }
 
 std::vector<std::shared_ptr<keyframe>> graph_node::get_top_n_covisibilities(const unsigned int num_covisibilities) const {
     std::lock_guard<std::mutex> lock(mtx_);
     if (ordered_covisibilities_.size() < num_covisibilities) {
-        return ordered_covisibilities_;
+        return std::vector<std::shared_ptr<keyframe>>(ordered_covisibilities_.begin(), ordered_covisibilities_.end());
     }
     else {
         return std::vector<std::shared_ptr<keyframe>>(ordered_covisibilities_.begin(), ordered_covisibilities_.begin() + num_covisibilities);
@@ -262,21 +262,22 @@ void graph_node::recover_spanning_connections() {
         std::shared_ptr<keyframe> max_weight_child = nullptr;
 
         for (const auto spanning_child : spanning_children_) {
-            if (spanning_child->will_be_erased()) {
+            auto locked_spanning_child = spanning_child.lock();
+            if (locked_spanning_child->will_be_erased()) {
                 continue;
             }
 
             // get intersection between the parent candidates and the spanning-child's covisibilities
-            const auto child_covisibilities = spanning_child->graph_node_->get_covisibilities();
+            const auto child_covisibilities = locked_spanning_child->graph_node_->get_covisibilities();
             const auto intersection = extract_intersection(new_parent_candidates, child_covisibilities);
 
             // find the new parent (which has the maximum weight with the spanning child) from the intersection
             for (const auto parent_candidate : intersection) {
-                const auto weight = spanning_child->graph_node_->get_weight(parent_candidate);
+                const auto weight = locked_spanning_child->graph_node_->get_weight(parent_candidate);
                 if (max_weight < weight) {
                     max_weight = weight;
                     max_weight_parent = parent_candidate;
-                    max_weight_child = spanning_child;
+                    max_weight_child = locked_spanning_child;
                     max_is_found = true;
                 }
             }
@@ -298,7 +299,7 @@ void graph_node::recover_spanning_connections() {
     if (!spanning_children_.empty()) {
         // set my parent as the new parent
         for (const auto spanning_child : spanning_children_) {
-            spanning_child->graph_node_->change_spanning_parent(spanning_parent_.lock());
+            spanning_child.lock()->graph_node_->change_spanning_parent(spanning_parent_.lock());
         }
     }
 
@@ -311,7 +312,11 @@ void graph_node::recover_spanning_connections() {
 
 std::set<std::shared_ptr<keyframe>> graph_node::get_spanning_children() const {
     std::lock_guard<std::mutex> lock(mtx_);
-    return spanning_children_;
+    std::set<std::shared_ptr<keyframe>> locked_spanning_children;
+    for (const auto& keyfrm : spanning_children_) {
+        locked_spanning_children.insert(keyfrm.lock());
+    }
+    return locked_spanning_children;
 }
 
 bool graph_node::has_spanning_child(const std::shared_ptr<keyframe>& keyfrm) const {
@@ -328,7 +333,11 @@ void graph_node::add_loop_edge(const std::shared_ptr<keyframe>& keyfrm) {
 
 std::set<std::shared_ptr<keyframe>> graph_node::get_loop_edges() const {
     std::lock_guard<std::mutex> lock(mtx_);
-    return loop_edges_;
+    std::set<std::shared_ptr<keyframe>> locked_loop_edges;
+    for (const auto& keyfrm : loop_edges_) {
+        locked_loop_edges.insert(keyfrm.lock());
+    }
+    return locked_loop_edges;
 }
 
 bool graph_node::has_loop_edge() const {

@@ -137,7 +137,7 @@ private:
     cv::Mat descriptor_;
 
     //! reference keyframe
-    std::shared_ptr<keyframe> ref_keyfrm_;
+    std::weak_ptr<keyframe> ref_keyfrm_;
 
     // track counter
     unsigned int num_observable_ = 1;

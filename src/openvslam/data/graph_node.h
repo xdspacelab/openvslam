@@ -151,24 +151,24 @@ private:
     std::weak_ptr<keyframe> const owner_keyfrm_;
 
     //! all connected keyframes and their weights
-    std::map<std::shared_ptr<keyframe>, unsigned int> connected_keyfrms_and_weights_;
+    std::map<std::weak_ptr<keyframe>, unsigned int, std::owner_less<std::weak_ptr<keyframe>>> connected_keyfrms_and_weights_;
 
     //! minimum threshold for covisibility graph connection
     static constexpr unsigned int weight_thr_ = 15;
     //! covisibility keyframe in descending order ot weights
-    std::vector<std::shared_ptr<keyframe>> ordered_covisibilities_;
+    std::vector<std::weak_ptr<keyframe>> ordered_covisibilities_;
     //! weights in descending order
     std::vector<unsigned int> ordered_weights_;
 
     //! parent of spanning tree
     std::weak_ptr<keyframe> spanning_parent_;
     //! children of spanning tree
-    std::set<std::shared_ptr<keyframe>> spanning_children_;
+    std::set<std::weak_ptr<keyframe>, std::owner_less<std::weak_ptr<keyframe>>> spanning_children_;
     //! flag which indicates spanning tree is not set yet or not
     bool spanning_parent_is_not_set_;
 
     //! loop edges
-    std::set<std::shared_ptr<keyframe>> loop_edges_;
+    std::set<std::weak_ptr<keyframe>, std::owner_less<std::weak_ptr<keyframe>>> loop_edges_;
 
     //! need mutex for access to connections
     mutable std::mutex mtx_;
