@@ -84,7 +84,7 @@ keyframe::keyframe(const unsigned int id, const unsigned int src_frm_id, const d
 keyframe::~keyframe() {}
 
 std::shared_ptr<keyframe> keyframe::make_keyframe(const frame& frm, map_database* map_db, bow_database* bow_db) {
-    auto ptr = std::make_shared<keyframe>(frm, map_db, bow_db);
+    auto ptr = std::allocate_shared<keyframe>(Eigen::aligned_allocator<keyframe>(), frm, map_db, bow_db);
     // covisibility graph node (connections is not assigned yet)
     ptr->graph_node_ = std::make_unique<graph_node>(ptr, true);
     return ptr;
@@ -98,7 +98,7 @@ std::shared_ptr<keyframe> keyframe::make_keyframe(
     const std::vector<float>& stereo_x_right, const std::vector<float>& depths, const cv::Mat& descriptors,
     const unsigned int num_scale_levels, const float scale_factor,
     bow_vocabulary* bow_vocab, bow_database* bow_db, map_database* map_db) {
-    auto ptr = std::make_shared<keyframe>(
+    auto ptr = std::allocate_shared<keyframe>(Eigen::aligned_allocator<keyframe>(),
         id, src_frm_id, timestamp,
         cam_pose_cw, camera, depth_thr,
         num_keypts, keypts,

@@ -34,7 +34,6 @@ class map_database;
 class bow_database;
 
 class keyframe : public std::enable_shared_from_this<keyframe> {
-private:
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
