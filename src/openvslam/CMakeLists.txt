@@ -134,6 +134,7 @@ target_link_libraries(${PROJECT_NAME}
                       opencv_core
                       opencv_features2d
                       opencv_calib3d
+                      glog
                       g2o::core
                       g2o::stuff
                       g2o::types_sba
