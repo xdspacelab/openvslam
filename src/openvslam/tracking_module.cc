@@ -16,6 +16,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "glog/logging.h"
+
 namespace openvslam {
 
 tracking_module::tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
@@ -463,14 +465,25 @@ void tracking_module::update_local_keyframes() {
         local_keyfrms_.push_back(keyfrm);
         return true;
     };
-    for (auto iter = local_keyfrms_.cbegin(); iter != local_keyfrms_.cend(); ++iter) {
+    unsigned dbg_index = 0;
+    // this is problemtic: the for loop iterates on local_keyfrms_, but it also modifies
+    // local_keyfrms_. This mostly works, but when the list gets to be about 50, it fails
+    // with a segfault. Why? One suggestion is that it reallocates when you do that, and then
+    // you end up re-sizing the vector, and then you end up referencing an iterator that has
+    // been moved. One forum suggests using a list or a dequeue.
+    for (auto iter = local_keyfrms_.cbegin(); iter != local_keyfrms_.cend(); iter++) {
         if (max_num_local_keyfrms < local_keyfrms_.size()) {
             break;
         }
-
+        if (dbg_index >= local_keyfrms_.size()) {
+            LOG(INFO) << "Error: keyframe index " << dbg_index << " exceeds local_keyfrms_.size()" << local_keyfrms_.size();
+            LOG(WARNING) << "Error: keyframe index " << dbg_index << " exceeds local_keyfrms_.size()" << local_keyfrms_.size();
+            break;
+        }
         auto keyfrm = *iter;
 
         // covisibilities of the neighbor keyframe
+        // TODO pbarsic this is where the segfault occurs
         const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
         for (auto neighbor : neighbors) {
             if (add_local_keyframe(neighbor)) {
