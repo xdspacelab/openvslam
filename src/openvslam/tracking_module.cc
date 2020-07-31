@@ -466,12 +466,12 @@ void tracking_module::update_local_keyframes() {
         return true;
     };
 
-    for (unsigned kefrm_index = 0; kefrm_index < max_num_local_keyfrms; kefrm_index++) {
-        if (kefrm_index >= local_keyfrms_.size()) {
+    for (unsigned keyfrm_index = 0; keyfrm_index < max_num_local_keyfrms; keyfrm_index++) {
+        if (keyfrm_index >= local_keyfrms_.size()) {
             break;
         }
 
-        auto keyfrm = local_keyfrms_.at(kefrm_index);
+        auto keyfrm = local_keyfrms_.at(keyfrm_index);
 
         // covisibilities of the neighbor keyframe
         const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
