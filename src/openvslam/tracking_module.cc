@@ -465,31 +465,17 @@ void tracking_module::update_local_keyframes() {
         local_keyfrms_.push_back(keyfrm);
         return true;
     };
-    // unsigned dbg_index = 0;
-    // this is problemtic: the for loop iterates on local_keyfrms_, but it also modifies
-    // local_keyfrms_. This mostly works, but when the list gets to be about 50, it fails
-    // with a segfault. Why? One suggestion is that it reallocates when you do that, and then
-    // you end up re-sizing the vector, and then you end up referencing an iterator that has
-    // been moved. One forum suggests using a list or a dequeue.
-    for (auto iter = local_keyfrms_.cbegin(); iter != local_keyfrms_.cend(); ++iter) {
-        if (max_num_local_keyfrms < local_keyfrms_.size()) {
+
+    for (unsigned kefrm_index = 0; kefrm_index < max_num_local_keyfrms; kefrm_index++) {
+        if (kefrm_index >= local_keyfrms_.size()) {
             break;
         }
-        // if (dbg_index >= local_keyfrms_.size()) {
-        //     LOG(INFO) << "Error: keyframe index " << dbg_index << " exceeds local_keyfrms_.size()" << local_keyfrms_.size();
-        //     LOG(WARNING) << "Error: keyframe index " << dbg_index << " exceeds local_keyfrms_.size()" << local_keyfrms_.size();
-        //     break;
-        // }
-        auto keyfrm = *iter;
+
+        auto keyfrm = local_keyfrms_.at(kefrm_index);
 
         // covisibilities of the neighbor keyframe
-        std::vector<openvslam::data::keyframe*> neighbors;
-        try {
-            neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
-        }
-        catch (const std::exception& err) {
-            LOG(WARNING) << "Error in update_local_keyframes: " << err.what();
-        }
+        const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
+
         for (auto neighbor : neighbors) {
             if (add_local_keyframe(neighbor)) {
                 break;
