@@ -16,8 +16,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "glog/logging.h"
-
 namespace openvslam {
 
 tracking_module::tracking_module(const std::shared_ptr<config>& cfg, system* system, data::map_database* map_db,
@@ -465,7 +463,6 @@ void tracking_module::update_local_keyframes() {
         local_keyfrms_.push_back(keyfrm);
         return true;
     };
-
     for (unsigned keyfrm_index = 0; keyfrm_index < max_num_local_keyfrms; keyfrm_index++) {
         if (keyfrm_index >= local_keyfrms_.size()) {
             break;
@@ -475,7 +472,6 @@ void tracking_module::update_local_keyframes() {
 
         // covisibilities of the neighbor keyframe
         const auto neighbors = keyfrm->graph_node_->get_top_n_covisibilities(10);
-
         for (auto neighbor : neighbors) {
             if (add_local_keyframe(neighbor)) {
                 break;
