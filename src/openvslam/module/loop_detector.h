@@ -23,7 +23,7 @@ public:
     /**
      * Constructor
      */
-    loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale_in_Sim3_estimation);
+    loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const YAML::Node& yaml_node, const bool fix_scale_in_Sim3_estimation);
 
     /**
      * Enable loop detection
@@ -114,6 +114,12 @@ private:
     //! for stereo/RGBD models, fix scale when estimating Sim3
     const bool fix_scale_in_Sim3_estimation_;
 
+    //! the threshold of the number of mutual matches after the Sim3 estimation
+    const unsigned int num_final_matches_thr_;
+
+    //! the threshold of the continuity of continuously detected keyframe set
+    const unsigned int min_continuity_;
+
     //-----------------------------------------
     // variables for loop detection and correction
 
@@ -139,9 +145,6 @@ private:
 
     //! the keyframe ID when the previouls loop correction was performed
     unsigned int prev_loop_correct_keyfrm_id_ = 0;
-
-    //! the threshold of the continuity of continuously detected keyframe set
-    static constexpr unsigned int min_continuity_ = 3;
 };
 
 } // namespace module
