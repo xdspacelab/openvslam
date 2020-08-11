@@ -59,8 +59,8 @@ In order to enable X11 forwarding, supplemental options (``-e DISPLAY=$DISPLAY``
 .. NOTE ::
 
     Additional option ``--runtime=nvidia`` is needed if you use NVIDIA graphics card(s).  
-    If you're using ``nvidia-docker`` with "Native GPU Support" then the options are ``--gpus all``
-    See below for more details. `https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(Native-GPU-Support)#usage`
+    If you're using Docker with **Native GPU Support** then the options are ``--gpus all``.
+    Please see `here <https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(Native-GPU-Support)#usage>`_ for more details.
 
 
 After launching the container, the shell interface will be launched in the docker container.
