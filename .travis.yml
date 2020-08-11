@@ -208,7 +208,7 @@ before_script:
   - |
     cd ${DATASET_DIR}
     if [ -z "$(ls video_for_ci_1)" ]; then
-        FILE_ID="1JPB4SFrv8Ca4qquf2CrnFtP2BPWlQAYe"
+        FILE_ID="1TXjREzkht3iRz__qVx4oYRW1GXsv37ct"
         curl -sc /tmp/cookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /dev/null
         CODE="$(awk '/_warning_/ {print $NF}' /tmp/cookie)"
         curl -sLb /tmp/cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o video_for_ci_1.zip
