@@ -3,6 +3,7 @@
 #include "openvslam/camera/fisheye.h"
 #include "openvslam/camera/equirectangular.h"
 #include "openvslam/camera/radial_division.h"
+#include "openvslam/util/string.h"
 
 #include <iostream>
 #include <memory>
@@ -119,19 +120,58 @@ config::~config() {
 std::ostream& operator<<(std::ostream& os, const config& cfg) {
     std::cout << "Camera Configuration:" << std::endl;
     cfg.camera_->show_parameters();
+    std::cout << std::endl;
 
     std::cout << "ORB Configuration:" << std::endl;
     cfg.orb_params_.show_parameters();
+    std::cout << std::endl;
 
     if (cfg.camera_->setup_type_ == camera::setup_type_t::Stereo || cfg.camera_->setup_type_ == camera::setup_type_t::RGBD) {
         std::cout << "Stereo Configuration:" << std::endl;
         std::cout << "- true baseline: " << cfg.camera_->true_baseline_ << std::endl;
         std::cout << "- true depth threshold: " << cfg.true_depth_thr_ << std::endl;
         std::cout << "- depth threshold factor: " << cfg.true_depth_thr_ / cfg.camera_->true_baseline_ << std::endl;
+        std::cout << std::endl;
     }
     if (cfg.camera_->setup_type_ == camera::setup_type_t::RGBD) {
         std::cout << "Depth Image Configuration:" << std::endl;
         std::cout << "- depthmap factor: " << cfg.depthmap_factor_ << std::endl;
+        std::cout << std::endl;
+    }
+
+    const std::vector<std::string> shown_entries = {"Camera", "Feature", "depth_threshold", "depthmap_factor"};
+
+    // extract entries which have not shown yet
+    std::map<std::string, YAML::Node> remained_nodes;
+    for (const auto& kv : cfg.yaml_node_) {
+        const auto entry = kv.first.as<std::string>();
+        // avoid displaying parameters twice
+        const bool entry_was_shown = std::any_of(shown_entries.begin(), shown_entries.end(),
+                                                 [&entry](const std::string& qry) { return util::string_startswith(entry, qry); });
+        if (entry_was_shown) {
+            continue;
+        }
+        remained_nodes[entry] = kv.second;
+    }
+
+    std::cout << "Other Configuration:" << std::endl;
+    std::string prev_entry = "";
+    for (const auto& node : remained_nodes) {
+        const auto& entry = node.first;
+        // split with '.'
+        const auto splitted_entry = util::split_string(entry, '.');
+        // show parameter hierarchically
+        if (prev_entry != splitted_entry.at(0)) {
+            std::cout << "  " << splitted_entry.at(0) << ":" << std::endl;
+        }
+        prev_entry = splitted_entry.at(0);
+        std::cout << "  - " << splitted_entry.at(1) << ": ";
+        try {
+            std::cout << cfg.yaml_node_[entry].as<std::string>() << std::endl;
+        }
+        catch (const std::exception& e) {
+            std::cout << cfg.yaml_node_[entry] << std::endl;
+        }
     }
 
     return os;
