@@ -29,6 +29,9 @@ add_library(socket_publisher
             ${CMAKE_CURRENT_SOURCE_DIR}/socket_client.cc
             ${MAP_PB_SOURCE})
 
+set_source_files_properties(${MAP_PB_SOURCE} PROPERTIES
+                            COMPILE_FLAGS -Wno-unused-parameter)
+
 set_target_properties(socket_publisher PROPERTIES
                       OUTPUT_NAME socket_publisher
                       ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib

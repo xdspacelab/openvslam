@@ -137,7 +137,7 @@ Install the dependencies via ``apt``.
     # Protobuf dependencies
     apt install -y autogen autoconf libtool
     # Node.js
-    curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+    curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
     apt install -y nodejs
 
 Download and install Eigen from source.
@@ -288,7 +288,7 @@ Download, build and install g2o.
 .. code-block:: bash
 
     cd /path/to/working/dir
-    git clone https://github.com/shinsumicco/socket.io-client-cpp
+    git clone https://github.com/shinsumicco/socket.io-client-cpp.git
     cd socket.io-client-cpp
     git submodule init
     git submodule update

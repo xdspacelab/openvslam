@@ -3,7 +3,7 @@
 
 #include "openvslam/config.h"
 
-#include <sio_client.h>
+#include <sioclient/sio_client.h>
 
 namespace openvslam {
 class config;
