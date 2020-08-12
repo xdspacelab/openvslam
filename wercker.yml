@@ -28,13 +28,6 @@ clang_format:
           exit 1
         fi
         echo "There is no file which needs clang-format"
-  after-steps:
-    - install-packages:
-      packages: ruby
-    - wantedly/pretty-slack-notify:
-      webhook_url: $SLACK_WEBHOOK_URL
-      passed_message: "there are no files which clang-format should applied to :smile:"
-      failed_message: "there are some files which clang-format should applied to :dizzy_face:"
 
 build_with_gui:
   steps:
@@ -57,13 +50,6 @@ build_with_gui:
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_MARCH_NATIVE=OFF -DUSE_PANGOLIN_VIEWER=OFF -DUSE_SOCKET_PUBLISHER=ON -DUSE_STACK_TRACE_LOGGER=ON -DBOW_FRAMEWORK=DBoW2 -DBUILD_TESTS=ON ..
         make -j $(($(nproc) / 2))
-  after-steps:
-    - install-packages:
-      packages: ruby
-    - wantedly/pretty-slack-notify:
-      webhook_url: $SLACK_WEBHOOK_URL
-      passed_message: "succeeded in building with GUI :smile:"
-      failed_message: "failed in building with GUI :dizzy_face:"
 
 build_without_gui:
   steps:
@@ -95,13 +81,6 @@ build_without_gui:
       code: |
         cd build
         ./run_euroc_slam -v /datasets/orb_vocab/orb_vocab.dbow2 -d /datasets/EuRoC/MH_04 -c ../example/euroc/EuRoC_stereo.yaml --frame-skip 2 --no-sleep --debug --eval-log --map-db euroc_stereo.msg
-  after-steps:
-    - install-packages:
-      packages: ruby
-    - wantedly/pretty-slack-notify:
-      webhook_url: $SLACK_WEBHOOK_URL
-      passed_message: "succeeded in building and testing without GUI :smile:"
-      failed_message: "failed in building and testing without GUI :dizzy_face:"
 
 build_tutorial:
   steps:
@@ -138,10 +117,3 @@ build_tutorial:
       code: |
         cd build
         ./run_video_localization -v /datasets/orb_vocab/orb_vocab.dbow2 -m ./video_for_ci_1/video.mp4 -c ./video_for_ci_1/config.yaml --frame-skip 3 --no-sleep --debug --eval-log --map-db map.msg
-  after-steps:
-    - install-packages:
-      packages: ruby
-    - wantedly/pretty-slack-notify:
-      webhook_url: $SLACK_WEBHOOK_URL
-      passed_message: "succeeded in building the tutorial :smile:"
-      failed_message: "failed in building the tutorial :dizzy_face:"
