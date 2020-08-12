@@ -52,6 +52,11 @@ void bow_database::clear() {
     std::lock_guard<std::mutex> lock(mtx_);
     spdlog::info("clear BoW database");
     keyfrms_in_node_.clear();
+    init_candidates_.clear();
+    num_common_words_.clear();
+    scores_.clear();
+    score_keyfrm_pairs_.clear();
+    total_score_keyfrm_pairs_.clear();
 }
 
 std::vector<keyframe*> bow_database::acquire_loop_candidates(keyframe* qry_keyfrm, const float min_score) {
