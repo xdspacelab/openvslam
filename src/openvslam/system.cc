@@ -78,7 +78,7 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     // mapping module
     mapper_ = new mapping_module(map_db_, camera_->setup_type_ == camera::setup_type_t::Monocular);
     // global optimization module
-    global_optimizer_ = new global_optimization_module(map_db_, bow_db_, bow_vocab_, camera_->setup_type_ != camera::setup_type_t::Monocular);
+    global_optimizer_ = new global_optimization_module(map_db_, bow_db_, bow_vocab_, cfg_->yaml_node_, camera_->setup_type_ != camera::setup_type_t::Monocular);
 
     // connect modules each other
     tracker_->set_mapping_module(mapper_);

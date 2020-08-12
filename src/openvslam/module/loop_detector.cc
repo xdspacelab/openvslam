@@ -12,9 +12,11 @@
 namespace openvslam {
 namespace module {
 
-loop_detector::loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const bool fix_scale_in_Sim3_estimation)
+loop_detector::loop_detector(data::bow_database* bow_db, data::bow_vocabulary* bow_vocab, const YAML::Node& yaml_node, const bool fix_scale_in_Sim3_estimation)
     : bow_db_(bow_db), bow_vocab_(bow_vocab), transform_optimizer_(fix_scale_in_Sim3_estimation),
-      fix_scale_in_Sim3_estimation_(fix_scale_in_Sim3_estimation) {}
+      fix_scale_in_Sim3_estimation_(fix_scale_in_Sim3_estimation),
+      num_final_matches_thr_(yaml_node["LoopDetector.num_final_matches_threshold"].as<unsigned int>(40)),
+      min_continuity_(yaml_node["LoopDetector.min_continuity"].as<unsigned int>(3)) {}
 
 void loop_detector::enable_loop_detector() {
     loop_detector_is_enabled_ = true;
@@ -163,9 +165,7 @@ bool loop_detector::validate_candidates() {
 
     spdlog::debug("acquired {} matches after projection-match", num_final_matches);
 
-    // if the number of matches is greater than the threshold, adopt the selected candidate for the loop correction
-    constexpr unsigned int num_final_matches_thr = 40;
-    if (num_final_matches_thr <= num_final_matches) {
+    if (num_final_matches_thr_ <= num_final_matches) {
         // allow the removal of the candidates except for the selected one
         for (const auto loop_candidate : loop_candidates_to_validate_) {
             if (*loop_candidate == *selected_candidate_) {
@@ -176,7 +176,7 @@ bool loop_detector::validate_candidates() {
         return true;
     }
     else {
-        spdlog::debug("destruct loop candidate because enough matches not acquired (< {})", num_final_matches_thr);
+        spdlog::debug("destruct loop candidate because enough matches not acquired (< {})", num_final_matches_thr_);
         // allow the removal of all of the candidates
         for (const auto loop_candidate : loop_candidates_to_validate_) {
             loop_candidate->set_to_be_erased();
