@@ -7,7 +7,7 @@
 [![Travis CI Status](https://api.travis-ci.org/xdspacelab/openvslam.svg?branch=master)](https://travis-ci.org/xdspacelab/openvslam)
 [![Documentation Status](https://readthedocs.org/projects/openvslam/badge/?version=master)](https://openvslam.readthedocs.io/)
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/shinsumicco/openvslam.svg)](https://hub.docker.com/r/shinsumicco/openvslam)
-[![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
+[![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause) [![Join the chat at https://gitter.im/xdspacelab-openvslam/pullreq](https://badges.gitter.im/xdspacelab-openvslam/pullreq.svg)](https://gitter.im/xdspacelab-openvslam/pullreq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Overview
 
