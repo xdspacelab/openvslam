@@ -60,10 +60,10 @@ If you would like to run visual SLAM with standard benchmarking datasets (e.g. K
 
 ## Community
 
-If you want to join our Slack community, please fill out the application form from the following site(s):
+If you want to join our Spectrum community, please join from the following URL:
 
-- [http://bit.ly/openvslam](http://bit.ly/openvslam)
-- [http://bit.ly/openvslam-jp](http://bit.ly/openvslam-jp) (日本語: in Japanese)
+- [https://spectrum.chat/openvslam](https://spectrum.chat/openvslam)
+- [https://spectrum.chat/openvslam-jp](https://spectrum.chat/openvslam-jp) (日本語: in Japanese)
 
 ## Currently working on
 
