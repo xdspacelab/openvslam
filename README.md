@@ -9,6 +9,8 @@
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/shinsumicco/openvslam.svg)](https://hub.docker.com/r/shinsumicco/openvslam)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
+[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/openvslam)
+
 ## Overview
 
 [<img src="https://raw.githubusercontent.com/xdspacelab/openvslam/master/docs/img/teaser.png" width="640px">](https://arxiv.org/abs/1910.01122)
