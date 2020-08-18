@@ -13,10 +13,6 @@ message(STATUS "Found protoc executable: ${PROTOBUF_PROTOC_EXECUTABLE}")
 # ----- Protobuf transpile -----
 
 protobuf_generate_cpp(MAP_PB_SOURCE MAP_PB_HEADER protobuf/map_segment.proto)
-if(NOT MSVC)
-    set_source_files_properties(${MAP_PB_HEADER} ${MAP_PB_SOURCE}
-                                COMPILE_FLAGS -Wno-unused-variable)
-endif()
 
 # ----- Configure SocketPublisher library -----
 
@@ -29,8 +25,10 @@ add_library(socket_publisher
             ${CMAKE_CURRENT_SOURCE_DIR}/socket_client.cc
             ${MAP_PB_SOURCE})
 
-set_source_files_properties(${MAP_PB_SOURCE} PROPERTIES
-                            COMPILE_FLAGS -Wno-unused-parameter)
+if(NOT MSVC)
+    set_source_files_properties(${MAP_PB_HEADER} ${MAP_PB_SOURCE}
+                                COMPILE_FLAGS -Wno-unused-variable)
+endif()
 
 set_target_properties(socket_publisher PROPERTIES
                       OUTPUT_NAME socket_publisher
