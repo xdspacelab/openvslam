@@ -169,7 +169,7 @@ std::ostream& operator<<(std::ostream& os, const config& cfg) {
         try {
             std::cout << cfg.yaml_node_[entry].as<std::string>() << std::endl;
         }
-        catch (const std::exception& e) {
+        catch (const std::exception&) {
             std::cout << cfg.yaml_node_[entry] << std::endl;
         }
     }
