@@ -65,120 +65,156 @@ Equirectangular Datasets
 
 .. list-table::
     :header-rows: 1
-    :widths: 8, 8, 2, 8
+    :widths: 8, 8, 2, 7, 7
 
     * - name
       - camera model
       - length
-      - download link
+      - Google Drive
+      - Baidu Wangpan
     * - aist_entrance_hall_1
       - equirectangular (mono)
       - 0:54
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1RTQJXFib96MaWe3NgWjW-Q>`__ (Pass: r7r4)
     * - aist_entrance_hall_2
       - equirectangular (mono)
       - 0:54
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1RUDh1Gy9BMWlwZY4MnlW4w>`__ (Pass: 4qma)
     * - aist_factory_A_1
       - equirectangular (mono)
       - 1:55
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1N4BxEj086RrToY2OA1iJvg>`__ (Pass: yy2u)
     * - aist_factory_A_2
       - equirectangular (mono)
       - 1:54
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/10HlYWYNX2J9oRVDpmT6SnA>`__ (Pass: 9vey)
     * - aist_factory_B_1
       - equirectangular (mono)
       - 1:04
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1rVSem2pD-kILX5cEvucyFg>`__ (Pass: gpec)
     * - aist_factory_B_2
       - equirectangular (mono)
       - 1:34
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1NSnDiof3-4zp6JX0dUDFUQ>`__ (Pass: ugrx)
     * - aist_living_lab_1
       - equirectangular (mono)
       - 2:16
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1HtFP1czDz2rWQpvvX2ywpQ>`__ (Pass: 434m)
     * - aist_living_lab_2
       - equirectangular (mono)
       - 1:47
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1NFP9owNKwLaeVl08R3UAnA>`__ (Pass: 549f)
     * - aist_living_lab_3
       - equirectangular (mono)
       - 2:06
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/13ORfLxbOUvX1CwK0pHCv4g>`__ (Pass: cc2p)
     * - aist_stairs_A_1
       - equirectangular (mono)
       - 2:27
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1ECTjzGHxjygVUI4YoGNpww>`__ (Pass: ncdr)
     * - aist_stairs_B_1
       - equirectangular (mono)
       - 2:55
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1m2ofFc9KhSSy7iWY0OjitQ>`__ (Pass: xr5t)
     * - aist_store_1
       - equirectangular (mono)
       - 1:12
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1NxdGty8KVOZg9gJqafDw8A>`__ (Pass: 47vq)
     * - aist_store_2
       - equirectangular (mono)
       - 1:44
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1QPWw45AfavtuzsyNNREioQ>`__ (Pass: xt8u)
     * - aist_store_3
       - equirectangular (mono)
       - 1:18
       - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1a43ykBO2ObIle8S7FmvO0Q>`__ (Pass: kghc)
+    * - ALL
+      - equirectangular (mono)
+      - 
+      - `link <https://drive.google.com/open?id=1A_gq8LYuENePhNHsuscLZQPhbJJwzAq4>`__
+      - `link <https://pan.baidu.com/s/1a6BCfQKpwhzlevZx1VkSZw>`__ (Pass: vsv7)
 
 Fisheye Datasets
 ````````````````
 
 .. list-table::
     :header-rows: 1
-    :widths: 8, 8, 2, 8
+    :widths: 8, 8, 2, 7, 7
 
     * - name
       - camera model
       - length
-      - download link
+      - Google Drive
+      - Baidu Wangpan
     * - aist_entrance_hall_1
       - fisheye (mono)
       - 1:05
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1u7DtI1y9j5BhneL_UlFViQ>`__ (Pass: u86e)
     * - aist_entrance_hall_2
       - fisheye (mono)
       - 1:06
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1-uIgqvpYqwrKFWF_qkPVYg>`__ (Pass: 9iyc)
     * - aist_entrance_hall_3
       - fisheye (mono)
       - 1:23
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1LphrOShoLCYef2bDGT-IRA>`__ (Pass: qaqc)
     * - aist_entrance_hall_4
       - fisheye (mono)
       - 1:27
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1ftfIoa1ouN0vCukFYr51yg>`__ (Pass: em43)
     * - aist_living_lab_1
       - fisheye (mono)
       - 1:20
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/10sr2HpL2AXnVdZZPybKNkA>`__ (Pass: wcw4)
     * - aist_living_lab_2
       - fisheye (mono)
       - 2:26
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/11bse95I7IFAUB29N8i-jNw>`__ (Pass: dxns)
     * - aist_living_lab_3
       - fisheye (mono)
       - 3:43
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1M-UwqCOpSAETrcFxYaDnXg>`__ (Pass: 7n4q)
     * - nu_eng2_corridor_1
       - fisheye (mono)
       - 2:56
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1ztjXhXCM7GSSTmFd6d95rw>`__ (Pass: 71ws)
     * - nu_eng2_corridor_2
       - fisheye (mono)
       - 2:45
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1j4IAPuux3dzE5W7fM6o7Pw>`__ (Pass: yrtj)
     * - nu_eng2_corridor_3
       - fisheye (mono)
       - 2:04
       - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/1cYEXzwYdr4YAjI6E_4B6wA>`__ (Pass: btpj)
+    * - ALL
+      - fisheye (mono)
+      - 
+      - `link <https://drive.google.com/open?id=1SVDsgz-ydm1pAbrdmhRQTmWhJnUl_xr8>`__
+      - `link <https://pan.baidu.com/s/11gqp2t-A2kHRntyN8ueqSQ>`__ (Pass: gumj)
 
 
 After downloading and uncompressing a zip file, you will find a video file and a config file under the uncompressed directory.
@@ -192,7 +228,7 @@ After downloading and uncompressing a zip file, you will find a video file and a
 
 You can put the dataset in any directory where you have access to.
 
-| Additionally, please download a vocabulary file for DBoW2 from `here <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__.
+| Additionally, please download a vocabulary file for DBoW2 from `Google Drive <https://drive.google.com/open?id=1wUPb328th8bUqhOk-i8xllt5mgRW4n84>`__ or `Baudu Wangpan <https://pan.baidu.com/s/1627YS4b-DC_0Ioya3gLTPQ>`__ (Pass: zb6v).
 | After uncompressing it, you will find ``orb_vocab.dbow2``.
 
 For the rest of this chapter, we will use ``aist_living_lab_1`` and ``aist_living_lab_2`` datasets for our example.
