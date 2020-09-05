@@ -1,3 +1,7 @@
+# Update note
+1) Support for RGBD and Stereo of ROS with this [PR](https://github.com/xdspacelab/openvslam/pull/276)
+2) Pose publisher in slam and localization mode with this [issue](https://github.com/xdspacelab/openvslam/issues/347#issue-638316624)
+______________________________________________________________
 <p align="center">
 <img src="https://raw.githubusercontent.com/xdspacelab/openvslam/master/docs/img/logo.png" width="435px">
 </p>
