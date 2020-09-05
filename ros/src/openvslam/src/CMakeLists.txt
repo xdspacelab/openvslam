@@ -8,10 +8,10 @@ endif()
 
 set(EXECUTABLE_TARGETS "")
 
-add_executable(run_slam run_slam.cc)
+add_executable(run_slam run_slam.cc openvslam_ros.cc)
 list(APPEND EXECUTABLE_TARGETS run_slam)
 
-add_executable(run_localization run_localization.cc)
+add_executable(run_localization run_localization.cc openvslam_ros.cc)
 list(APPEND EXECUTABLE_TARGETS run_localization)
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)

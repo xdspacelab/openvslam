@@ -1,0 +1,59 @@
+# RS_D435 RGBD
+
+#==============#
+# Camera Model #
+#==============#
+
+Camera.name: "RS_D435 RGBD"
+Camera.setup: "RGBD"
+Camera.model: "perspective"
+
+Camera.fx: 613.535888671875
+Camera.fy: 614.2517700195312
+Camera.cx: 313.0935363769531
+Camera.cy: 238.74679565429688
+
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
+Camera.k3: 0.0
+
+Camera.fps: 30.0
+Camera.cols: 640
+Camera.rows: 480
+Camera.focal_x_baseline: 30.67
+
+Camera.color_order: "RGB"
+
+#=====================#
+# Tracking Parameters #
+#=====================#
+
+depth_threshold: 40.0
+depthmap_factor: 1000.0
+
+#================#
+# ORB Parameters #
+#================#
+
+Feature.max_num_keypoints: 2000
+Feature.scale_factor: 1.2
+Feature.num_levels: 8
+Feature.ini_fast_threshold: 20
+Feature.min_fast_threshold: 7
+
+#===========================#
+# PangolinViewer Parameters #
+#===========================#
+
+PangolinViewer.keyframe_size: 0.06
+PangolinViewer.keyframe_line_width: 1
+PangolinViewer.graph_line_width: 1
+PangolinViewer.point_size: 2
+PangolinViewer.camera_size: 0.07
+PangolinViewer.camera_line_width: 2
+PangolinViewer.viewpoint_x: 0
+PangolinViewer.viewpoint_y: -20
+PangolinViewer.viewpoint_z: -0.1
+PangolinViewer.viewpoint_f: 2800

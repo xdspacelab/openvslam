@@ -1,0 +1,14 @@
+<launch>
+    <!-- open realsense RGBD mode -->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch" />
+
+    <!-- open openVSLAM node  -->
+    <node name="openvslam_node" pkg="openvslam" type="run_slam" 
+    args="-v $(find openvslam)../../orb_vocab/orb_vocab.dbow2 -c $(find openvslam)../../camera_config/rs_D435_mono.yaml"/>
+
+    <!-- rename image topics from realsense  -->
+    <node name="image_transport_node" pkg="image_transport" type="republish" 
+    args="raw in:=/camera/color/image_raw raw out:=/camera/image_raw"/>
+
+
+</launch>

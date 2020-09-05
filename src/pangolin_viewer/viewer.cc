@@ -184,6 +184,7 @@ void viewer::draw_horizontal_grid() {
 
 pangolin::OpenGlMatrix viewer::get_current_cam_pose() {
     const auto cam_pose_cw = map_publisher_->get_current_cam_pose();
+    // const pangolin::OpenGlMatrix gl_cam_pose_wc(cam_pose_cw.eval());
     const pangolin::OpenGlMatrix gl_cam_pose_wc(cam_pose_cw.inverse().eval());
     return gl_cam_pose_wc;
 }

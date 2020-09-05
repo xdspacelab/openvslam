@@ -95,7 +95,7 @@ message(STATUS "Use OpenCV ${OpenCV_VERSION}")
 # ----- Install configuration -----
 
 include(CMakePackageConfigHelpers)
-
+include_directories(/home/jedsadakorn/git/SuiteSparse-5.8.1/include/)
 # Generate cmake configuration scripts
 set(OPENVSLAM_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(OPENVSLAM_VERSION_CONFIG ${OPENVSLAM_GENERATED_DIR}/${PROJECT_NAME}ConfigVersion.cmake)
