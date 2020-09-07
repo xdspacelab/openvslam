@@ -55,10 +55,9 @@ ENV LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}
 ARG EIGEN3_VERSION=3.3.7
 WORKDIR /tmp
 RUN set -x && \
-  wget -q http://bitbucket.org/eigen/eigen/get/${EIGEN3_VERSION}.tar.bz2 && \
-  tar xf ${EIGEN3_VERSION}.tar.bz2 && \
-  rm -rf ${EIGEN3_VERSION}.tar.bz2 && \
-  mv eigen-eigen-* eigen-${EIGEN3_VERSION} && \
+  wget -q https://gitlab.com/libeigen/eigen/-/archive/${EIGEN3_VERSION}/eigen-${EIGEN3_VERSION}.tar.bz2 && \
+  tar xf eigen-${EIGEN3_VERSION}.tar.bz2 && \
+  rm -rf eigen-${EIGEN3_VERSION}.tar.bz2 && \
   cd eigen-${EIGEN3_VERSION} && \
   mkdir -p build && \
   cd build && \
