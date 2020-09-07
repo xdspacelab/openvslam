@@ -6,6 +6,12 @@
 #include <opencv2/imgcodecs.hpp>
 
 void pose_odometry_pub(auto cam_pose_, auto pose_pub_){
+    // ENU coordinate
+    
+    // cam_pose is a homogeneous transformation matrix
+    // det should be 1, otherwise it is not initialized
+    if (cam_pose_.determinant() != 1) return;
+
     Eigen::Matrix3d rotation_matrix = cam_pose_.block(0, 0, 3, 3);
     Eigen::Vector3d translation_vector = cam_pose_.block(0, 3, 3, 1);
 
@@ -33,6 +39,7 @@ void pose_odometry_pub(auto cam_pose_, auto pose_pub_){
 
     // Create pose message and update it with current camera pose
     geometry_msgs::PoseStamped camera_pose_msg_;
+
     camera_pose_msg_.header.stamp = now;
     camera_pose_msg_.header.frame_id = "map";
     camera_pose_msg_.pose.position.x = transform_tf.getOrigin().getX();
@@ -42,25 +49,9 @@ void pose_odometry_pub(auto cam_pose_, auto pose_pub_){
     camera_pose_msg_.pose.orientation.y = transform_tf.getRotation().getY();
     camera_pose_msg_.pose.orientation.z = transform_tf.getRotation().getZ();
     camera_pose_msg_.pose.orientation.w = transform_tf.getRotation().getW();
+
     pose_pub_.publish(camera_pose_msg_);
 
-    // // transform broadcast
-    // static tf2_ros::TransformBroadcaster tf_br;
-   
-    // geometry_msgs::TransformStamped transformStamped;
-
-    // transformStamped.header.stamp = ros::Time::now();
-    // transformStamped.header.frame_id = "map";
-    // transformStamped.child_frame_id = "base_link_frame";
-    // transformStamped.transform.translation.x = transform_tf.getOrigin().getX();
-    // transformStamped.transform.translation.y = transform_tf.getOrigin().getY();
-    // transformStamped.transform.translation.z = transform_tf.getOrigin().getZ();
-    // transformStamped.transform.rotation.x = transform_tf.getRotation().getX();
-    // transformStamped.transform.rotation.y = transform_tf.getRotation().getY();
-    // transformStamped.transform.rotation.z = transform_tf.getRotation().getZ();
-    // transformStamped.transform.rotation.w = transform_tf.getRotation().getW();
-
-    // tf_br.sendTransform(transformStamped);
 }
 
 namespace openvslam_ros {
@@ -71,7 +62,7 @@ system::system(const std::shared_ptr<openvslam::config>& cfg, const std::string&
 mono::mono(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path, const std::string& mask_img_path)
     : system(cfg, vocab_file_path, mask_img_path) {
     sub_ = it_.subscribe("camera/image_raw", 1, &mono::callback, this);
-    camera_pose_publisher = nh_.advertise<geometry_msgs::PoseStamped>("/openvslam/camera_pose", 1);
+    camera_pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/openvslam/camera_pose", 1);
 }
 
 void mono::callback(const sensor_msgs::ImageConstPtr& msg) {
@@ -85,7 +76,7 @@ void mono::callback(const sensor_msgs::ImageConstPtr& msg) {
 
     const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
     track_times_.push_back(track_time);
-    pose_odometry_pub(cam_pose, camera_pose_publisher);
+    pose_odometry_pub(cam_pose, camera_pose_pub);
 }
 
 stereo::stereo(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path, const std::string& mask_img_path,
@@ -96,7 +87,7 @@ stereo::stereo(const std::shared_ptr<openvslam::config>& cfg, const std::string&
       right_sf_(it_, "camera/right/image_raw", 1),
       sync_(SyncPolicy(10), left_sf_, right_sf_) {
     sync_.registerCallback(&stereo::callback, this);
-    camera_pose_publisher = nh_.advertise<geometry_msgs::PoseStamped>("/openvslam/camera_pose", 1);
+    camera_pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/openvslam/camera_pose", 1);
 }
 
 void stereo::callback(const sensor_msgs::ImageConstPtr& left, const sensor_msgs::ImageConstPtr& right) {
@@ -120,7 +111,7 @@ void stereo::callback(const sensor_msgs::ImageConstPtr& left, const sensor_msgs:
 
     const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
     track_times_.push_back(track_time);
-    pose_odometry_pub(cam_pose, camera_pose_publisher);
+    pose_odometry_pub(cam_pose, camera_pose_pub);
 }
 
 rgbd::rgbd(const std::shared_ptr<openvslam::config>& cfg, const std::string& vocab_file_path, const std::string& mask_img_path)
@@ -129,7 +120,7 @@ rgbd::rgbd(const std::shared_ptr<openvslam::config>& cfg, const std::string& voc
       depth_sf_(it_, "camera/depth/image_raw", 1),
       sync_(SyncPolicy(10), color_sf_, depth_sf_) {
     sync_.registerCallback(&rgbd::callback, this);
-    camera_pose_publisher = nh_.advertise<geometry_msgs::PoseStamped>("/openvslam/camera_pose", 1);
+    camera_pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/openvslam/camera_pose", 1);
 }
 
 void rgbd::callback(const sensor_msgs::ImageConstPtr& color, const sensor_msgs::ImageConstPtr& depth) {
@@ -149,6 +140,6 @@ void rgbd::callback(const sensor_msgs::ImageConstPtr& color, const sensor_msgs::
 
     const auto track_time = std::chrono::duration_cast<std::chrono::duration<double>>(tp_2 - tp_1).count();
     track_times_.push_back(track_time);
-    pose_odometry_pub(cam_pose, camera_pose_publisher);
+    pose_odometry_pub(cam_pose, camera_pose_pub);
 }
 } // namespace openvslam_ros

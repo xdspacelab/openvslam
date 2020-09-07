@@ -4,7 +4,8 @@
 
     <!-- open openVSLAM node  -->
     <node name="openvslam_node" pkg="openvslam" type="run_slam" 
-    args="-v $(find openvslam)../../orb_vocab/orb_vocab.dbow2 -c $(find openvslam)../../camera_config/rs_D435_rgbd.yaml"/>
+    args="-v $(find openvslam)../../orb_vocab/orb_vocab.dbow2 -c $(find openvslam)../../camera_config/rs_D435_rgbd.yaml"
+    output="screen"/>
 
     <!-- rename depth topics from realsense  -->
     <node name="image_transport_node" pkg="image_transport" type="republish" 

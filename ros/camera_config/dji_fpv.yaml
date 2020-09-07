@@ -8,15 +8,15 @@ Camera.name: "DJI FPV"
 Camera.setup: "monocular"
 Camera.model: "perspective"
 
-Camera.fx: 5.742046503089782e+02
-Camera.fy: 5.741208776023565e+02
-Camera.cx: 6.238622918042993e+02
-Camera.cy: 3.589546909147419e+02
+Camera.fx: 5.734698899458732e+02
+Camera.fy: 5.732961697834952e+02
+Camera.cx: 6.235830774968280e+02
+Camera.cy: 3.588871219995716e+02
 
-Camera.k1: -0.208250499190539
-Camera.k2: 0.030316706655677
-Camera.p1: 4.460333879273426e-04
-Camera.p2: 3.321678588465075e-04
+Camera.k1: -0.207811173751188
+Camera.k2: 0.030018424705535
+Camera.p1: 4.389351880018832e-04
+Camera.p2: 1.387007183700114e-04
 Camera.k3: 0.0
 
 # Camera frames per second 

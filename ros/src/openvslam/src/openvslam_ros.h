@@ -1,6 +1,9 @@
 #ifndef OPENVSLAM_ROS_H
 #define OPENVSLAM_ROS_H
 
+#include <iostream>
+#include <cmath>
+
 #include <openvslam/system.h>
 #include <openvslam/config.h>
 #include <openvslam/util/stereo_rectifier.h>
@@ -39,7 +42,7 @@ public:
 
     image_transport::Subscriber sub_;
     
-    ros::Publisher camera_pose_publisher;
+    ros::Publisher camera_pose_pub;
 };
 
 class stereo : public system {
@@ -53,7 +56,7 @@ public:
     using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image>;
     message_filters::Synchronizer<SyncPolicy> sync_;
 
-    ros::Publisher camera_pose_publisher;
+    ros::Publisher camera_pose_pub;
 };
 
 class rgbd : public system {
@@ -65,7 +68,7 @@ public:
     using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image>;
     message_filters::Synchronizer<SyncPolicy> sync_;
 
-    ros::Publisher camera_pose_publisher;
+    ros::Publisher camera_pose_pub;
 };
 } // namespace openvslam_ros
 
