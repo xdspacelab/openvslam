@@ -9,6 +9,8 @@
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/shinsumicco/openvslam.svg)](https://hub.docker.com/r/shinsumicco/openvslam)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
+[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/openvslam)
+
 ## Overview
 
 [<img src="https://raw.githubusercontent.com/xdspacelab/openvslam/master/docs/img/teaser.png" width="640px">](https://arxiv.org/abs/1910.01122)
@@ -60,10 +62,9 @@ If you would like to run visual SLAM with standard benchmarking datasets (e.g. K
 
 ## Community
 
-If you want to join our Slack community, please fill out the application form from the following site(s):
+If you want to join our Spectrum community, please join from the following link:
 
-- [http://bit.ly/openvslam](http://bit.ly/openvslam)
-- [http://bit.ly/openvslam-jp](http://bit.ly/openvslam-jp) (日本語: in Japanese)
+[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/openvslam)
 
 ## Currently working on
 

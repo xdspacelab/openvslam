@@ -59,10 +59,9 @@ ENV NVIDIA_DRIVER_CAPABILITIES ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPA
 ARG EIGEN3_VERSION=3.3.7
 WORKDIR /tmp
 RUN set -x && \
-  wget -q http://bitbucket.org/eigen/eigen/get/${EIGEN3_VERSION}.tar.bz2 && \
-  tar xf ${EIGEN3_VERSION}.tar.bz2 && \
-  rm -rf ${EIGEN3_VERSION}.tar.bz2 && \
-  mv eigen-eigen-* eigen-${EIGEN3_VERSION} && \
+  wget -q https://gitlab.com/libeigen/eigen/-/archive/${EIGEN3_VERSION}/eigen-${EIGEN3_VERSION}.tar.bz2 && \
+  tar xf eigen-${EIGEN3_VERSION}.tar.bz2 && \
+  rm -rf eigen-${EIGEN3_VERSION}.tar.bz2 && \
   cd eigen-${EIGEN3_VERSION} && \
   mkdir -p build && \
   cd build && \
@@ -90,7 +89,7 @@ RUN set -x && \
     -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_UNITTESTS=OFF \
-    -DBUILD_WITH_MARCH_NATIVE=ON \
+    -DBUILD_WITH_MARCH_NATIVE=OFF \
     -DG2O_USE_CHOLMOD=OFF \
     -DG2O_USE_CSPARSE=ON \
     -DG2O_USE_OPENGL=OFF \
@@ -209,7 +208,7 @@ RUN set -x && \
   mkdir -p build && \
   cd build && \
   cmake \
-    -DBUILD_WITH_MARCH_NATIVE=ON \
+    -DBUILD_WITH_MARCH_NATIVE=OFF \
     -DUSE_PANGOLIN_VIEWER=ON \
     -DUSE_SOCKET_PUBLISHER=OFF \
     -DUSE_STACK_TRACE_LOGGER=ON \
