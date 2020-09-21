@@ -151,12 +151,6 @@ protected:
     //! Update the local map
     void update_local_map();
 
-    //! Update the local keyframes
-    void update_local_keyframes();
-
-    //! Update the local landmarks
-    void update_local_landmarks();
-
     //! Acquire more 2D-3D matches using initial camera pose estimation
     void search_local_landmarks();
 
