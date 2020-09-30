@@ -22,7 +22,7 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     : cfg_(cfg), camera_(cfg->camera_) {
     spdlog::debug("CONSTRUCT: system");
 
-    std::ostream message_stream;
+    std::ostringstream message_stream;
 
     message_stream << R"(  ___               __   _____ _      _   __  __ )" << std::endl;
     message_stream << R"( / _ \ _ __  ___ _ _\ \ / / __| |    /_\ |  \/  |)" << std::endl;
@@ -42,7 +42,7 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     // show configuration
     message_stream << *cfg_ << std::endl;
 
-    spdlog::info(message_stream.string());
+    spdlog::info(message_stream.str());
 
     // load ORB vocabulary
     spdlog::info("loading ORB vocabulary: {}", vocab_file_path);
