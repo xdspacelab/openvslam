@@ -24,6 +24,7 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
 
     std::ostringstream message_stream;
 
+    message_stream << std::endl;
     message_stream << R"(  ___               __   _____ _      _   __  __ )" << std::endl;
     message_stream << R"( / _ \ _ __  ___ _ _\ \ / / __| |    /_\ |  \/  |)" << std::endl;
     message_stream << R"(| (_) | '_ \/ -_) ' \\ V /\__ \ |__ / _ \| |\/| |)" << std::endl;
