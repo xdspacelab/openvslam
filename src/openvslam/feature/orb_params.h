@@ -47,6 +47,9 @@ struct orb_params {
 };
 
 } // namespace feature
+
+std::ostream& operator<<(std::ostream& os, const feature::orb_params& oparam);
+
 } // namespace openvslam
 
 #endif // OPENVSLAM_FEATURE_ORB_PARAMS_H

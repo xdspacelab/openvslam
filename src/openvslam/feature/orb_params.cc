@@ -87,4 +87,23 @@ std::vector<float> orb_params::calc_inv_level_sigma_sq(const unsigned int num_sc
 }
 
 } // namespace feature
+
+std::ostream& operator<<(std::ostream& os, const feature::orb_params& oparam) {
+    os << "- number of keypoints: " << oparam.max_num_keypts_ << std::endl;
+    os << "- scale factor: " << oparam.scale_factor_ << std::endl;
+    os << "- number of levels: " << oparam.num_levels_ << std::endl;
+    os << "- initial fast threshold: " << oparam.ini_fast_thr_ << std::endl;
+    os << "- minimum fast threshold: " << oparam.min_fast_thr << std::endl;
+    if (!oparam.mask_rects_.empty()) {
+        os << "- mask rectangles:" << std::endl;
+        for (const auto& mask_rect : oparam.mask_rects_) {
+            os << "  - ["
+               << mask_rect.at(0) << ", "
+               << mask_rect.at(1) << ", "
+               << mask_rect.at(2) << ", "
+               << mask_rect.at(3) << "]" << std::endl;
+        }
+    }
+    return os;
+}
 } // namespace openvslam
