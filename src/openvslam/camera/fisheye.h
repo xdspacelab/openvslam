@@ -105,6 +105,8 @@ public:
     Vec4_t eigen_dist_params_;
 };
 
+std::ostream& operator<<(std::ostream& os, const fisheye& params);
+
 } // namespace camera
 } // namespace openvslam
 

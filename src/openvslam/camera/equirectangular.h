@@ -66,6 +66,8 @@ public:
     nlohmann::json to_json() const override final;
 };
 
+std::ostream& operator<<(std::ostream& os, const equirectangular& params);
+
 } // namespace camera
 } // namespace openvslam
 

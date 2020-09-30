@@ -249,5 +249,28 @@ nlohmann::json fisheye::to_json() const {
             {"k4", k4_}};
 }
 
+std::ostream& operator<<(std::ostream& os, const fisheye& params) {
+    os << "- name: " << params.name_ << std::endl;
+    os << "- setup: " << params.get_setup_type_string() << std::endl;
+    os << "- fps: " << params.fps_ << std::endl;
+    os << "- cols: " << params.cols_ << std::endl;
+    os << "- rows: " << params.rows_ << std::endl;
+    os << "- color: " << params.get_color_order_string() << std::endl;
+    os << "- model: " << params.get_model_type_string() << std::endl;
+    os << "  - fx: " << params.fx_ << std::endl;
+    os << "  - fy: " << params.fy_ << std::endl;
+    os << "  - cx: " << params.cx_ << std::endl;
+    os << "  - cy: " << params.cy_ << std::endl;
+    os << "  - k1: " << params.k1_ << std::endl;
+    os << "  - k2: " << params.k2_ << std::endl;
+    os << "  - k3: " << params.k3_ << std::endl;
+    os << "  - k4: " << params.k4_ << std::endl;
+    os << "  - min x: " << params.img_bounds_.min_x_ << std::endl;
+    os << "  - max x: " << params.img_bounds_.max_x_ << std::endl;
+    os << "  - min y: " << params.img_bounds_.min_y_ << std::endl;
+    os << "  - max y: " << params.img_bounds_.max_y_ << std::endl;
+    return os;
+}
+
 } // namespace camera
 } // namespace openvslam

@@ -86,9 +86,7 @@ std::vector<float> orb_params::calc_inv_level_sigma_sq(const unsigned int num_sc
     return inv_level_sigma_sq;
 }
 
-} // namespace feature
-
-std::ostream& operator<<(std::ostream& os, const feature::orb_params& oparam) {
+std::ostream& operator<<(std::ostream& os, const orb_params& oparam) {
     os << "- number of keypoints: " << oparam.max_num_keypts_ << std::endl;
     os << "- scale factor: " << oparam.scale_factor_ << std::endl;
     os << "- number of levels: " << oparam.num_levels_ << std::endl;
@@ -106,4 +104,6 @@ std::ostream& operator<<(std::ostream& os, const feature::orb_params& oparam) {
     }
     return os;
 }
+
+} // namespace feature
 } // namespace openvslam

@@ -111,6 +111,8 @@ public:
     Vec5_t eigen_dist_params_;
 };
 
+std::ostream& operator<<(std::ostream& os, const perspective& params);
+
 } // namespace camera
 } // namespace openvslam
 

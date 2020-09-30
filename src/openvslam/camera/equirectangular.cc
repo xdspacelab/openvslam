@@ -102,5 +102,19 @@ nlohmann::json equirectangular::to_json() const {
             {"num_grid_rows", num_grid_rows_}};
 }
 
+std::ostream& operator<<(std::ostream& os, const equirectangular& params) {
+    os << "- name: " << params.name_ << std::endl;
+    os << "- setup: " << params.get_setup_type_string() << std::endl;
+    os << "- fps: " << params.fps_ << std::endl;
+    os << "- cols: " << params.cols_ << std::endl;
+    os << "- rows: " << params.rows_ << std::endl;
+    os << "- color: " << params.get_color_order_string() << std::endl;
+    os << "- model: " << params.get_model_type_string() << std::endl;
+    os << "- focal x baseline: " << params.focal_x_baseline_ << std::endl;
+    os << "- num grid cols: " << params.num_grid_cols_ << std::endl;
+    os << "- num grid rows: " << params.num_grid_rows_ << std::endl;
+    return os;
+}
+
 } // namespace camera
 } // namespace openvslam

@@ -46,10 +46,9 @@ struct orb_params {
     static std::vector<float> calc_inv_level_sigma_sq(const unsigned int num_scale_levels, const float scale_factor);
 };
 
+std::ostream& operator<<(std::ostream& os, const orb_params& oparam);
+
 } // namespace feature
-
-std::ostream& operator<<(std::ostream& os, const feature::orb_params& oparam);
-
 } // namespace openvslam
 
 #endif // OPENVSLAM_FEATURE_ORB_PARAMS_H

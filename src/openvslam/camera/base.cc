@@ -105,5 +105,16 @@ void base::show_common_parameters() const {
     std::cout << "- model: " << get_model_type_string() << std::endl;
 }
 
+std::ostream& operator<<(std::ostream& os, const base& params) {
+    os << "- name: " << params.name_ << std::endl;
+    os << "- setup: " << params.get_setup_type_string() << std::endl;
+    os << "- fps: " << params.fps_ << std::endl;
+    os << "- cols: " << params.cols_ << std::endl;
+    os << "- rows: " << params.rows_ << std::endl;
+    os << "- color: " << params.get_color_order_string() << std::endl;
+    os << "- model: " << params.get_model_type_string() << std::endl;
+    return os;
+}
+
 } // namespace camera
 } // namespace openvslam
