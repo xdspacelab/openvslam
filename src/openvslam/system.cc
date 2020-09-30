@@ -38,7 +38,7 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     std::cout << std::endl;
 
     // show configuration
-    std::cout << cfg_ << std::endl;
+    std::cout << *cfg_ << std::endl;
 
     // load ORB vocabulary
     spdlog::info("loading ORB vocabulary: {}", vocab_file_path);
