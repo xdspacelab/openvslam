@@ -22,23 +22,27 @@ system::system(const std::shared_ptr<config>& cfg, const std::string& vocab_file
     : cfg_(cfg), camera_(cfg->camera_) {
     spdlog::debug("CONSTRUCT: system");
 
-    std::cout << R"(  ___               __   _____ _      _   __  __ )" << std::endl;
-    std::cout << R"( / _ \ _ __  ___ _ _\ \ / / __| |    /_\ |  \/  |)" << std::endl;
-    std::cout << R"(| (_) | '_ \/ -_) ' \\ V /\__ \ |__ / _ \| |\/| |)" << std::endl;
-    std::cout << R"( \___/| .__/\___|_||_|\_/ |___/____/_/ \_\_|  |_|)" << std::endl;
-    std::cout << R"(      |_|                                        )" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Copyright (C) 2019," << std::endl;
-    std::cout << "National Institute of Advanced Industrial Science and Technology (AIST)" << std::endl;
-    std::cout << "All rights reserved." << std::endl;
-    std::cout << std::endl;
-    std::cout << "This is free software," << std::endl;
-    std::cout << "and you are welcome to redistribute it under certain conditions." << std::endl;
-    std::cout << "See the LICENSE file." << std::endl;
-    std::cout << std::endl;
+    std::ostream message_stream;
+
+    message_stream << R"(  ___               __   _____ _      _   __  __ )" << std::endl;
+    message_stream << R"( / _ \ _ __  ___ _ _\ \ / / __| |    /_\ |  \/  |)" << std::endl;
+    message_stream << R"(| (_) | '_ \/ -_) ' \\ V /\__ \ |__ / _ \| |\/| |)" << std::endl;
+    message_stream << R"( \___/| .__/\___|_||_|\_/ |___/____/_/ \_\_|  |_|)" << std::endl;
+    message_stream << R"(      |_|                                        )" << std::endl;
+    message_stream << std::endl;
+    message_stream << "Copyright (C) 2019," << std::endl;
+    message_stream << "National Institute of Advanced Industrial Science and Technology (AIST)" << std::endl;
+    message_stream << "All rights reserved." << std::endl;
+    message_stream << std::endl;
+    message_stream << "This is free software," << std::endl;
+    message_stream << "and you are welcome to redistribute it under certain conditions." << std::endl;
+    message_stream << "See the LICENSE file." << std::endl;
+    message_stream << std::endl;
 
     // show configuration
-    std::cout << *cfg_ << std::endl;
+    message_stream << *cfg_ << std::endl;
+
+    spdlog::info(message_stream.string());
 
     // load ORB vocabulary
     spdlog::info("loading ORB vocabulary: {}", vocab_file_path);
