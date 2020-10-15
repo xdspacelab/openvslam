@@ -45,6 +45,10 @@ else()
     message(STATUS "Address/Memory sanitizer: DISABLED")
 endif()
 
+set(BOW_FRAMEWORK "DBoW2" CACHE STRING "DBoW2 or FBoW")
+set_property(CACHE BOW_FRAMEWORK PROPERTY STRINGS "DBoW2" "FBoW")
+
+
 # ----- Set compiler options -----
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
@@ -120,10 +124,10 @@ install(EXPORT ${OPENVSLAM_TARGETS_EXPORT_NAME}
         DESTINATION ${OPENVSLAM_CONFIG_INSTALL_DIR})
 
 # Set standard installation directories
-set(RUNTIME_DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-set(LIBRARY_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-set(ARCHIVE_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-set(INCLUDES_DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+set(RUNTIME_DESTINATION bin)
+set(LIBRARY_DESTINATION lib)
+set(ARCHIVE_DESTINATION lib)
+set(INCLUDES_DESTINATION include)
 
 # ----- Build selection -----
 
