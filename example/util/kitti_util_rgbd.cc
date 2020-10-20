@@ -1,4 +1,4 @@
-#include "kitti_util.h"
+#include "kitti_util_rgbd.h"
 
 #include <iostream>
 #include <fstream>
@@ -31,27 +31,26 @@ kitti_sequence::kitti_sequence(const std::string& seq_dir_path) {
     ifs_timestamp.close();
 
     // load image file paths
-    const std::string left_img_dir_path = seq_dir_path + "/image_2/";
-    const std::string right_img_dir_path = seq_dir_path + "/image_3/";
+    const std::string rgb_img_dir_path = seq_dir_path + "/image_2/";
+    const std::string depth_img_dir_path = seq_dir_path + "/image_depth/";
 
-    left_img_file_paths_.clear();
-    right_img_file_paths_.clear();
+    rgb_img_file_paths_.clear();
+    depth_img_file_paths_.clear();
     for (unsigned int i = 0; i < timestamps_.size(); ++i) {
         std::stringstream ss;
         ss << std::setfill('0') << std::setw(6) << i;
-        left_img_file_paths_.push_back(left_img_dir_path + ss.str() + ".png");
-        right_img_file_paths_.push_back(right_img_dir_path + ss.str() + ".png");
-        // std::cerr << "push_back the images" << std::endl;
+        rgb_img_file_paths_.push_back(rgb_img_dir_path + ss.str() + ".png");
+        depth_img_file_paths_.push_back(depth_img_dir_path + ss.str() + ".png");
     }
 }
 
 std::vector<kitti_sequence::frame> kitti_sequence::get_frames() const {
     std::vector<frame> frames;
-    assert(timestamps_.size() == left_img_file_paths_.size());
-    assert(timestamps_.size() == right_img_file_paths_.size());
-    assert(left_img_file_paths_.size() == right_img_file_paths_.size());
+    assert(timestamps_.size() == rgb_img_file_paths_.size());
+    assert(timestamps_.size() == depth_img_file_paths_.size());
+    assert(rgb_img_file_paths_.size() == depth_img_file_paths_.size());
     for (unsigned int i = 0; i < timestamps_.size(); ++i) {
-        frames.emplace_back(frame{left_img_file_paths_.at(i), right_img_file_paths_.at(i), timestamps_.at(i)});
+        frames.emplace_back(frame{rgb_img_file_paths_.at(i), depth_img_file_paths_.at(i), timestamps_.at(i)});
     }
     return frames;
 }

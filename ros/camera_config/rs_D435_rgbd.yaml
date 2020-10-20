@@ -32,6 +32,7 @@ Camera.color_order: "RGB"
 
 depth_threshold: 40.0
 depthmap_factor: 1000.0
+# ref: https://github.com/IntelRealSense/realsense-ros/issues/41
 
 #================#
 # ORB Parameters #

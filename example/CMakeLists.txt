@@ -59,6 +59,9 @@ list(APPEND EXECUTABLE_TARGETS run_euroc_slam)
 add_executable(run_kitti_slam run_kitti_slam.cc util/kitti_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_kitti_slam)
 
+add_executable(run_kitti_slam_rgbd run_kitti_slam_rgbd.cc util/kitti_util_rgbd.cc)
+list(APPEND EXECUTABLE_TARGETS run_kitti_slam_rgbd)
+
 add_executable(run_tum_rgbd_slam run_tum_rgbd_slam.cc util/tum_rgbd_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_tum_rgbd_slam)
 

@@ -24,7 +24,7 @@ Camera.cols: 1226
 Camera.rows: 370
 Camera.focal_x_baseline: 379.8145
 
-Camera.color_order: "Gray"
+Camera.color_order: "RGB"
 
 #================#
 # ORB Parameters #
