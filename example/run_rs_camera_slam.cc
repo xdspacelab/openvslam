@@ -31,11 +31,8 @@
 #include <gperftools/profiler.h>
 #endif
 
-void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
-                   const std::string& vocab_file_path, const std::string& mask_img_path,
-                   const float scale, const std::string& map_db_path) {
-    // load the mask image
-    const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
+void mono_tracking(rs2::pipeline pipe, const std::shared_ptr<openvslam::config>& cfg,
+                   const std::string& vocab_file_path, const std::string& map_db_path) {
 
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
@@ -53,13 +50,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     using namespace cv;
     using namespace rs2;
 
-    // Declare RealSense pipeline, encapsulating the actual device and sensors
-    pipeline pipe;
-
     align align_to(RS2_STREAM_COLOR);
-
-    // Start streaming with default recommended configuration
-    pipe.start();
 
     double timestamp = 0.0;
     std::vector<double> track_times;
@@ -88,7 +79,7 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
             const auto tp_1 = std::chrono::steady_clock::now();
 
             // input the current frame and estimate the camera pose
-            SLAM.feed_monocular_frame(frame, timestamp, mask);
+            SLAM.feed_monocular_frame(frame, timestamp);
 
             const auto tp_2 = std::chrono::steady_clock::now();
 
@@ -128,10 +119,8 @@ void mono_tracking(const std::shared_ptr<openvslam::config>& cfg,
     std::cout << "mean tracking time: " << total_track_time / track_times.size() << "[s]" << std::endl;
 }
 
-void rgbd_tracking(const std::shared_ptr<openvslam::config>& cfg,
-                     const std::string& vocab_file_path, const std::string& mask_img_path,
-                     const float scale, const std::string& map_db_path) {
-    const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
+void rgbd_tracking(rs2::pipeline pipe, const std::shared_ptr<openvslam::config>& cfg,
+                     const std::string& vocab_file_path, const std::string& map_db_path) {
     // build a SLAM system
     openvslam::system SLAM(cfg, vocab_file_path);
     // startup the SLAM process
@@ -148,13 +137,7 @@ void rgbd_tracking(const std::shared_ptr<openvslam::config>& cfg,
     using namespace cv;
     using namespace rs2;
 
-    // Declare RealSense pipeline, encapsulating the actual device and sensors
-    pipeline pipe;
-
     align align_to(RS2_STREAM_COLOR);
-
-    // Start streaming with default recommended configuration
-    pipe.start();
 
     double timestamp = 0.0;
     std::vector<double> track_times;
@@ -182,7 +165,7 @@ void rgbd_tracking(const std::shared_ptr<openvslam::config>& cfg,
             const auto tp_1 = std::chrono::steady_clock::now();
 
             // input the current frame and estimate the camera pose
-            SLAM.feed_RGBD_frame(rgb_img, depth_img, timestamp, mask);
+            SLAM.feed_RGBD_frame(rgb_img, depth_img, timestamp);
 
             const auto tp_2 = std::chrono::steady_clock::now();
 
@@ -234,8 +217,6 @@ int main(int argc, char* argv[]) try
     auto help = op.add<popl::Switch>("h", "help", "produce help message");
     auto vocab_file_path = op.add<popl::Value<std::string>>("v", "vocab", "vocabulary file path");
     auto config_file_path = op.add<popl::Value<std::string>>("c", "config", "config file path");
-    auto mask_img_path = op.add<popl::Value<std::string>>("", "mask", "mask image path", "");
-    auto scale = op.add<popl::Value<float>>("s", "scale", "scaling ratio of images", 1.0);
     auto map_db_path = op.add<popl::Value<std::string>>("p", "map-db", "store a map database at this path after SLAM", "");
     auto debug_mode = op.add<popl::Switch>("", "debug", "debug mode");
     try {
@@ -283,14 +264,17 @@ int main(int argc, char* argv[]) try
     ProfilerStart("slam.prof");
 #endif
 
+    // Declare RealSense pipeline, encapsulating the actual device and sensors
+    rs2::pipeline pipe;
+    // Start streaming with default recommended configuration
+    pipe.start();
+
     // run tracking
     if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::Monocular) {
-        mono_tracking(cfg, vocab_file_path->value(), mask_img_path->value(),
-                      scale->value(), map_db_path->value());
+        mono_tracking(pipe, cfg, vocab_file_path->value(), map_db_path->value());
     }
     else if (cfg->camera_->setup_type_ == openvslam::camera::setup_type_t::RGBD) {
-        rgbd_tracking(cfg, vocab_file_path->value(), mask_img_path->value(),
-                        scale->value(), map_db_path->value());
+        rgbd_tracking(pipe, cfg, vocab_file_path->value(), map_db_path->value());
     }
     else {
         throw std::runtime_error("Invalid setup type: " + cfg->camera_->get_setup_type_string());
