@@ -2,6 +2,42 @@
 1) Support for RGBD and Stereo of ROS with this [PR](https://github.com/xdspacelab/openvslam/pull/276)
 2) Pose publisher in slam and localization mode with this [issue](https://github.com/xdspacelab/openvslam/issues/347#issue-638316624)
 3) Calibration file for tello, dji_fpv and realsense D435 (Mono + RGBD)
+4) Run RGB-D SLAM without ROS using Realsense D435 camera
+
+```$ ./build/run_rs_camera_slam  -v ros/orb_vocab/orb_vocab.dbow2 -n 0 -c example/realsense/rsD435_rgbd.yaml --debug```
+
+# Code snipped to stream RGB and Depth (aligned) from realsense Camera
+```
+
+using namespace cv;
+using namespace rs2;
+
+// Declare RealSense pipeline, encapsulating the actual device and sensors
+pipeline pipe;
+
+align align_to(RS2_STREAM_COLOR);
+
+// Start streaming with default recommended configuration
+pipe.start();
+
+const auto window_name = "Display Image";
+namedWindow(window_name, WINDOW_AUTOSIZE);
+
+while (waitKey(1) < 0 && getWindowProperty(window_name, WND_PROP_AUTOSIZE) >= 0)
+{
+    std::cerr << "In the loop" << std::endl;
+    frameset data = pipe.wait_for_frames(); // Wait for next set of frames from the camera
+
+    frameset aligned_set = align_to.process(data);
+    // frame depth = data.get_depth_frame();
+    auto color_mat = frame_to_mat(aligned_set.get_color_frame());
+    auto depth_mat = frame_to_mat(aligned_set.get_depth_frame());
+
+    // Update the window with new data
+    imshow(window_name, depth_mat);
+}
+
+```
 ______________________________________________________________
 <p align="center">
 <img src="https://raw.githubusercontent.com/xdspacelab/openvslam/master/docs/img/logo.png" width="435px">
