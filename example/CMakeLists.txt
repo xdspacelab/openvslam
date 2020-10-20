@@ -65,6 +65,15 @@ list(APPEND EXECUTABLE_TARGETS run_kitti_slam_rgbd)
 add_executable(run_tum_rgbd_slam run_tum_rgbd_slam.cc util/tum_rgbd_util.cc)
 list(APPEND EXECUTABLE_TARGETS run_tum_rgbd_slam)
 
+add_executable(run_rs_rgbd_slam run_rs_rgbd_slam.cc util/tum_rgbd_util.cc)
+list(APPEND EXECUTABLE_TARGETS run_rs_rgbd_slam)
+
+add_executable(run_rs_camera_slam run_rs_camera_slam.cc util/cv-helpers.hpp)
+list(APPEND EXECUTABLE_TARGETS run_rs_camera_slam)
+
+find_package(realsense2 CONFIG REQUIRED)
+target_link_libraries(run_rs_camera_slam PRIVATE realsense2::fw realsense2::usb realsense2::realsense2 realsense2::realsense-file)
+
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # Set output directory for executables
     set_target_properties(${EXECUTABLE_TARGET} PROPERTIES

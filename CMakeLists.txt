@@ -69,6 +69,10 @@ endif()
 
 # ----- Find dependencies -----
 
+# realsense2
+# find_package(realsense2 CONFIG REQUIRED)
+# target_link_libraries(main PRIVATE realsense2::fw realsense2::usb realsense2::realsense2 realsense2::realsense-file)
+
 # Threads
 find_package(Threads REQUIRED)
 

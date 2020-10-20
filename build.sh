@@ -1,5 +1,9 @@
 echo "Building openVSLAM"
+
+mkdir -p build
 cd build
+
+# -DCMAKE_TOOLCHAIN_FILE=/home/jedsadakorn/git/vcpkg/scripts/buildsystems/vcpkg.cmake \
 
 cmake \
     -DBUILD_WITH_MARCH_NATIVE=ON \
@@ -11,3 +15,4 @@ cmake \
     ..
 
 make -j8
+
