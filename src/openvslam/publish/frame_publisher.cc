@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "openvslam/data/landmark.h"
 #include "openvslam/data/map_database.h"
 #include "openvslam/publish/frame_publisher.h"
