@@ -31,7 +31,7 @@ nlohmann::json convert_keypoints_to_json(const std::vector<cv::KeyPoint>& keypts
                                {"ang", keypts.at(idx).angle},
                                {"oct", static_cast<unsigned int>(keypts.at(idx).octave)}};
     }
-    return std::move(json_keypts);
+    return json_keypts;
 }
 
 std::vector<cv::KeyPoint> convert_json_to_keypoints(const nlohmann::json& json_keypts) {
