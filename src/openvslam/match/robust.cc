@@ -27,7 +27,7 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
     const Mat33_t rot_2w = keyfrm_2->get_rotation();
     const Vec3_t trans_2w = keyfrm_2->get_translation();
     Vec3_t epiplane_in_keyfrm_2;
-    keyfrm_2->camera_->reproject_to_bearing(rot_2w, trans_2w, cam_center_1, epiplane_in_keyfrm_2);
+    const bool valid_epiplane = keyfrm_2->camera_->reproject_to_bearing(rot_2w, trans_2w, cam_center_1, epiplane_in_keyfrm_2);
 
     // Acquire the 3D point information of the keframes
     const auto assoc_lms_in_keyfrm_1 = keyfrm_1->get_landmarks();
@@ -107,7 +107,7 @@ unsigned int robust::match_for_triangulation(data::keyframe* keyfrm_1, data::key
                         continue;
                     }
 
-                    if (!is_stereo_keypt_1 && !is_stereo_keypt_2) {
+                    if (valid_epiplane && !is_stereo_keypt_1 && !is_stereo_keypt_2) {
                         // Do not use any keypoints near the epipole if both are not stereo keypoints
                         const auto cos_dist = epiplane_in_keyfrm_2.dot(bearing_2);
                         // The threshold of the minimum angle formed by the epipole and the bearing vector is 3.0 degree
